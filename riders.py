@@ -47,14 +47,14 @@ class RiderDatabase:
         # Initialize all riders from the 2025 Tour de France startlist
         rider_data = [
             # EF Education - EasyPost
-            {"name": "Richard Carapaz", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "D", "itt": "D", "mountain": "A", "hills": "D", "punch": "D"}, "price": 1.5, "chance_of_abandon": 0.0},
+            {"name": "Richard Carapaz", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "D", "itt": "D", "mountain": "B", "hills": "D", "punch": "C"}, "price": 1.5, "chance_of_abandon": 0.0},
             {"name": "Harry Sweeny", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
             {"name": "Neilson Powless", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "hills": "B", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
             {"name": "Ben Healy", "team": "EF Education - EasyPost", "age": 22, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "B", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
             
             # UAE Team Emirates - XRG
             {"name": "Tadej Pogačar", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "D", "itt": "A", "mountain": "S", "hills": "A", "punch": "A"}, "price": 7.5, "chance_of_abandon": 0.0},
-            {"name": "João Almeida", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "B", "mountain": "B", "hills": "E", "punch": "C"}, "price": 4.5, "chance_of_abandon": 0.0},
+            {"name": "João Almeida", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "B", "mountain": "A", "hills": "E", "punch": "C"}, "price": 4.5, "chance_of_abandon": 0.0},
             {"name": "Adam Yates", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "B", "hills": "E", "punch": "E"}, "price": 2.5, "chance_of_abandon": 0.0},
             {"name": "Pavel Sivakov", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
             {"name": "Marc Soler", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "D", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
@@ -99,7 +99,7 @@ class RiderDatabase:
             # Team Visma | Lease a Bike
             {"name": "Wout van Aert", "team": "Team Visma | Lease a Bike", "age": 29, "tiers": {"sprint": "C", "itt": "A", "mountain": "E", "hills": "A", "punch": "B"}, "price": 3.5, "chance_of_abandon": 0.0},
             {"name": "Simon Yates", "team": "Team Visma | Lease a Bike", "age": 27, "tiers": {"sprint": "E", "itt": "C", "mountain": "B", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Jonas Vingegaard", "team": "Team Visma | Lease a Bike", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "S", "hills": "E", "punch": "E"}, "price": 6, "chance_of_abandon": 0.0},
+            {"name": "Jonas Vingegaard", "team": "Team Visma | Lease a Bike", "age": 25, "tiers": {"sprint": "E", "itt": "A", "mountain": "S", "hills": "C", "punch": "C"}, "price": 6, "chance_of_abandon": 0.0},
             {"name": "Matteo Jorgenson", "team": "Team Visma | Lease a Bike", "age": 26, "tiers": {"sprint": "E", "itt": "B", "mountain": "C", "hills": "E", "punch": "E"}, "price": 3, "chance_of_abandon": 0.0},
             {"name": "Sepp Kuss", "team": "Team Visma | Lease a Bike", "age": 28, "tiers": {"sprint": "E", "itt": "D", "mountain": "B", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
             {"name": "Victor Campenaerts", "team": "Team Visma | Lease a Bike", "age": 27, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
@@ -133,11 +133,11 @@ class RiderDatabase:
             {"name": "Thibau Nys", "team": "Lidl - Trek", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "B"}, "price": 1, "chance_of_abandon": 0.0},
             
             # Groupama - FDJ
-            {"name": "David Gaudu", "team": "Groupama - FDJ", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "C", "punch": "C"}, "price": 0, "chance_of_abandon": 0.0},
-            {"name": "Guillaume Martin", "team": "Groupama - FDJ", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "C", "punch": "E"}, "price": 0, "chance_of_abandon": 0.0},
-            {"name": "Valentin Madouas", "team": "Groupama - FDJ", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "B", "punch": "B"}, "price": 0, "chance_of_abandon": 0.0},
-            {"name": "Romain Grégoire", "team": "Groupama - FDJ", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "A"}, "price": 0, "chance_of_abandon": 0.0},
-            {"name": "Quentin Pacher", "team": "Groupama - FDJ", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "C"}, "price": 0, "chance_of_abandon": 0.0},
+            {"name": "David Gaudu", "team": "Groupama - FDJ", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "C", "punch": "C"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Guillaume Martin", "team": "Groupama - FDJ", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "C", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
+            {"name": "Valentin Madouas", "team": "Groupama - FDJ", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "B", "punch": "B"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Romain Grégoire", "team": "Groupama - FDJ", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "A"}, "price": 0.75, "chance_of_abandon": 0.0},
+            {"name": "Quentin Pacher", "team": "Groupama - FDJ", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "C"}, "price": 0.5, "chance_of_abandon": 0.0},
             
             # Movistar Team
             {"name": "Pablo Castrillo", "team": "Movistar Team", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},

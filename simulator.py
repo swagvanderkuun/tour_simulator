@@ -9,10 +9,10 @@ from datetime import datetime
 
 # Points arrays for classifications
 SPRINT_SPRINT_POINTS = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
-HILLS_SPRINT_POINTS = [10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+HILLS_SPRINT_POINTS = [15, 10, 7, 6, 5, 4, 3, 2, 1, 0]
 HILLS_MOUNTAIN_POINTS = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
 MOUNTAIN_MOUNTAIN_POINTS = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
-PUNCH_SPRINT_POINTS = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
+PUNCH_SPRINT_POINTS = [30, 25, 20, 15, 12, 10, 8, 6, 4, 2]
 PUNCH_MOUNTAIN_POINTS = [10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 
 # Time gaps per place for each stage type (in seconds)

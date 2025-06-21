@@ -79,6 +79,27 @@ if 'optimization_results' not in st.session_state:
 if 'rider_db' not in st.session_state:
     st.session_state.rider_db = RiderDatabase()
 
+def inject_rider_database(simulator, rider_db):
+    """Helper function to inject a modified rider database into a simulator"""
+    simulator.rider_db = rider_db
+    # Recalculate youth riders and other dependent data
+    simulator.youth_rider_names = set(r.name for r in simulator.rider_db.get_all_riders() if r.age < 25)
+    simulator.rider_db_records = []
+    for rider in simulator.rider_db.get_all_riders():
+        simulator.rider_db_records.append({
+            "name": rider.name,
+            "team": rider.team,
+            "age": rider.age,
+            "sprint_ability": rider.parameters.sprint_ability,
+            "punch_ability": rider.parameters.punch_ability,
+            "itt_ability": rider.parameters.itt_ability,
+            "mountain_ability": rider.parameters.mountain_ability,
+            "hills_ability": rider.parameters.hills_ability,
+            "is_youth": rider.name in simulator.youth_rider_names,
+            "price": rider.price,
+            "chance_of_abandon": rider.chance_of_abandon
+        })
+
 def main():
     # Header
     st.markdown('<h1 class="main-header">🚴‍♂️ Tour de France Simulator Dashboard</h1>', unsafe_allow_html=True)
@@ -174,18 +195,19 @@ def show_single_simulation():
         st.subheader("Simulation Settings")
         
         # Simulation options
-        show_progress = st.checkbox("Show simulation progress", value=True)
-        export_results = st.checkbox("Export results to Excel", value=True)
+        show_progress = st.checkbox("Show simulation progress", value=True, key="single_sim_progress")
+        export_results = st.checkbox("Export results to Excel", value=True, key="single_sim_export")
         
-        if st.button("🚀 Run Single Simulation", type="primary"):
+        if st.button("🚀 Run Single Simulation", type="primary", key="run_single_sim"):
             with st.spinner("Running simulation..."):
                 # Create progress bar
                 if show_progress:
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                 
-                # Run simulation
+                # Run simulation using the session state rider database
                 simulator = TourSimulator()
+                inject_rider_database(simulator, st.session_state.rider_db)
                 
                 # Complete simulation
                 simulator.simulate_tour()
@@ -209,13 +231,13 @@ def show_single_simulation():
     with col2:
         st.subheader("Quick Actions")
         
-        if st.button("📊 View Results"):
+        if st.button("📊 View Results", key="view_single_results"):
             if st.session_state.simulation_results is not None:
                 show_simulation_results(st.session_state.simulation_results)
             else:
                 st.warning("No simulation results available. Run a simulation first.")
         
-        if st.button("📥 Export Results"):
+        if st.button("📥 Export Results", key="export_single_results"):
             if st.session_state.simulation_results is not None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"tour_simulation_results_{timestamp}.xlsx"
@@ -232,16 +254,16 @@ def show_multi_simulation():
     with col1:
         st.subheader("Simulation Parameters")
         
-        num_simulations = st.slider("Number of simulations", 10, 500, 100, 10)
-        show_progress = st.checkbox("Show progress", value=True)
+        num_simulations = st.slider("Number of simulations", 10, 500, 100, 10, key="multi_sim_count")
+        show_progress = st.checkbox("Show progress", value=True, key="multi_sim_progress")
         
-        if st.button("🔄 Run Multi-Simulation", type="primary"):
+        if st.button("🔄 Run Multi-Simulation", type="primary", key="run_multi_sim"):
             with st.spinner(f"Running {num_simulations} simulations..."):
                 if show_progress:
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                 
-                # Run multi-simulation
+                # Run multi-simulation using the session state rider database
                 results = run_multi_simulation(num_simulations, progress_callback=progress_bar if show_progress else None)
                 
                 if show_progress:
@@ -257,7 +279,7 @@ def show_multi_simulation():
         if st.session_state.multi_simulation_results is not None:
             st.success("Multi-simulation results available")
             
-            if st.button("📊 View Analysis"):
+            if st.button("📊 View Analysis", key="view_multi_analysis"):
                 show_multi_simulation_analysis(st.session_state.multi_simulation_results)
         else:
             st.info("Run a multi-simulation to see results")
@@ -270,18 +292,21 @@ def show_team_optimization():
     with col1:
         st.subheader("Optimization Parameters")
         
-        budget = st.slider("Budget", 30.0, 60.0, 48.0, 0.5)
-        team_size = st.slider("Team size", 15, 25, 20, 1)
-        num_simulations = st.slider("Simulations for expected points", 50, 200, 100, 10)
-        risk_aversion = st.slider("Risk aversion", 0.0, 1.0, 0.0, 0.1)
-        abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1)
+        budget = st.slider("Budget", 30.0, 60.0, 48.0, 0.5, key="opt_budget")
+        team_size = st.slider("Team size", 15, 25, 20, 1, key="opt_team_size")
+        num_simulations = st.slider("Simulations for expected points", 50, 200, 100, 10, key="opt_sim_count")
+        risk_aversion = st.slider("Risk aversion", 0.0, 1.0, 0.0, 0.1, key="opt_risk_aversion")
+        abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="opt_abandon_penalty")
         
-        if st.button("🎯 Optimize Team", type="primary"):
+        if st.button("🎯 Optimize Team", type="primary", key="run_optimization"):
             with st.spinner("Running optimization..."):
                 optimizer = TeamOptimizer(budget=budget, team_size=team_size)
+                # Replace the optimizer's rider database with our modified one
+                optimizer.rider_db = st.session_state.rider_db
+                inject_rider_database(optimizer.simulator, st.session_state.rider_db)
                 
-                # Get expected points
-                rider_data = optimizer.run_simulation(num_simulations)
+                # Get expected points using our custom method
+                rider_data = run_optimizer_simulation(optimizer, num_simulations, st.session_state.rider_db)
                 
                 # Optimize team
                 team_selection = optimizer.optimize_team(
@@ -308,7 +333,7 @@ def show_team_optimization():
             st.metric("Expected Points", f"{team_selection.expected_points:.1f}")
             st.metric("Team Size", len(team_selection.riders))
             
-            if st.button("📋 View Team"):
+            if st.button("📋 View Team", key="view_optimization_team"):
                 show_optimization_results(st.session_state.optimization_results)
         else:
             st.info("Run optimization to see results")
@@ -345,11 +370,11 @@ def show_rider_management():
         # Filters
         col1, col2, col3 = st.columns(3)
         with col1:
-            team_filter = st.selectbox("Filter by team", ["All"] + sorted(df['Team'].unique()))
+            team_filter = st.selectbox("Filter by team", ["All"] + sorted(df['Team'].unique()), key="view_team_filter")
         with col2:
-            age_filter = st.slider("Age range", int(df['Age'].min()), int(df['Age'].max()), (20, 35))
+            age_filter = st.slider("Age range", int(df['Age'].min()), int(df['Age'].max()), (20, 35), key="view_age_filter")
         with col3:
-            price_filter = st.slider("Price range", float(df['Price'].min()), float(df['Price'].max()), (0.0, 10.0))
+            price_filter = st.slider("Price range", float(df['Price'].min()), float(df['Price'].max()), (0.0, 10.0), key="view_price_filter")
         
         # Apply filters
         filtered_df = df.copy()
@@ -365,7 +390,7 @@ def show_rider_management():
         st.dataframe(filtered_df, use_container_width=True)
         
         # Export riders
-        if st.button("📥 Export Riders"):
+        if st.button("📥 Export Riders", key="export_riders"):
             csv = filtered_df.to_csv(index=False)
             st.download_button(
                 label="Download CSV",
@@ -379,7 +404,7 @@ def show_rider_management():
         
         # Select rider
         rider_names = [rider.name for rider in riders]
-        selected_rider = st.selectbox("Select rider to edit", rider_names)
+        selected_rider = st.selectbox("Select rider to edit", rider_names, key="edit_rider_select")
         
         if selected_rider:
             rider = st.session_state.rider_db.get_rider(selected_rider)
@@ -391,8 +416,8 @@ def show_rider_management():
                 st.write(f"**Team:** {rider.team}")
                 st.write(f"**Age:** {rider.age}")
                 
-                new_price = st.number_input("Price", value=float(rider.price), step=0.1)
-                new_abandon = st.slider("Abandon chance", 0.0, 1.0, float(rider.chance_of_abandon), 0.01)
+                new_price = st.number_input("Price", value=float(rider.price), step=0.1, key="edit_price")
+                new_abandon = st.slider("Abandon chance", 0.0, 1.0, float(rider.chance_of_abandon), 0.01, key="edit_abandon")
             
             with col2:
                 st.write("**Current Abilities:**")
@@ -404,13 +429,13 @@ def show_rider_management():
                 
                 # Ability sliders
                 st.write("**New Abilities:**")
-                new_sprint = st.slider("Sprint", 0, 100, rider.parameters.sprint_ability)
-                new_itt = st.slider("ITT", 0, 100, rider.parameters.itt_ability)
-                new_mountain = st.slider("Mountain", 0, 100, rider.parameters.mountain_ability)
-                new_hills = st.slider("Hills", 0, 100, rider.parameters.hills_ability)
-                new_punch = st.slider("Punch", 0, 100, rider.parameters.punch_ability)
+                new_sprint = st.slider("Sprint", 0, 100, rider.parameters.sprint_ability, key="edit_sprint")
+                new_itt = st.slider("ITT", 0, 100, rider.parameters.itt_ability, key="edit_itt")
+                new_mountain = st.slider("Mountain", 0, 100, rider.parameters.mountain_ability, key="edit_mountain")
+                new_hills = st.slider("Hills", 0, 100, rider.parameters.hills_ability, key="edit_hills")
+                new_punch = st.slider("Punch", 0, 100, rider.parameters.punch_ability, key="edit_punch")
             
-            if st.button("💾 Save Changes"):
+            if st.button("💾 Save Changes", key="save_rider_changes"):
                 # Update rider parameters
                 rider.price = new_price
                 rider.chance_of_abandon = new_abandon
@@ -428,21 +453,21 @@ def show_rider_management():
         col1, col2 = st.columns(2)
         
         with col1:
-            new_name = st.text_input("Rider name")
-            new_team = st.text_input("Team")
-            new_age = st.number_input("Age", min_value=18, max_value=50, value=25)
-            new_price = st.number_input("Price", min_value=0.0, value=1.0, step=0.1)
-            new_abandon = st.slider("Abandon chance", 0.0, 1.0, 0.0, 0.01)
+            new_name = st.text_input("Rider name", key="add_name")
+            new_team = st.text_input("Team", key="add_team")
+            new_age = st.number_input("Age", min_value=18, max_value=50, value=25, key="add_age")
+            new_price = st.number_input("Price", min_value=0.0, value=1.0, step=0.1, key="add_price")
+            new_abandon = st.slider("Abandon chance", 0.0, 1.0, 0.0, 0.01, key="add_abandon")
         
         with col2:
             st.write("**Abilities:**")
-            new_sprint = st.slider("Sprint ability", 0, 100, 50)
-            new_itt = st.slider("ITT ability", 0, 100, 50)
-            new_mountain = st.slider("Mountain ability", 0, 100, 50)
-            new_hills = st.slider("Hills ability", 0, 100, 50)
-            new_punch = st.slider("Punch ability", 0, 100, 50)
+            new_sprint = st.slider("Sprint ability", 0, 100, 50, key="add_sprint")
+            new_itt = st.slider("ITT ability", 0, 100, 50, key="add_itt")
+            new_mountain = st.slider("Mountain ability", 0, 100, 50, key="add_mountain")
+            new_hills = st.slider("Hills ability", 0, 100, 50, key="add_hills")
+            new_punch = st.slider("Punch ability", 0, 100, 50, key="add_punch")
         
-        if st.button("➕ Add Rider"):
+        if st.button("➕ Add Rider", key="add_rider_button"):
             if new_name and new_team:
                 # Create new rider parameters
                 new_parameters = RiderParameters(
@@ -505,25 +530,25 @@ def show_simulation_results(simulator):
     
     with col1:
         st.write("**🏆 General Classification**")
-        gc_results = simulator.get_final_gc()
+        gc_results = [(rider, time) for rider, time in simulator.get_final_gc() if rider not in simulator.abandoned_riders]
         for i, (rider, time) in enumerate(gc_results[:5]):
             st.write(f"{i+1}. {rider} ({time/3600:.2f}h)")
     
     with col2:
         st.write("**🏁 Sprint Classification**")
-        sprint_results = simulator.get_final_sprint()
+        sprint_results = [(rider, points) for rider, points in simulator.get_final_sprint() if rider not in simulator.abandoned_riders]
         for i, (rider, points) in enumerate(sprint_results[:5]):
             st.write(f"{i+1}. {rider} ({points} pts)")
     
     with col3:
         st.write("**⛰️ Mountain Classification**")
-        mountain_results = simulator.get_final_mountain()
+        mountain_results = [(rider, points) for rider, points in simulator.get_final_mountain() if rider not in simulator.abandoned_riders]
         for i, (rider, points) in enumerate(mountain_results[:5]):
             st.write(f"{i+1}. {rider} ({points} pts)")
     
     with col4:
         st.write("**👶 Youth Classification**")
-        youth_results = simulator.get_final_youth()
+        youth_results = [(rider, time) for rider, time in simulator.get_final_youth() if rider not in simulator.abandoned_riders]
         for i, (rider, time) in enumerate(youth_results[:5]):
             st.write(f"{i+1}. {rider} ({time/3600:.2f}h)")
     
@@ -595,7 +620,7 @@ def show_optimization_results(optimization_data):
         st.plotly_chart(fig, use_container_width=True)
 
 def run_multi_simulation(num_simulations, progress_callback=None):
-    """Run multiple simulations with progress tracking"""
+    """Run multiple simulations with progress tracking using the session state rider database"""
     results = []
     
     for i in range(num_simulations):
@@ -603,10 +628,65 @@ def run_multi_simulation(num_simulations, progress_callback=None):
             progress_callback.progress((i + 1) / num_simulations)
         
         simulator = TourSimulator()
+        inject_rider_database(simulator, st.session_state.rider_db)
+        
         simulator.simulate_tour()
         results.append(simulator)
     
     return results
+
+def run_optimizer_simulation(optimizer, num_simulations, rider_db):
+    """
+    Custom run_simulation method that uses the modified rider database
+    """
+    print(f"Running {num_simulations} simulations to calculate expected points...")
+    
+    # Store points from all simulations
+    all_points = []
+    
+    for i in range(num_simulations):
+        if i % 10 == 0:
+            print(f"Simulation {i+1}/{num_simulations}")
+        
+        # Run simulation
+        optimizer.simulator.simulate_tour()
+        
+        # Get final points for each rider
+        for rider_name, points in optimizer.simulator.scorito_points.items():
+            all_points.append({
+                'rider_name': rider_name,
+                'points': points,
+                'simulation': i
+            })
+        
+        # Reset simulator for next run but keep the modified rider database
+        optimizer.simulator = TourSimulator()
+        inject_rider_database(optimizer.simulator, rider_db)
+    
+    # Calculate expected points for each rider
+    points_df = pd.DataFrame(all_points)
+    expected_points = points_df.groupby('rider_name')['points'].agg(['mean', 'std']).reset_index()
+    expected_points.columns = ['rider_name', 'expected_points', 'points_std']
+    
+    # Add rider information
+    rider_info = []
+    for rider in rider_db.get_all_riders():
+        rider_info.append({
+            'rider_name': rider.name,
+            'price': rider.price,
+            'team': rider.team,
+            'age': rider.age,
+            'chance_of_abandon': rider.chance_of_abandon
+        })
+    
+    rider_info_df = pd.DataFrame(rider_info)
+    
+    # Merge with expected points
+    final_df = rider_info_df.merge(expected_points, on='rider_name', how='left')
+    final_df['expected_points'] = final_df['expected_points'].fillna(0)
+    final_df['points_std'] = final_df['points_std'].fillna(0)
+    
+    return final_df
 
 if __name__ == "__main__":
     main() 

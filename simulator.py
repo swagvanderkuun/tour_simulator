@@ -76,6 +76,10 @@ class TourSimulator:
         self.youth_rider_names = set(r.name for r in self.rider_db.get_all_riders() if r.age < YOUTH_AGE_LIMIT)
         # Track abandoned riders
         self.abandoned_riders = set()
+        # Immediately abandon riders with 100% abandon chance
+        for rider in self.rider_db.get_all_riders():
+            if getattr(rider, 'chance_of_abandon', 0.0) >= 1.0:
+                self.abandoned_riders.add(rider.name)
         # For DataFrame collection
         self.stage_results_records = []
         self.gc_records = []
@@ -517,17 +521,21 @@ def main():
     simulator.write_results_to_excel(f"tour_simulation_results_{timestamp}.xlsx")
     
     print("\nFINAL GENERAL CLASSIFICATION (TOP 10):")
-    for name, t in simulator.get_final_gc()[:10]:
-        print(f"{name}: {t/3600:.2f}h")
+    for name, t in simulator.get_final_gc():
+        if name not in simulator.abandoned_riders:
+            print(f"{name}: {t/3600:.2f}h")
     print("\nFINAL SPRINT CLASSIFICATION (TOP 10):")
-    for name, pts in simulator.get_final_sprint()[:10]:
-        print(f"{name}: {pts} pts")
+    for name, pts in simulator.get_final_sprint():
+        if name not in simulator.abandoned_riders:
+            print(f"{name}: {pts} pts")
     print("\nFINAL MOUNTAIN CLASSIFICATION (TOP 10):")
-    for name, pts in simulator.get_final_mountain()[:10]:
-        print(f"{name}: {pts} pts")
+    for name, pts in simulator.get_final_mountain():
+        if name not in simulator.abandoned_riders:
+            print(f"{name}: {pts} pts")
     print("\nFINAL YOUTH CLASSIFICATION (TOP 10):")
-    for name, t in simulator.get_final_youth()[:10]:
-        print(f"{name}: {t/3600:.2f}h")
+    for name, t in simulator.get_final_youth():
+        if name not in simulator.abandoned_riders:
+            print(f"{name}: {t/3600:.2f}h")
 
 if __name__ == "__main__":
     main() 

@@ -425,7 +425,6 @@ def show_rider_management():
             rider_data.append({
                 'Name': rider.name,
                 'Team': rider.team,
-                'Age': rider.age,
                 'Price': rider.price,
                 'Sprint': rider.parameters.sprint_ability,
                 'ITT': rider.parameters.itt_ability,
@@ -442,20 +441,25 @@ def show_rider_management():
         with col1:
             team_filter = st.selectbox("Filter by team", ["All"] + sorted(df['Team'].unique()), key="view_team_filter")
         with col2:
-            age_filter = st.slider("Age range", int(df['Age'].min()), int(df['Age'].max()), (20, 35), key="view_age_filter")
-        with col3:
             price_filter = st.slider("Price range", float(df['Price'].min()), float(df['Price'].max()), (0.0, 10.0), key="view_price_filter")
+        with col3:
+            ability_filter = st.selectbox("Filter by ability", ["All", "Sprint", "ITT", "Mountain", "Hills", "Punch"], key="view_ability_filter")
         
         # Apply filters
         filtered_df = df.copy()
         if team_filter != "All":
             filtered_df = filtered_df[filtered_df['Team'] == team_filter]
         filtered_df = filtered_df[
-            (filtered_df['Age'] >= age_filter[0]) & 
-            (filtered_df['Age'] <= age_filter[1]) &
             (filtered_df['Price'] >= price_filter[0]) & 
             (filtered_df['Price'] <= price_filter[1])
         ]
+        
+        # Apply ability filter if selected
+        if ability_filter != "All":
+            ability_col = ability_filter
+            if ability_filter == "ITT":
+                ability_col = "ITT"
+            filtered_df = filtered_df[filtered_df[ability_col] > 0]  # Show riders with some ability in that category
         
         st.dataframe(filtered_df, use_container_width=True)
         
@@ -484,7 +488,6 @@ def show_rider_management():
             with col1:
                 st.write(f"**Name:** {rider.name}")
                 st.write(f"**Team:** {rider.team}")
-                st.write(f"**Age:** {rider.age}")
                 
                 new_price = st.number_input("Price", value=float(rider.price), step=0.1, key="edit_price")
                 new_abandon = st.slider("Abandon chance", 0.0, 1.0, float(rider.chance_of_abandon), 0.01, key="edit_abandon")

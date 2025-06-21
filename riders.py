@@ -47,15 +47,15 @@ class RiderDatabase:
         # Initialize all riders from the 2025 Tour de France startlist
         rider_data = [
             # EF Education - EasyPost
-            {"name": "Richard Carapaz", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "D", "itt": "D", "mountain": "B", "hills": "D", "punch": "C"}, "price": 1.5, "chance_of_abandon": 0.0},
+            {"name": "Richard Carapaz", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "B", "hills": "D", "punch": "C"}, "price": 1.5, "chance_of_abandon": 0.},
             {"name": "Harry Sweeny", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
             {"name": "Neilson Powless", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "hills": "B", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
             {"name": "Ben Healy", "team": "EF Education - EasyPost", "age": 22, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "B", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
             
             # UAE Team Emirates - XRG
-            {"name": "Tadej Pogačar", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "D", "itt": "A", "mountain": "S", "hills": "A", "punch": "A"}, "price": 7.5, "chance_of_abandon": 0.0},
+            {"name": "Tadej Pogačar", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "A", "mountain": "S", "hills": "A", "punch": "A"}, "price": 7.5, "chance_of_abandon": 0.0},
             {"name": "João Almeida", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "B", "mountain": "A", "hills": "E", "punch": "C"}, "price": 4.5, "chance_of_abandon": 0.0},
-            {"name": "Adam Yates", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "B", "hills": "E", "punch": "E"}, "price": 2.5, "chance_of_abandon": 0.0},
+            {"name": "Adam Yates", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "C", "hills": "E", "punch": "E"}, "price": 2.5, "chance_of_abandon": 0.0},
             {"name": "Pavel Sivakov", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
             {"name": "Marc Soler", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "D", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
             {"name": "Tim Wellens", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "D", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
@@ -184,7 +184,7 @@ class RiderDatabase:
             {"name": "Joseph Blackmore", "team": "Israel - Premier Tech", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
             {"name": "Michael Woods", "team": "Israel - Premier Tech", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "B", "punch": "B"}, "price": 0.5, "chance_of_abandon": 0.0},
             {"name": "Alexey Lutsenko", "team": "Israel - Premier Tech", "age": 26, "tiers": {"sprint": "E", "itt": "D", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Jake Stewart", "team": "Israel - Premier Tech", "age": 25, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Jake Stewart", "team": "Israel - Premier Tech", "age": 25, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
             
             # Team TotalEnergies
             {"name": "Mathieu Burgaudeau", "team": "Team TotalEnergies", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},

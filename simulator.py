@@ -53,8 +53,11 @@ class Stage:
         self.stage_number = stage_number
         self.results: List[StageResult] = []
 
-    def simulate(self, rider_db: RiderDatabase):
+    def simulate(self, rider_db: RiderDatabase, abandoned_riders: set):
         for rider in rider_db.get_all_riders():
+            # Skip riders who have already abandoned
+            if rider.name in abandoned_riders:
+                continue
             position = rider_db.generate_stage_result(rider, self.stage_number)
             self.results.append(StageResult(rider, position))
         self.results.sort(key=lambda x: x.position)
@@ -71,6 +74,8 @@ class TourSimulator:
         self.rider_db = RiderDatabase()
         # Get youth riders once for the whole tour - properly filter by age
         self.youth_rider_names = set(r.name for r in self.rider_db.get_all_riders() if r.age < YOUTH_AGE_LIMIT)
+        # Track abandoned riders
+        self.abandoned_riders = set()
         # For DataFrame collection
         self.stage_results_records = []
         self.gc_records = []
@@ -105,8 +110,28 @@ class TourSimulator:
         for stage_idx, stage in enumerate(self.stages):
             print(f"\nSimulating Stage {stage_idx+1}")
             print("-------------------")
-            stage.simulate(self.rider_db)  # Pass rider_db to stage simulation
+            stage.simulate(self.rider_db, self.abandoned_riders)  # Pass rider_db and abandoned_riders to stage simulation
             stage_type = get_stage_type(stage_idx+1).value
+
+            # --- Handle Crashes/Abandonments (except for stage 22) ---
+            if stage_idx < 21:  # Stages 1-20 (0-indexed, so stages 1-21)
+                for rider in self.rider_db.get_all_riders():
+                    if rider.name not in self.abandoned_riders:
+                        # Calculate crash probability for this stage
+                        # Formula: (1 - chance_of_abandon ^ (1/21))
+                        # Handle the case where chance_of_abandon is 0.0 (no chance of abandoning)
+                        if rider.chance_of_abandon == 0.0:
+                            crash_probability = 0.0
+                        else:
+                            crash_probability = 1 - ((1 - rider.chance_of_abandon) ** (1/21))
+                        if np.random.random() < crash_probability:
+                            self.abandoned_riders.add(rider.name)
+                            print(f"💥 {rider.name} has crashed out of the race!")
+            
+            # Print current abandoned riders count
+            if self.abandoned_riders:
+                print(f"Total riders abandoned: {len(self.abandoned_riders)}")
+                print(f"Riders remaining: {len(self.rider_db.get_all_riders()) - len(self.abandoned_riders)}")
 
             # --- General Classification (GC) ---
             base_time = 0 
@@ -150,8 +175,29 @@ class TourSimulator:
                     "team": result.rider.team,
                     "age": result.rider.age,
                     "position": place,
-                    "sim_position": result.position
+                    "sim_position": result.position,
+                    "abandoned": False
                 })
+            
+            # Add abandoned riders to stage results with DNF
+            for rider_name in self.abandoned_riders:
+                # Find the rider object
+                rider_obj = None
+                for rider in self.rider_db.get_all_riders():
+                    if rider.name == rider_name:
+                        rider_obj = rider
+                        break
+                if rider_obj:
+                    self.stage_results_records.append({
+                        "stage": stage_idx+1,
+                        "rider": rider_name,
+                        "team": rider_obj.team,
+                        "age": rider_obj.age,
+                        "position": None,  # DNF
+                        "sim_position": None,  # DNF
+                        "abandoned": True
+                    })
+            
             # GC standings
             for name, t in self.gc_times.items():
                 self.gc_records.append({
@@ -182,34 +228,34 @@ class TourSimulator:
                 })
 
             # --- Scorito Points Calculation ---
-            # Stage result points (top 20)
+            # Stage result points (top 20) - only for non-abandoned riders
             for idx, result in enumerate(stage.results[:20]):
                 pts = SCORITO_STAGE_POINTS[idx]
                 self.scorito_points[result.rider.name] += pts
-            # GC classification points (top 5 after this stage)
-            gc_sorted = sorted(self.gc_times.items(), key=lambda x: x[1])[:5]
+            # GC classification points (top 5 after this stage) - only for non-abandoned riders
+            gc_sorted = sorted([(name, time) for name, time in self.gc_times.items() if name not in self.abandoned_riders], key=lambda x: x[1])[:5]
             for idx, (name, _) in enumerate(gc_sorted):
                 pts = SCORITO_STAGE_GC_POINTS[idx]
                 self.scorito_points[name] += pts
-            # Sprint classification points (top 5 after this stage)
-            sprint_sorted = sorted(self.sprint_points.items(), key=lambda x: x[1], reverse=True)[:5]
+            # Sprint classification points (top 5 after this stage) - only for non-abandoned riders
+            sprint_sorted = sorted([(name, pts) for name, pts in self.sprint_points.items() if name not in self.abandoned_riders], key=lambda x: x[1], reverse=True)[:5]
             for idx, (name, _) in enumerate(sprint_sorted):
                 pts = SCORITO_STAGE_SPRINT_POINTS[idx]
                 self.scorito_points[name] += pts
-            # Mountain classification points (top 5 after this stage)
-            mountain_sorted = sorted(self.mountain_points.items(), key=lambda x: x[1], reverse=True)[:5]
+            # Mountain classification points (top 5 after this stage) - only for non-abandoned riders
+            mountain_sorted = sorted([(name, pts) for name, pts in self.mountain_points.items() if name not in self.abandoned_riders], key=lambda x: x[1], reverse=True)[:5]
             for idx, (name, _) in enumerate(mountain_sorted):
                 pts = SCORITO_STAGE_MOUNTAIN_POINTS[idx]
                 self.scorito_points[name] += pts
-            # Youth classification points (top 5 after this stage)
-            youth_sorted = sorted(self.youth_times.items(), key=lambda x: x[1])[:5]
+            # Youth classification points (top 5 after this stage) - only for non-abandoned riders
+            youth_sorted = sorted([(name, time) for name, time in self.youth_times.items() if name not in self.abandoned_riders], key=lambda x: x[1])[:5]
             for idx, (name, _) in enumerate(youth_sorted):
                 pts = SCORITO_STAGE_YOUTH_POINTS[idx]
                 self.scorito_points[name] += pts
 
             # --- Teammate Bonus Points ---
-            # Find winners
-            stage_winner = stage.results[0].rider
+            # Find winners (only among non-abandoned riders)
+            stage_winner = stage.results[0].rider if stage.results else None
             gc_leader = gc_sorted[0][0] if gc_sorted else None
             sprint_leader = sprint_sorted[0][0] if sprint_sorted else None
             mountain_leader = mountain_sorted[0][0] if mountain_sorted else None
@@ -217,8 +263,11 @@ class TourSimulator:
             # Map rider names to teams
             name_to_team = {r.name: r.team for r in self.rider_db.get_all_riders()}
             for rider in self.rider_db.get_all_riders():
+                # Skip abandoned riders for teammate bonuses
+                if rider.name in self.abandoned_riders:
+                    continue
                 # Stage winner teammate bonus
-                if rider.name != stage_winner.name and name_to_team[rider.name] == stage_winner.team:
+                if stage_winner and rider.name != stage_winner.name and name_to_team[rider.name] == stage_winner.team:
                     self.scorito_points[rider.name] += 10
                 # GC leader teammate bonus
                 if gc_leader and rider.name != gc_leader and name_to_team[rider.name] == name_to_team[gc_leader]:
@@ -233,30 +282,35 @@ class TourSimulator:
                 if youth_leader and rider.name != youth_leader and name_to_team[rider.name] == name_to_team[youth_leader]:
                     self.scorito_points[rider.name] += 4
 
-            # Record scorito points after this stage for export
+            # Record scorito points after this stage for export (only non-abandoned riders)
             for rider in self.rider_db.get_all_riders():
-                self.scorito_points_records.append({
-                    "stage": stage_idx+1,
-                    "rider": rider.name,
-                    "scorito_points": self.scorito_points[rider.name]
-                })
+                if rider.name not in self.abandoned_riders:
+                    self.scorito_points_records.append({
+                        "stage": stage_idx+1,
+                        "rider": rider.name,
+                        "scorito_points": self.scorito_points[rider.name]
+                    })
 
             # --- Print Standings after Stage ---
             print("\nGC Standings (Top 5):")
-            for name, t in sorted(self.gc_times.items(), key=lambda x: x[1])[:5]:
+            gc_standings = [(name, t) for name, t in sorted(self.gc_times.items(), key=lambda x: x[1]) if name not in self.abandoned_riders]
+            for name, t in gc_standings[:5]:
                 print(f"{name}: {t/3600:.2f}h")
             print("\nSprint Standings (Top 5):")
-            for name, pts in sorted(self.sprint_points.items(), key=lambda x: x[1], reverse=True)[:5]:
+            sprint_standings = [(name, pts) for name, pts in sorted(self.sprint_points.items(), key=lambda x: x[1], reverse=True) if name not in self.abandoned_riders]
+            for name, pts in sprint_standings[:5]:
                 print(f"{name}: {pts} pts")
             print("\nMountain Standings (Top 5):")
-            for name, pts in sorted(self.mountain_points.items(), key=lambda x: x[1], reverse=True)[:5]:
+            mountain_standings = [(name, pts) for name, pts in sorted(self.mountain_points.items(), key=lambda x: x[1], reverse=True) if name not in self.abandoned_riders]
+            for name, pts in mountain_standings[:5]:
                 print(f"{name}: {pts} pts")
             print("\nYouth GC Standings (Top 5):")
-            for name, t in sorted(self.youth_times.items(), key=lambda x: x[1])[:5]:
+            youth_standings = [(name, t) for name, t in sorted(self.youth_times.items(), key=lambda x: x[1]) if name not in self.abandoned_riders]
+            for name, t in youth_standings[:5]:
                 print(f"{name}: {t/3600:.2f}h")
 
-        # After all stages, award final GC points
-        final_gc = self.get_final_gc()
+        # After all stages, award final GC points (only for non-abandoned riders)
+        final_gc = [(name, time) for name, time in self.get_final_gc() if name not in self.abandoned_riders]
         for idx, (name, _) in enumerate(final_gc[:len(SCORITO_FINAL_GC_POINTS)]):
             pts = SCORITO_FINAL_GC_POINTS[idx]
             self.scorito_points[name] += pts
@@ -267,8 +321,8 @@ class TourSimulator:
                 "scorito_points": self.scorito_points[name]
             })
 
-        # Award final Sprint points
-        final_sprint = self.get_final_sprint()
+        # Award final Sprint points (only for non-abandoned riders)
+        final_sprint = [(name, pts) for name, pts in self.get_final_sprint() if name not in self.abandoned_riders]
         for idx, (name, _) in enumerate(final_sprint[:len(SCORITO_FINAL_SPRINT_POINTS)]):
             pts = SCORITO_FINAL_SPRINT_POINTS[idx]
             self.scorito_points[name] += pts
@@ -279,8 +333,8 @@ class TourSimulator:
                 "scorito_points": self.scorito_points[name]
             })
 
-        # Award final Mountain points
-        final_mountain = self.get_final_mountain()
+        # Award final Mountain points (only for non-abandoned riders)
+        final_mountain = [(name, pts) for name, pts in self.get_final_mountain() if name not in self.abandoned_riders]
         for idx, (name, _) in enumerate(final_mountain[:len(SCORITO_FINAL_MOUNTAIN_POINTS)]):
             pts = SCORITO_FINAL_MOUNTAIN_POINTS[idx]
             self.scorito_points[name] += pts
@@ -291,8 +345,8 @@ class TourSimulator:
                 "scorito_points": self.scorito_points[name]
             })
 
-        # Award final Youth points
-        final_youth = self.get_final_youth()
+        # Award final Youth points (only for non-abandoned riders)
+        final_youth = [(name, time) for name, time in self.get_final_youth() if name not in self.abandoned_riders]
         for idx, (name, _) in enumerate(final_youth[:len(SCORITO_FINAL_YOUTH_POINTS)]):
             pts = SCORITO_FINAL_YOUTH_POINTS[idx]
             self.scorito_points[name] += pts
@@ -303,15 +357,18 @@ class TourSimulator:
                 "scorito_points": self.scorito_points[name]
             })
 
-        # Award teammate bonus points for final classification winners
+        # Award teammate bonus points for final classification winners (only non-abandoned riders)
         # Map rider names to teams
         name_to_team = {r.name: r.team for r in self.rider_db.get_all_riders()}
-        # Get winners
+        # Get winners (only among non-abandoned riders)
         gc_winner = final_gc[0][0] if final_gc else None
         sprint_winner = final_sprint[0][0] if final_sprint else None
         mountain_winner = final_mountain[0][0] if final_mountain else None
         youth_winner = final_youth[0][0] if final_youth else None
         for rider in self.rider_db.get_all_riders():
+            # Skip abandoned riders for final teammate bonuses
+            if rider.name in self.abandoned_riders:
+                continue
             # GC winner teammate bonus
             if gc_winner and rider.name != gc_winner and name_to_team[rider.name] == name_to_team[gc_winner]:
                 self.scorito_points[rider.name] += 24
@@ -379,37 +436,46 @@ class TourSimulator:
                 
                 # Get stage results for current stage
                 stage_results = df_stage[df_stage['stage'] == stage].copy()
-                stage_results = stage_results[['rider', 'team', 'age', 'position']]
-                stage_results.columns = ['Rider', 'Team', 'Age', 'Position']
+                stage_results = stage_results[['rider', 'team', 'age', 'position', 'abandoned']]
+                stage_results.columns = ['Rider', 'Team', 'Age', 'Position', 'Abandoned']
+                # Replace None positions with "DNF" for abandoned riders
+                stage_results['Position'] = stage_results['Position'].fillna('DNF')
                 
-                # Get GC standings after this stage
+                # Get GC standings after this stage (only non-abandoned riders)
                 gc_standings = df_gc[df_gc['stage'] == stage].copy()
+                # Filter out abandoned riders
+                abandoned_in_stage = df_stage[(df_stage['stage'] == stage) & (df_stage['abandoned'] == True)]['rider'].tolist()
+                gc_standings = gc_standings[~gc_standings['rider'].isin(abandoned_in_stage)]
                 gc_standings = gc_standings.sort_values('gc_time')
                 gc_standings['gc_time'] = gc_standings['gc_time'] / 3600  # Convert to hours
                 gc_standings = gc_standings[['rider', 'gc_time']]
                 gc_standings.columns = ['Rider', 'GC Time (h)']
                 
-                # Get Sprint standings after this stage
+                # Get Sprint standings after this stage (only non-abandoned riders)
                 sprint_standings = df_sprint[df_sprint['stage'] == stage].copy()
+                sprint_standings = sprint_standings[~sprint_standings['rider'].isin(abandoned_in_stage)]
                 sprint_standings = sprint_standings.sort_values('sprint_points', ascending=False)
                 sprint_standings = sprint_standings[['rider', 'sprint_points']]
                 sprint_standings.columns = ['Rider', 'Sprint Points']
                 
-                # Get Mountain standings after this stage
+                # Get Mountain standings after this stage (only non-abandoned riders)
                 mountain_standings = df_mountain[df_mountain['stage'] == stage].copy()
+                mountain_standings = mountain_standings[~mountain_standings['rider'].isin(abandoned_in_stage)]
                 mountain_standings = mountain_standings.sort_values('mountain_points', ascending=False)
                 mountain_standings = mountain_standings[['rider', 'mountain_points']]
                 mountain_standings.columns = ['Rider', 'Mountain Points']
                 
-                # Get Youth standings after this stage
+                # Get Youth standings after this stage (only non-abandoned riders)
                 youth_standings = df_youth[df_youth['stage'] == stage].copy()
+                youth_standings = youth_standings[~youth_standings['rider'].isin(abandoned_in_stage)]
                 youth_standings = youth_standings.sort_values('youth_time')
                 youth_standings['youth_time'] = youth_standings['youth_time'] / 3600  # Convert to hours
                 youth_standings = youth_standings[['rider', 'youth_time']]
                 youth_standings.columns = ['Rider', 'Youth Time (h)']
                 
-                # Get scorito points after this stage
+                # Get scorito points after this stage (only non-abandoned riders)
                 scorito_stage = df_scorito[df_scorito['stage'] == stage].copy()
+                scorito_stage = scorito_stage[~scorito_stage['rider'].isin(abandoned_in_stage)]
                 scorito_stage = scorito_stage[['rider', 'scorito_points']]
                 scorito_stage = scorito_stage.sort_values('scorito_points', ascending=False)
                 scorito_stage.columns = ['Rider', 'Scorito Points']

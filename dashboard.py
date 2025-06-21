@@ -35,24 +35,29 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .success-message {
-        background-color: #d4edda;
-        color: #155724;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #c3e6cb;
+    .metric-card h3 {
+        color: white;
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+        font-weight: bold;
     }
-    .warning-message {
-        background-color: #fff3cd;
-        color: #856404;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #ffeaa7;
+    .metric-card p {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+        line-height: 1.4;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
     }
     .stButton > button {
         width: 100%;
@@ -65,6 +70,19 @@ st.markdown("""
     }
     .stButton > button:hover {
         background-color: #0d5aa7;
+    }
+    .stMetric {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 1rem;
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .stMetric > div {
+        color: white !important;
+    }
+    .stMetric label {
+        color: rgba(255, 255, 255, 0.9) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -101,17 +119,69 @@ def inject_rider_database(simulator, rider_db):
         })
 
 def main():
-    # Header
-    st.markdown('<h1 class="main-header">🚴‍♂️ Tour de France Simulator Dashboard</h1>', unsafe_allow_html=True)
+    # Custom CSS for better styling
+    st.markdown("""
+    <style>
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
     
-    # Sidebar navigation
-    st.sidebar.title("Navigation")
+    .metric-card h3 {
+        color: white;
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    
+    .metric-card p {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+        line-height: 1.4;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    /* Additional styling for better visibility */
+    .stMetric {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 1rem;
+        border-radius: 8px;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stMetric > div {
+        color: white !important;
+    }
+    
+    .stMetric label {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Header
+    st.title("🚴 Tour de France Cycling Simulator")
+    st.markdown("---")
+    
+    # Navigation
     page = st.sidebar.selectbox(
-        "Choose a page:",
-        ["🏠 Overview", "🎯 Single Simulation", "📊 Multi Simulation", "⚡ Team Optimization", "👥 Rider Management", "📈 Results Analysis"]
+        "Choose a page",
+        ["📊 Overview", "🎯 Single Simulation", "📊 Multi Simulation", "⚡ Team Optimization", "👥 Rider Management", "📈 Results Analysis"]
     )
     
-    if page == "🏠 Overview":
+    # Page routing
+    if page == "📊 Overview":
         show_overview()
     elif page == "🎯 Single Simulation":
         show_single_simulation()

@@ -1776,40 +1776,52 @@ def show_stage_types_management():
     # Display current stage types
     st.markdown("### Current Stage Types")
     
-    # Create a grid layout for stages
-    cols = st.columns(5)
+    # Create a list layout for stages
     for i in range(21):  # 21 stages
-        col_idx = i % 5
         stage_num = i + 1
         
-        with cols[col_idx]:
-            st.markdown(f"**Stage {stage_num}**")
+        # Create a container for each stage
+        with st.container():
+            col1, col2, col3 = st.columns([1, 3, 1])
             
-            # Get current stage type
-            current_type = st.session_state.stage_profiles_edit.get(stage_num, StageType.SPRINT)
+            with col1:
+                st.markdown(f"**Stage {stage_num}**")
             
-            # Create selectbox for stage type
-            # Handle the case where current_type might not be in the options
-            try:
-                current_index = list(stage_type_options.keys()).index(current_type)
-            except ValueError:
-                # If current_type is not in options, default to first option
-                current_index = 0
-                current_type = list(stage_type_options.keys())[0]
-                st.session_state.stage_profiles_edit[stage_num] = current_type
+            with col2:
+                # Get current stage type
+                current_type = st.session_state.stage_profiles_edit.get(stage_num, StageType.SPRINT)
+                
+                # Create selectbox for stage type
+                # Handle the case where current_type might not be in the options
+                try:
+                    current_index = list(stage_type_options.keys()).index(current_type)
+                except ValueError:
+                    # If current_type is not in options, default to first option
+                    current_index = 0
+                    current_type = list(stage_type_options.keys())[0]
+                    st.session_state.stage_profiles_edit[stage_num] = current_type
+                
+                new_type = st.selectbox(
+                    f"Select stage type for Stage {stage_num}",
+                    options=list(stage_type_options.keys()),
+                    format_func=lambda x: stage_type_options[x],
+                    index=current_index,
+                    key=f"stage_type_{stage_num}",
+                    label_visibility="collapsed"
+                )
+                
+                # Update if changed
+                if new_type != current_type:
+                    st.session_state.stage_profiles_edit[stage_num] = new_type
+                    st.success(f"✅ Updated to {stage_type_options[new_type]}")
             
-            new_type = st.selectbox(
-                f"Stage {stage_num}",
-                options=list(stage_type_options.keys()),
-                format_func=lambda x: stage_type_options[x],
-                index=current_index,
-                key=f"stage_type_{stage_num}"
-            )
+            with col3:
+                # Show current selection
+                st.markdown(f"*{stage_type_options[current_type]}*")
             
-            # Update if changed
-            if new_type != current_type:
-                st.session_state.stage_profiles_edit[stage_num] = new_type
-                st.success(f"✅ Stage {stage_num} updated to {stage_type_options[new_type]}")
+            # Add a small divider between stages
+            if stage_num < 21:
+                st.divider()
     
     # Stage type summary
     st.markdown("---")

@@ -164,6 +164,13 @@ class TeamOptimizer:
                 if team_riders:
                     prob += lpSum(rider_vars[rider] for rider in team_riders) >= min_riders
         
+        # Constraint 4: Maximum 4 riders per team (Scorito rule)
+        teams = rider_data['team'].unique()
+        for team in teams:
+            team_riders = rider_data[rider_data['team'] == team]['rider_name'].tolist()
+            if team_riders:
+                prob += lpSum(rider_vars[rider] for rider in team_riders) <= 4
+        
         # Solve the problem
         prob.solve()
         
@@ -276,6 +283,13 @@ class TeamOptimizer:
                 prob += lpSum(stage_vars[(rider, stage)] for rider in riders) == self.final_stage_riders
             else:  # Regular stages: riders_per_stage
                 prob += lpSum(stage_vars[(rider, stage)] for rider in riders) == self.riders_per_stage
+        
+        # Constraint 5: Maximum 4 riders per team (Scorito rule)
+        teams = rider_data['team'].unique()
+        for team in teams:
+            team_riders = rider_data[rider_data['team'] == team]['rider_name'].tolist()
+            if team_riders:
+                prob += lpSum(rider_vars[rider] for rider in team_riders) <= 4
         
         # Solve
         prob.solve()

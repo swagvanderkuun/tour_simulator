@@ -46,162 +46,1701 @@ class RiderDatabase:
     def _initialize_riders(self):
         # Initialize all riders from the 2025 Tour de France startlist
         rider_data = [
-            # EF Education - EasyPost
-            {"name": "Richard Carapaz", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "B", "hills": "D", "punch": "C"}, "price": 1.5, "chance_of_abandon": 0.},
-            {"name": "Harry Sweeny", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Neilson Powless", "team": "EF Education - EasyPost", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "hills": "B", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Ben Healy", "team": "EF Education - EasyPost", "age": 22, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "B", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            
-            # UAE Team Emirates - XRG
-            {"name": "Tadej Pogačar", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "A", "mountain": "S", "hills": "A", "punch": "A"}, "price": 7.5, "chance_of_abandon": 0.0},
-            {"name": "João Almeida", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "B", "mountain": "A", "hills": "E", "punch": "C"}, "price": 4.5, "chance_of_abandon": 0.0},
-            {"name": "Adam Yates", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "C", "hills": "E", "punch": "E"}, "price": 2.5, "chance_of_abandon": 0.0},
-            {"name": "Pavel Sivakov", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
-            {"name": "Marc Soler", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "D", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
-            {"name": "Tim Wellens", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "D", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Jhonatan Narváez", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "C", "punch": "E"}, "price": 2, "chance_of_abandon": 0.0},
-            {"name": "Domen Novak", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Nils Politt", "team": "UAE Team Emirates - XRG", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            
-            # Decathlon AG2R La Mondiale Team
-            {"name": "Felix Gall", "team": "Decathlon AG2R La Mondiale Team", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "B", "hills": "E", "punch": "E"}, "price": 1.500000, "chance_of_abandon": 0.0},
-            
-            # Red Bull - BORA - hansgrohe
-            {"name": "Primož Roglič", "team": "Red Bull - BORA - hansgrohe", "age": 30, "tiers": {"sprint": "E", "itt": "A", "mountain": "A", "hills": "E", "punch": "C"}, "price": 3.500000, "chance_of_abandon": 0.0},
-            {"name": "Daniel Felipe Martínez", "team": "Red Bull - BORA - hansgrohe", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1.000000, "chance_of_abandon": 0.0},
-            {"name": "Aleksandr Vlasov", "team": "Red Bull - BORA - hansgrohe", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 7.50000, "chance_of_abandon": 0.0},
-            {"name": "Jan Tratnik", "team": "Red Bull - BORA - hansgrohe", "age": 30, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "hills": "E", "punch": "E"}, "price": 5.00000, "chance_of_abandon": 0.0},
-            {"name": "Danny van Poppel", "team": "Red Bull - BORA - hansgrohe", "age": 27, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.750000, "chance_of_abandon": 0.0},
-            {"name": "Florian Lipowitz", "team": "Red Bull - BORA - hansgrohe", "age": 23, "tiers": {"sprint": "E", "itt": "B", "mountain": "B", "hills": "B", "punch": "C"}, "price": 3.000000, "chance_of_abandon": 0.0},
-            
-            # Soudal Quick-Step
-            {"name": "Remco Evenepoel", "team": "Soudal Quick-Step", "age": 24, "tiers": {"sprint": "E", "itt": "S", "mountain": "A", "hills": "B", "punch": "B"}, "price": 6.000000, "chance_of_abandon": 0.0},
-            {"name": "Tim Merlier", "team": "Soudal Quick-Step", "age": 31, "tiers": {"sprint": "S", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 3.500000, "chance_of_abandon": 0.0},
-            {"name": "Bert Van Lerberghe", "team": "Soudal Quick-Step", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            {"name": "Pascal Eenkhoorn", "team": "Soudal Quick-Step", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            
-            # Cofidis
-            {"name": "Alex Aranburu", "team": "Cofidis", "age": 27, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "C", "punch": "E"}, "price": 0.750000, "chance_of_abandon": 0.0},
-            {"name": "Ion Izagirre", "team": "Cofidis", "age": 28, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "hills": "D", "punch": "D"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            {"name": "Benjamin Thomas", "team": "Cofidis", "age": 25, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            {"name": "Emanuel Buchmann", "team": "Cofidis", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            {"name": "Simon Carr", "team": "Cofidis", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            
-            # Alpecin - Deceuninck
-            {"name": "Mathieu van der Poel", "team": "Alpecin - Deceuninck", "age": 25, "tiers": {"sprint": "C", "itt": "C", "mountain": "E", "hills": "A", "punch": "A"}, "price": 2.500000, "chance_of_abandon": 0.0},
-            {"name": "Jasper Philipsen", "team": "Alpecin - Deceuninck", "age": 26, "tiers": {"sprint": "S", "itt": "E", "mountain": "E", "hills": "C", "punch": "C"}, "price": 4.000000, "chance_of_abandon": 0.0},
-            {"name": "Kaden Groves", "team": "Alpecin - Deceuninck", "age": 25, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "D", "punch": "D"}, "price": 1.000000, "chance_of_abandon": 0.0},
-            {"name": "Oscar Riesebeek", "team": "Alpecin - Deceuninck", "age": 27, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.500000, "chance_of_abandon": 0.0},
-            
-            # Arkéa - B&B Hotels
-            {"name": "Kévin Vauquelin", "team": "Arkéa - B&B Hotels", "age": 23, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "C", "punch": "C"}, "price": 0.750000, "chance_of_abandon": 0.0},
-            
-            # Team Visma | Lease a Bike
-            {"name": "Wout van Aert", "team": "Team Visma | Lease a Bike", "age": 29, "tiers": {"sprint": "C", "itt": "A", "mountain": "E", "hills": "A", "punch": "B"}, "price": 3.5, "chance_of_abandon": 0.0},
-            {"name": "Simon Yates", "team": "Team Visma | Lease a Bike", "age": 27, "tiers": {"sprint": "E", "itt": "C", "mountain": "B", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Jonas Vingegaard", "team": "Team Visma | Lease a Bike", "age": 25, "tiers": {"sprint": "E", "itt": "A", "mountain": "S", "hills": "C", "punch": "C"}, "price": 6, "chance_of_abandon": 0.0},
-            {"name": "Matteo Jorgenson", "team": "Team Visma | Lease a Bike", "age": 26, "tiers": {"sprint": "E", "itt": "B", "mountain": "C", "hills": "E", "punch": "E"}, "price": 3, "chance_of_abandon": 0.0},
-            {"name": "Sepp Kuss", "team": "Team Visma | Lease a Bike", "age": 28, "tiers": {"sprint": "E", "itt": "D", "mountain": "B", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Victor Campenaerts", "team": "Team Visma | Lease a Bike", "age": 27, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Tiesj Benoot", "team": "Team Visma | Lease a Bike", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            
-            # INEOS Grenadiers
-            {"name": "Michał Kwiatkowski", "team": "INEOS Grenadiers", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "C", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Carlos Rodríguez", "team": "INEOS Grenadiers", "age": 24, "tiers": {"sprint": "E", "itt": "B", "mountain": "B", "hills": "E", "punch": "E"}, "price": 2.5, "chance_of_abandon": 0.0},
-            {"name": "Filippo Ganna", "team": "INEOS Grenadiers", "age": 25, "tiers": {"sprint": "E", "itt": "S", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Geraint Thomas", "team": "INEOS Grenadiers", "age": 28, "tiers": {"sprint": "E", "itt": "B", "mountain": "C", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Thymen Arensman", "team": "INEOS Grenadiers", "age": 26, "tiers": {"sprint": "E", "itt": "B", "mountain": "C", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Laurens De Plus", "team": "INEOS Grenadiers", "age": 27, "tiers": {"sprint": "E", "itt": "D", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Tobias Foss", "team": "INEOS Grenadiers", "age": 25, "tiers": {"sprint": "E", "itt": "B", "mountain": "D", "hills": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Intermarché - Wanty
-            {"name": "Biniam Girmay", "team": "Intermarché - Wanty", "age": 24, "tiers": {"sprint": "A", "itt": "E", "mountain": "E", "hills": "B", "punch": "C"}, "price": 2.5, "chance_of_abandon": 0.0},
-            {"name": "Hugo Page", "team": "Intermarché - Wanty", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Laurenz Rex", "team": "Intermarché - Wanty", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Georg Zimmermann", "team": "Intermarché - Wanty", "age": 27, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Kobe Goossens", "team": "Intermarché - Wanty", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Louis Barré", "team": "Intermarché - Wanty", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Lidl - Trek
-            {"name": "Jonathan Milan", "team": "Lidl - Trek", "age": 23, "tiers": {"sprint": "A", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 4, "chance_of_abandon": 0.0},
-            {"name": "Mattias Skjelmose", "team": "Lidl - Trek", "age": 24, "tiers": {"sprint": "E", "itt": "D", "mountain": "C", "hills": "B", "punch": "A"}, "price": 2.5, "chance_of_abandon": 0.0},
-            {"name": "Jasper Stuyven", "team": "Lidl - Trek", "age": 25, "tiers": {"sprint": "D", "itt": "E", "mountain": "E", "hills": "D", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Edward Theuns", "team": "Lidl - Trek", "age": 26, "tiers": {"sprint": "D", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Simone Consonni", "team": "Lidl - Trek", "age": 27, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Julien Bernard", "team": "Lidl - Trek", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Tao Geoghegan Hart", "team": "Lidl - Trek", "age": 29, "tiers": {"sprint": "E", "itt": "D", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Thibau Nys", "team": "Lidl - Trek", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "B"}, "price": 1, "chance_of_abandon": 0.0},
-            
-            # Groupama - FDJ
-            {"name": "David Gaudu", "team": "Groupama - FDJ", "age": 30, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "C", "punch": "C"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Guillaume Martin", "team": "Groupama - FDJ", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "C", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Valentin Madouas", "team": "Groupama - FDJ", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "B", "punch": "B"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Romain Grégoire", "team": "Groupama - FDJ", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "A"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Quentin Pacher", "team": "Groupama - FDJ", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "C"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Movistar Team
-            {"name": "Pablo Castrillo", "team": "Movistar Team", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Enric Mas", "team": "Movistar Team", "age": 27, "tiers": {"sprint": "E", "itt": "E", "mountain": "B", "hills": "E", "punch": "D"}, "price": 2, "chance_of_abandon": 0.0},
-            {"name": "Nelson Oliveira", "team": "Movistar Team", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Einer Rubio", "team": "Movistar Team", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "C", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Fernando Gaviria", "team": "Movistar Team", "age": 25, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Iván Romeo", "team": "Movistar Team", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "D", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Javier Romo", "team": "Movistar Team", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Team Picnic PostNL
-            {"name": "Oscar Onley", "team": "Team Picnic PostNL", "age": 21, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Frank van den Broek", "team": "Team Picnic PostNL", "age": 22, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Tobias Lund Andresen", "team": "Team Picnic PostNL", "age": 21, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            
-            # Team Jayco AlUla
-            {"name": "Ben O'Connor", "team": "Team Jayco AlUla", "age": 26, "tiers": {"sprint": "E", "itt": "D", "mountain": "C", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Eddie Dunbar", "team": "Team Jayco AlUla", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "C", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Mauro Schmid", "team": "Team Jayco AlUla", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "D", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Dylan Groenewegen", "team": "Team Jayco AlUla", "age": 30, "tiers": {"sprint": "A", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Luka Mezgec", "team": "Team Jayco AlUla", "age": 27, "tiers": {"sprint": "D", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Elmar Reinders", "team": "Team Jayco AlUla", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Christopher Juul-Jensen", "team": "Team Jayco AlUla", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Bahrain - Victorious
-            {"name": "Lenny Martinez", "team": "Bahrain - Victorious", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "B", "hills": "C", "punch": "B"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Santiago Buitrago", "team": "Bahrain - Victorious", "age": 28, "tiers": {"sprint": "E", "itt": "E", "mountain": "C", "hills": "E", "punch": "C"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Matej Mohorič", "team": "Bahrain - Victorious", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "C", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Phil Bauhaus", "team": "Bahrain - Victorious", "age": 29, "tiers": {"sprint": "B", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            
-            # XDS Astana Team
-            {"name": "Simone Velasco", "team": "XDS Astana Team", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Harold Tejada", "team": "XDS Astana Team", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Clément Champoussin", "team": "XDS Astana Team", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Lotto
-            {"name": "Arnaud De Lie", "team": "Lotto", "age": 22, "tiers": {"sprint": "B", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Lennert van Eetvelt", "team": "Lotto", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "C"}, "price": 1, "chance_of_abandon": 0.0},
-            {"name": "Jasper De Buyst", "team": "Lotto", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Jenno Berckmoes", "team": "Lotto", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Israel - Premier Tech
-            {"name": "Pascal Ackermann", "team": "Israel - Premier Tech", "age": 27, "tiers": {"sprint": "B", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.0},
-            {"name": "Joseph Blackmore", "team": "Israel - Premier Tech", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Michael Woods", "team": "Israel - Premier Tech", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "B", "punch": "B"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Alexey Lutsenko", "team": "Israel - Premier Tech", "age": 26, "tiers": {"sprint": "E", "itt": "D", "mountain": "D", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Jake Stewart", "team": "Israel - Premier Tech", "age": 25, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0},
-            
-            # Team TotalEnergies
-            {"name": "Mathieu Burgaudeau", "team": "Team TotalEnergies", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            
-            # Tudor Pro Cycling Team
-            {"name": "Julian Alaphilippe", "team": "Tudor Pro Cycling Team", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "B", "punch": "B"}, "price": 0.75, "chance_of_abandon": 0.0},
-            
-            # Uno-X Mobility
-            {"name": "Magnus Cort", "team": "Uno-X Mobility", "age": 27, "tiers": {"sprint": "D", "itt": "E", "mountain": "E", "hills": "B", "punch": "C"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Søren Wærenskjold", "team": "Uno-X Mobility", "age": 23, "tiers": {"sprint": "C", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.0},
-            {"name": "Andreas Leknessund", "team": "Uno-X Mobility", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Tobias Halland Johannessen", "team": "Uno-X Mobility", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "hills": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Anders Halland Johannessen", "team": "Uno-X Mobility", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Jonas Abrahamsen", "team": "Uno-X Mobility", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Markus Hoelgaard", "team": "Uno-X Mobility", "age": 22, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "Stian Fredheim", "team": "Uno-X Mobility", "age": 21, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"}, "price": 1, "chance_of_abandon": 0.0}
-        ]
+  {
+    "name": "CARAPAZ Richard",
+    "team": "EF Education - EasyPost (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "C"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SWEENY Harry",
+    "team": "EF Education - EasyPost (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "POWLESS Neilson",
+    "team": "EF Education - EasyPost (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "D"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "HEALY Ben",
+    "team": "EF Education - EasyPost (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "D",
+      "hills": "C",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "POGA\u010cAR Tadej",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "A",
+      "mountain": "S",
+      "hills": "A",
+      "punch": "A"
+    },
+    "price": 7.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ALMEIDA Jo\u00e3o",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "B",
+      "mountain": "B",
+      "hills": "C",
+      "punch": "B"
+    },
+    "price": 4.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "YATES Adam",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 2.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SIVAKOV Pavel",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 2,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SOLER Marc",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 2,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "WELLENS Tim",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "E"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "NARV\u00c1EZ Jhonatan",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "C"
+    },
+    "price": 2,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "POLITT Nils",
+    "team": "UAE Team Emirates - XRG (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GALL Felix",
+    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "C",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ROGLI\u010c Primo\u017e",
+    "team": "Red Bull - BORA - hansgrohe (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "A",
+      "mountain": "B",
+      "hills": "E",
+      "punch": "C"
+    },
+    "price": 3.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MART\u00cdNEZ Daniel Felipe",
+    "team": "Red Bull - BORA - hansgrohe (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "D"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VLASOV Aleksandr",
+    "team": "Red Bull - BORA - hansgrohe (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "TRATNIK Jan",
+    "team": "Red Bull - BORA - hansgrohe (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN POPPEL Danny",
+    "team": "Red Bull - BORA - hansgrohe (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "LIPOWITZ Florian",
+    "team": "Red Bull - BORA - hansgrohe (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "B",
+      "mountain": "B",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 3,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "EVENEPOEL Remco",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "S",
+      "mountain": "A",
+      "hills": "C",
+      "punch": "C"
+    },
+    "price": 6,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MERLIER Tim",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "S",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 3.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN LERBERGHE Bert",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "EENKHOORN Pascal",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "PARET-PEINTRE Valentin",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN WILDER Ilan",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SCHACHMANN Maximilian",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CATTANEO Mattia",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "B",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "PEDERSEN Casper",
+    "team": "Soudal Quick-Step (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ARANBURU Alex",
+    "team": "Cofidis (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "IZAGIRRE Ion",
+    "team": "Cofidis (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "THOMAS Benjamin",
+    "team": "Cofidis (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BUCHMANN Emanuel",
+    "team": "Cofidis (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CARR Simon",
+    "team": "Cofidis (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN DER POEL Mathieu",
+    "team": "Alpecin - Deceuninck (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "C",
+      "mountain": "E",
+      "hills": "A",
+      "punch": "A"
+    },
+    "price": 2.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "PHILIPSEN Jasper",
+    "team": "Alpecin - Deceuninck (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "S",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 4,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GROVES Kaden",
+    "team": "Alpecin - Deceuninck (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 2,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "RIESEBEEK Oscar",
+    "team": "Alpecin - Deceuninck (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAUQUELIN K\u00e9vin",
+    "team": "Ark\u00e9a - B&B Hotels (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "D",
+      "hills": "B",
+      "punch": "B"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VINGEGAARD Jonas",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "A",
+      "mountain": "A",
+      "hills": "D",
+      "punch": "B"
+    },
+    "price": 6,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN AERT Wout",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "A",
+      "mountain": "E",
+      "hills": "B",
+      "punch": "B"
+    },
+    "price": 3.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "YATES Simon",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "C",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "JORGENSON Matteo",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "B",
+      "mountain": "C",
+      "hills": "B",
+      "punch": "C"
+    },
+    "price": 3,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "AFFINI Edoardo",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "B",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BENOOT Tiesj",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "KUSS Sepp",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "C",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CAMPENAERTS Victor",
+    "team": "Team Visma | Lease a Bike (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "KWIATKOWSKI Micha\u0142",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "RODR\u00cdGUEZ Carlos",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 2.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GANNA Filippo",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "A",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "THOMAS Geraint",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ARENSMAN Thymen",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "B",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "DE PLUS Laurens",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "FOSS Tobias",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GIRMAY Biniam",
+    "team": "Intermarch\u00e9 - Wanty (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "B",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "C"
+    },
+    "price": 2.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "PAGE Hugo",
+    "team": "Intermarch\u00e9 - Wanty (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "REX Laurenz",
+    "team": "Intermarch\u00e9 - Wanty (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ZIMMERMANN Georg",
+    "team": "Intermarch\u00e9 - Wanty (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GOOSSENS Kobe",
+    "team": "Intermarch\u00e9 - Wanty (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BARR\u00c9 Louis",
+    "team": "Intermarch\u00e9 - Wanty (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MILAN Jonathan",
+    "team": "Lidl - Trek (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "A",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 4,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SKJELMOSE Mattias",
+    "team": "Lidl - Trek (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "C",
+      "hills": "C",
+      "punch": "C"
+    },
+    "price": 2.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "STUYVEN Jasper",
+    "team": "Lidl - Trek (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "THEUNS Edward",
+    "team": "Lidl - Trek (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CONSONNI Simone",
+    "team": "Lidl - Trek (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BERNARD Julien",
+    "team": "Lidl - Trek (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GEOGHEGAN HART Tao",
+    "team": "Lidl - Trek (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "NYS Thibau",
+    "team": "Lidl - Trek (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "B"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GAUDU David",
+    "team": "Groupama - FDJ (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MARTIN Guillaume",
+    "team": "Groupama - FDJ (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MADOUAS Valentin",
+    "team": "Groupama - FDJ (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GR\u00c9GOIRE Romain",
+    "team": "Groupama - FDJ (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "B"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "PACHER Quentin",
+    "team": "Groupama - FDJ (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CASTRILLO Pablo",
+    "team": "Movistar Team (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MAS Enric",
+    "team": "Movistar Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "C"
+    },
+    "price": 2,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "OLIVEIRA Nelson",
+    "team": "Movistar Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "RUBIO Einer",
+    "team": "Movistar Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GAVIRIA Fernando",
+    "team": "Movistar Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ROMEO Iv\u00e1n",
+    "team": "Movistar Team (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ROMO Javier",
+    "team": "Movistar Team (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ONLEY Oscar",
+    "team": "Team Picnic PostNL (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN DEN BROEK Frank",
+    "team": "Team Picnic PostNL (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ANDRESEN Tobias Lund",
+    "team": "Team Picnic PostNL (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "O'CONNOR Ben",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "DUNBAR Eddie",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "D"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SCHMID Mauro",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "GROENEWEGEN Dylan",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "B",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MEZGEC Luka",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "REINDERS Elmar",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "JUUL-JENSEN Christopher",
+    "team": "Team Jayco AlUla (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MARTINEZ Lenny",
+    "team": "Bahrain - Victorious (WT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BUITRAGO Santiago",
+    "team": "Bahrain - Victorious (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "MOHORI\u010c Matej",
+    "team": "Bahrain - Victorious (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BAUHAUS Phil",
+    "team": "Bahrain - Victorious (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VELASCO Simone",
+    "team": "XDS Astana Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "TEJADA Harold",
+    "team": "XDS Astana Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CHAMPOUSSIN Cl\u00e9ment",
+    "team": "XDS Astana Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "HIGUITA Sergio",
+    "team": "XDS Astana Team (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "DE LIE Arnaud",
+    "team": "Lotto (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "D"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN EETVELT Lennert",
+    "team": "Lotto (PRT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "C",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "DE BUYST Jasper",
+    "team": "Lotto (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BERCKMOES Jenno",
+    "team": "Lotto (PRT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "DRIZNERS Jarrad",
+    "team": "Lotto (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SEP\u00daLVEDA Eduardo",
+    "team": "Lotto (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "VAN MOER Brent",
+    "team": "Lotto (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "SEGAERT Alec",
+    "team": "Lotto (PRT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "C",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ACKERMANN Pascal",
+    "team": "Israel - Premier Tech (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BLACKMORE Joseph",
+    "team": "Israel - Premier Tech (PRT)",
+    "age": 24,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "WOODS Michael",
+    "team": "Israel - Premier Tech (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "LUTSENKO Alexey",
+    "team": "Israel - Premier Tech (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "STEWART Jake",
+    "team": "Israel - Premier Tech (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "C",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BENNETT George",
+    "team": "Israel - Premier Tech (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "BURGAUDEAU Mathieu",
+    "team": "Team TotalEnergies (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ALAPHILIPPE Julian",
+    "team": "Tudor Pro Cycling Team (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "C",
+      "punch": "C"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "CORT Magnus",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "D"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "W\u00c6RENSKJOLD S\u00f8ren",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.75,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "LEKNESSUND Andreas",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "D",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "JOHANNESSEN Tobias Halland",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "D",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "JOHANNESSEN Anders Halland",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "ABRAHAMSEN Jonas",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "D",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "HOELGAARD Markus",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.05
+  },
+  {
+    "name": "FREDHEIM Stian",
+    "team": "Uno-X Mobility (PRT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "D",
+      "itt": "E",
+      "mountain": "E",
+      "hills": "E",
+      "punch": "E"
+    },
+    "price": 1,
+    "chance_of_abandon": 0.05
+  }
+]
 
         # Create Rider objects with their parameters
         self.riders = []

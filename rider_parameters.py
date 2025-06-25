@@ -14,6 +14,26 @@ Parameters are on a scale of 0-100, where:
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
+# Global tier parameters that can be modified by the dashboard
+TIER_PARAMETERS = {
+    "exceptional": {"min": 1, "mode": 1, "max": 10},      # 98+
+    "world_class": {"min": 1, "mode": 3, "max": 20},      # 95-97
+    "elite": {"min": 1, "mode": 6, "max": 30},            # 90-94
+    "very_good": {"min": 1, "mode": 15, "max": 40},       # 80-89
+    "good": {"min": 5, "mode": 20, "max": 50},            # 70-79
+    "average": {"min": 20, "mode": 30, "max": 60},        # 50-69
+    "below_average": {"min": 50, "mode": 75, "max": 150}  # <50
+}
+
+def update_tier_parameters(new_parameters: Dict):
+    """Update the global tier parameters"""
+    global TIER_PARAMETERS
+    TIER_PARAMETERS.update(new_parameters)
+
+def get_tier_parameters() -> Dict:
+    """Get the current tier parameters"""
+    return TIER_PARAMETERS.copy()
+
 @dataclass
 class RiderParameters:
     sprint_ability: int  # Ability in sprint finishes
@@ -28,31 +48,30 @@ class RiderParameters:
         Returns (min, mode, max) for triangular distribution.
         Lower numbers = better result (1 = winner)
 
-        Probability ranges by ability tier:
-        >=98: (1, 1, 3)    - Dominant, very likely to win
-        95-97: (1, 2, 5)   - Can win any day
-        90-94: (1, 3, 8)   - Regular podium contender
-        80-89: (2, 5, 12)  - Can make top 5
-        70-79: (5, 10, 20) - Regular top 10
-        50-69: (10, 20, 40) - Mid-pack finisher
-        <50: (30, 50, 80)  - Back of the pack
         """
-        # Base conversion of ability to probabilities
+        # Base conversion of ability to probabilities using configurable parameters
         def ability_to_prob(ability: int) -> Tuple[float, float, float]:
             if ability >= 98:  # Exceptional
-                return (1, 1, 10)
+                params = TIER_PARAMETERS["exceptional"]
+                return (params["min"], params["mode"], params["max"])
             elif ability >= 95:  # World Class
-                return (1, 3, 20)
+                params = TIER_PARAMETERS["world_class"]
+                return (params["min"], params["mode"], params["max"])
             elif ability >= 90:  # Elite
-                return (1, 6, 30)
+                params = TIER_PARAMETERS["elite"]
+                return (params["min"], params["mode"], params["max"])
             elif ability >= 80:  # Very Good
-                return (1, 15, 40)
+                params = TIER_PARAMETERS["very_good"]
+                return (params["min"], params["mode"], params["max"])
             elif ability >= 70:  # Good
-                return (5, 20, 50)
+                params = TIER_PARAMETERS["good"]
+                return (params["min"], params["mode"], params["max"])
             elif ability >= 50:  # Average
-                return (20, 30, 60)
+                params = TIER_PARAMETERS["average"]
+                return (params["min"], params["mode"], params["max"])
             else:  # Below Average
-                return (50, 75, 150)
+                params = TIER_PARAMETERS["below_average"]
+                return (params["min"], params["mode"], params["max"])
 
         # Get relevant ability for stage type
         ability = {

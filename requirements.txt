@@ -8,3 +8,4 @@ pulp==3.2.1
 streamlit>=1.46.0
 plotly>=6.1.2
 watchdog>=6.0.0
+matplotlib>=3.10.3

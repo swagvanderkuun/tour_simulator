@@ -16,6 +16,7 @@ from simulator import TourSimulator
 from team_optimization import TeamOptimizer
 from riders import RiderDatabase, Rider
 from rider_parameters import RiderParameters, get_tier_parameters, update_tier_parameters
+from multi_simulator import MultiSimulationAnalyzer
 
 # Page configuration
 st.set_page_config(
@@ -536,92 +537,253 @@ def show_single_simulation():
 def show_multi_simulation():
     st.header("📊 Multi-Simulation Analysis")
     
-    col1, col2 = st.columns([2, 1])
+    st.subheader("Simulation Parameters")
     
-    with col1:
-        st.subheader("Simulation Parameters")
-        
-        num_simulations = st.slider("Number of simulations", 10, 500, 100, 10, key="multi_sim_count")
-        show_progress = st.checkbox("Show progress", value=True, key="multi_sim_progress")
-        
-        if st.button("🔄 Run Multi-Simulation", type="primary", key="run_multi_sim"):
-            with st.spinner(f"Running {num_simulations} simulations..."):
-                if show_progress:
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                
-                # Run multi-simulation using the session state rider database
-                results = run_multi_simulation(num_simulations, progress_callback=progress_bar if show_progress else None)
-                
-                if show_progress:
-                    progress_bar.progress(1.0)
-                    status_text.text("Multi-simulation completed!")
-                
-                st.session_state.multi_simulation_results = results
-                st.success(f"✅ {num_simulations} simulations completed!")
+    num_simulations = st.slider("Number of simulations", 10, 500, 100, 10, key="multi_sim_count")
+    show_progress = st.checkbox("Show progress", value=True, key="multi_sim_progress")
     
-    with col2:
-        st.subheader("Results")
-        
-        if st.session_state.multi_simulation_results is not None:
-            st.success("Multi-simulation results available")
+    if st.button("🔄 Run Multi-Simulation", type="primary", key="run_multi_sim"):
+        with st.spinner(f"Running {num_simulations} simulations..."):
+            if show_progress:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
             
-            if st.button("📊 View Analysis", key="view_multi_analysis"):
-                show_multi_simulation_analysis(st.session_state.multi_simulation_results)
-        else:
-            st.info("Run a multi-simulation to see results")
+            # Run multi-simulation using the new analyzer
+            analyzer = MultiSimulationAnalyzer(num_simulations)
+            
+            def progress_callback(current, total):
+                if show_progress:
+                    progress = current / total
+                    progress_bar.progress(progress)
+                    status_text.text(f"Simulation {current}/{total}")
+            
+            metrics = analyzer.run_simulations(st.session_state.rider_db, progress_callback)
+            
+            if show_progress:
+                progress_bar.empty()
+                status_text.empty()
+            
+            st.success(f"✅ Completed {num_simulations} simulations!")
+            
+            # Store results in session state
+            st.session_state.multi_sim_results = metrics
+            
+            # Display the analysis
+            show_scorito_analysis_dashboard(metrics)
+    
+    # Show results if available
+    if 'multi_sim_results' in st.session_state:
+        show_scorito_analysis_dashboard(st.session_state.multi_sim_results)
 
 def show_team_optimization():
     st.header("⚡ Team Optimization")
     
-    col1, col2 = st.columns([2, 1])
+    st.subheader("Optimization Parameters")
     
-    with col1:
-        st.subheader("Optimization Parameters")
-        
-        budget = st.slider("Budget", 30.0, 60.0, 48.0, 0.5, key="opt_budget")
-        team_size = st.slider("Team size", 15, 25, 20, 1, key="opt_team_size")
-        num_simulations = st.slider("Simulations for expected points", 50, 200, 100, 10, key="opt_sim_count")
-        abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="opt_abandon_penalty")
-        
-        if st.button("🎯 Optimize Team", type="primary", key="run_optimization"):
-            with st.spinner("Running optimization..."):
-                optimizer = TeamOptimizer(budget=budget, team_size=team_size)
-                # Replace the optimizer's rider database with our modified one
-                optimizer.rider_db = st.session_state.rider_db
-                inject_rider_database(optimizer.simulator, st.session_state.rider_db)
-                
-                # Get expected points using our custom method
-                rider_data = run_optimizer_simulation(optimizer, num_simulations, st.session_state.rider_db)
-                
-                # Optimize team
-                team_selection = optimizer.optimize_team(
-                    rider_data, 
-                    abandon_penalty=abandon_penalty
-                )
-                
-                st.session_state.optimization_results = {
-                    'team_selection': team_selection,
-                    'rider_data': rider_data,
-                    'optimizer': optimizer
-                }
-                
-                st.success("✅ Team optimization completed!")
+    budget = st.slider("Budget", 30.0, 60.0, 48.0, 0.5, key="opt_budget")
+    team_size = st.slider("Team size", 15, 25, 20, 1, key="opt_team_size")
+    num_simulations = st.slider("Simulations for expected points", 50, 200, 100, 10, key="opt_sim_count")
+    abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="opt_abandon_penalty")
     
-    with col2:
-        st.subheader("Results")
-        
-        if st.session_state.optimization_results is not None:
-            team_selection = st.session_state.optimization_results['team_selection']
+    if st.button("🎯 Optimize Team", type="primary", key="run_optimization"):
+        with st.spinner("Running optimization..."):
+            optimizer = TeamOptimizer(budget=budget, team_size=team_size)
+            # Replace the optimizer's rider database with our modified one
+            optimizer.rider_db = st.session_state.rider_db
+            inject_rider_database(optimizer.simulator, st.session_state.rider_db)
             
+            # Get expected points using our custom method
+            rider_data = run_optimizer_simulation(optimizer, num_simulations, st.session_state.rider_db)
+            
+            # Optimize team (with stage-by-stage selection)
+            team_selection = optimizer.optimize_with_stage_selection(
+                rider_data,
+                num_simulations=num_simulations,
+                risk_aversion=0.0,  # You can expose this as a parameter if desired
+                abandon_penalty=abandon_penalty
+            )
+            
+            st.session_state.optimization_results = {
+                'team_selection': team_selection,
+                'rider_data': rider_data,
+                'optimizer': optimizer
+            }
+            
+            st.success("✅ Team optimization completed!")
+    
+    # Display results below the button
+    if hasattr(st.session_state, 'optimization_results') and st.session_state.optimization_results is not None:
+        st.subheader("📊 Optimization Results")
+        
+        team_selection = st.session_state.optimization_results['team_selection']
+        rider_data = st.session_state.optimization_results['rider_data']
+        
+        # Key metrics in columns
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
             st.metric("Total Cost", f"{team_selection.total_cost:.2f}")
+        
+        with col2:
             st.metric("Expected Points", f"{team_selection.expected_points:.1f}")
+        
+        with col3:
             st.metric("Team Size", len(team_selection.riders))
+        
+        with col4:
+            efficiency = team_selection.expected_points / team_selection.total_cost if team_selection.total_cost > 0 else 0
+            st.metric("Points per Euro", f"{efficiency:.2f}")
+        
+        # Team composition chart
+        st.subheader("🏢 Team Composition")
+        team_counts = {}
+        for rider in team_selection.riders:
+            team_counts[rider.team] = team_counts.get(rider.team, 0) + 1
+        
+        fig = px.pie(
+            values=list(team_counts.values()),
+            names=list(team_counts.keys()),
+            title="Riders per Team"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Points scored per rider
+        st.subheader("📊 Points Scored per Rider")
+        
+        # Calculate points per rider from rider_data
+        rider_points = []
+        for rider in team_selection.riders:
+            rider_row = rider_data[rider_data['rider_name'] == rider.name]
+            if not rider_row.empty:
+                expected_points = rider_row.iloc[0]['expected_points']
+                rider_points.append({
+                    'Rider': rider.name,
+                    'Team': rider.team,
+                    'Price': rider.price,
+                    'Expected Points': expected_points,
+                    'Points per Euro': expected_points / rider.price if rider.price > 0 else 0
+                })
+        
+        # Sort by expected points
+        rider_points.sort(key=lambda x: x['Expected Points'], reverse=True)
+        
+        # Display as a table
+        points_df = pd.DataFrame(rider_points)
+        st.dataframe(points_df, use_container_width=True)
+        
+        # Bar chart of points per rider
+        fig = px.bar(
+            points_df,
+            x='Rider',
+            y='Expected Points',
+            color='Team',
+            title="Expected Points per Rider",
+            text='Expected Points'
+        )
+        fig.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+        fig.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Stage selections
+        if hasattr(team_selection, 'stage_selections') and team_selection.stage_selections:
+            st.subheader("🏁 Stage-by-Stage Rider Selections")
             
-            if st.button("📋 View Team", key="view_optimization_team"):
-                show_optimization_results(st.session_state.optimization_results)
+            # Create stage selection summary
+            stage_summary = []
+            for stage in sorted(team_selection.stage_selections.keys()):
+                selected_riders = team_selection.stage_selections[stage]
+                stage_points = team_selection.stage_points.get(stage, {})
+                total_stage_points = sum(stage_points.values())
+                
+                stage_summary.append({
+                    'Stage': stage,
+                    'Riders Selected': len(selected_riders),
+                    'Total Points': total_stage_points,
+                    'Selected Riders': ', '.join(selected_riders)
+                })
+            
+            # Display stage summary
+            stage_df = pd.DataFrame(stage_summary)
+            st.dataframe(stage_df, use_container_width=True)
+            
+            # Detailed stage-by-stage breakdown
+            st.subheader("📋 Detailed Stage Breakdown")
+            
+            # Create tabs for each stage
+            stage_tabs = st.tabs([f"Stage {stage}" for stage in sorted(team_selection.stage_selections.keys())])
+            
+            for i, stage in enumerate(sorted(team_selection.stage_selections.keys())):
+                with stage_tabs[i]:
+                    selected_riders = team_selection.stage_selections[stage]
+                    stage_points = team_selection.stage_points.get(stage, {})
+                    
+                    # Get all riders and their points for this stage
+                    stage_rider_data = []
+                    for _, rider_row in rider_data.iterrows():
+                        rider_name = rider_row['rider_name']
+                        points = stage_points.get(rider_name, 0)
+                        is_selected = rider_name in selected_riders
+                        
+                        stage_rider_data.append({
+                            'Rider': rider_name,
+                            'Team': rider_row['team'],
+                            'Price': rider_row['price'],
+                            'Points': points,
+                            'Selected': '✓' if is_selected else '✗'
+                        })
+                    
+                    # Sort by points (descending)
+                    stage_rider_data.sort(key=lambda x: x['Points'], reverse=True)
+                    stage_rider_df = pd.DataFrame(stage_rider_data)
+                    
+                    # Show selected riders first
+                    selected_df = stage_rider_df[stage_rider_df['Selected'] == '✓']
+                    unselected_df = stage_rider_df[stage_rider_df['Selected'] == '✗']
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write("**Selected Riders:**")
+                        st.dataframe(selected_df, use_container_width=True)
+                    
+                    with col2:
+                        st.write("**Top Unselected Riders:**")
+                        st.dataframe(unselected_df.head(10), use_container_width=True)
+                    
+                    # Stage points chart
+                    fig = px.bar(
+                        stage_rider_df.head(20),  # Top 20 riders
+                        x='Rider',
+                        y='Points',
+                        color='Selected',
+                        title=f"Stage {stage} - Points per Rider (Top 20)",
+                        color_discrete_map={'✓': 'green', '✗': 'red'}
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("Run optimization to see results")
+            st.info("⚠️ Stage-by-stage selection data not available. This may be from a basic optimization run.")
+            
+            # Fallback: show basic team information
+            st.subheader("👥 Selected Team")
+            team_info = []
+            for i, rider in enumerate(team_selection.riders, 1):
+                rider_row = rider_data[rider_data['rider_name'] == rider.name]
+                expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+                team_info.append({
+                    'Position': i,
+                    'Rider': rider.name,
+                    'Team': rider.team,
+                    'Price': rider.price,
+                    'Expected Points': expected_points
+                })
+            
+            team_df = pd.DataFrame(team_info)
+            st.dataframe(team_df, use_container_width=True)
+    
+    # Show detailed results if available
+    if hasattr(st.session_state, 'optimization_results') and st.session_state.optimization_results is not None:
+        show_optimization_results(st.session_state.optimization_results)
 
 def show_rider_management():
     st.header("👥 Rider Management")
@@ -1646,11 +1808,519 @@ def show_simulation_results(simulator):
         st.plotly_chart(fig2, use_container_width=True)
 
 def show_multi_simulation_analysis(results):
-    st.subheader("📈 Multi-Simulation Analysis")
+    st.subheader("📈 Comprehensive Multi-Simulation Analysis")
     
-    # This would show statistical analysis of multiple simulation runs
-    st.write("Multi-simulation analysis would be displayed here")
-    st.write("Features: confidence intervals, probability distributions, etc.")
+    # Create tabs for different analysis sections
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "📊 Overview", "🏁 Stage Analysis", "🏆 Classifications", "💰 Scorito Points", 
+        "👥 Rider Insights", "🏢 Team Performance", "📈 Advanced Metrics"
+    ])
+    
+    with tab1:
+        show_overview_metrics(results)
+    
+    with tab2:
+        show_stage_analysis(results)
+    
+    with tab3:
+        show_classification_analysis(results)
+    
+    with tab4:
+        show_scorito_analysis(results)
+    
+    with tab5:
+        show_rider_insights(results)
+    
+    with tab6:
+        show_team_performance_analysis(results)
+    
+    with tab7:
+        show_advanced_metrics(results)
+
+def show_overview_metrics(results):
+    """Display overview metrics and summary statistics"""
+    st.subheader("📊 Simulation Overview")
+    
+    summary = results['simulation_summary']
+    
+    # Key metrics cards
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            "Total Simulations", 
+            f"{summary['total_simulations']:,}",
+            help="Number of Tour de France simulations run"
+        )
+    
+    with col2:
+        st.metric(
+            "Total Riders", 
+            f"{summary['total_riders']:,}",
+            help="Number of riders in the simulation"
+        )
+    
+    with col3:
+        st.metric(
+            "Avg Abandonments", 
+            f"{summary['avg_abandonments']:.1f}",
+            help="Average number of riders who abandon per simulation"
+        )
+    
+    with col4:
+        st.metric(
+            "Avg Total Points", 
+            f"{summary['avg_total_points']:.0f}",
+            help="Average total Scorito points per simulation"
+        )
+    
+    # Abandonment analysis
+    st.subheader("💥 Abandonment Analysis")
+    abandonment_data = results['abandonment_analysis']
+    
+    # Top riders by abandonment rate
+    high_risk_riders = {k: v for k, v in abandonment_data.items() if v['abandonment_rate'] > 0.1}
+    if high_risk_riders:
+        st.warning("⚠️ High-risk riders (abandonment rate > 10%):")
+        for rider, data in sorted(high_risk_riders.items(), key=lambda x: x[1]['abandonment_rate'], reverse=True)[:10]:
+            st.write(f"• {rider}: {data['abandonment_rate']:.1%} chance of abandoning")
+    
+    # Stage type impact
+    st.subheader("🏁 Stage Type Impact")
+    stage_type_data = results['stage_type_impact']
+    
+    if stage_type_data:
+        stage_type_df = pd.DataFrame([
+            {
+                'Stage Type': stage_type,
+                'Avg Position': data['avg_position'],
+                'Position Std': data['position_std'],
+                'Unique Riders': data['unique_riders']
+            }
+            for stage_type, data in stage_type_data.items()
+        ])
+        
+        fig = px.bar(
+            stage_type_df, 
+            x='Stage Type', 
+            y='Avg Position',
+            title="Average Position by Stage Type",
+            color='Position Std',
+            color_continuous_scale='viridis'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_stage_analysis(results):
+    """Display detailed stage-by-stage analysis"""
+    st.subheader("🏁 Stage-by-Stage Analysis")
+    
+    stage_analysis = results['stage_analysis']
+    
+    # Stage selector
+    selected_stage = st.selectbox(
+        "Select Stage to Analyze",
+        options=list(range(1, 22)),
+        format_func=lambda x: f"Stage {x}"
+    )
+    
+    if selected_stage in stage_analysis:
+        stage_data = stage_analysis[selected_stage]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("Total Finishers", stage_data['total_finishers'])
+            
+            # Stage winners frequency
+            if stage_data['stage_winner_frequency']:
+                st.subheader("🏆 Most Frequent Stage Winners")
+                winners_df = pd.DataFrame([
+                    {'Rider': rider, 'Wins': wins}
+                    for rider, wins in stage_data['stage_winner_frequency'].items()
+                ]).sort_values('Wins', ascending=False).head(10)
+                
+                fig = px.bar(winners_df, x='Rider', y='Wins', title=f"Stage {selected_stage} Winners")
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            # Team dominance
+            if stage_data['avg_position_by_team']:
+                st.subheader("🏢 Team Performance")
+                team_df = pd.DataFrame([
+                    {'Team': team, 'Avg Position': pos}
+                    for team, pos in stage_data['avg_position_by_team'].items()
+                ]).sort_values('Avg Position')
+                
+                fig = px.bar(team_df, x='Team', y='Avg Position', title=f"Stage {selected_stage} Team Performance")
+                st.plotly_chart(fig, use_container_width=True)
+    
+    # Stage consistency analysis
+    st.subheader("📈 Stage Consistency Analysis")
+    
+    # Calculate consistency across all stages
+    all_stages_data = []
+    for stage_num in range(1, 22):
+        if stage_num in stage_analysis:
+            stage_data = stage_analysis[stage_num]
+            if stage_data['position_volatility']:
+                avg_volatility = np.mean(list(stage_data['position_volatility'].values()))
+                all_stages_data.append({
+                    'Stage': stage_num,
+                    'Avg Volatility': avg_volatility,
+                    'Total Finishers': stage_data['total_finishers']
+                })
+    
+    if all_stages_data:
+        stages_df = pd.DataFrame(all_stages_data)
+        
+        fig = px.line(
+            stages_df, 
+            x='Stage', 
+            y='Avg Volatility',
+            title="Position Volatility by Stage",
+            markers=True
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_classification_analysis(results):
+    """Display classification analysis"""
+    st.subheader("🏆 Classification Analysis")
+    
+    classification_analysis = results['classification_analysis']
+    
+    # Classification selector
+    classification = st.selectbox(
+        "Select Classification",
+        options=['gc', 'sprint', 'mountain', 'youth'],
+        format_func=lambda x: x.upper()
+    )
+    
+    if classification in classification_analysis:
+        class_data = classification_analysis[classification]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Winner frequency
+            if class_data['winner_frequency']:
+                st.subheader(f"🏆 {classification.upper()} Winners")
+                winners_df = pd.DataFrame([
+                    {'Rider': rider, 'Wins': wins}
+                    for rider, wins in class_data['winner_frequency'].items()
+                ]).sort_values('Wins', ascending=False).head(10)
+                
+                fig = px.bar(winners_df, x='Rider', y='Wins', title=f"{classification.upper()} Winners")
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            # Podium frequency
+            if class_data['podium_frequency']:
+                st.subheader(f"🥇🥈🥉 {classification.upper()} Podium")
+                podium_data = []
+                for rider, positions in class_data['podium_frequency'].items():
+                    for pos, count in positions.items():
+                        podium_data.append({
+                            'Rider': rider,
+                            'Position': f"{pos}{'st' if pos==1 else 'nd' if pos==2 else 'rd' if pos==3 else 'th'}",
+                            'Count': count
+                        })
+                
+                if podium_data:
+                    podium_df = pd.DataFrame(podium_data)
+                    fig = px.bar(
+                        podium_df, 
+                        x='Rider', 
+                        y='Count', 
+                        color='Position',
+                        title=f"{classification.upper()} Podium Frequency"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+        
+        # Classification volatility
+        if class_data['classification_volatility']:
+            st.subheader(f"📊 {classification.upper()} Volatility")
+            volatility_df = pd.DataFrame([
+                {'Rider': rider, 'Volatility': vol}
+                for rider, vol in class_data['classification_volatility'].items()
+            ]).sort_values('Volatility').head(15)
+            
+            fig = px.bar(volatility_df, x='Rider', y='Volatility', title=f"{classification.upper()} Position Volatility")
+            st.plotly_chart(fig, use_container_width=True)
+
+def show_scorito_analysis(results):
+    """Display Scorito points analysis"""
+    st.subheader("💰 Scorito Points Analysis")
+    
+    scorito_analysis = results['scorito_analysis']
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Top scorers
+        if scorito_analysis['top_scorers']:
+            st.subheader("🏆 Top Scorito Scorers")
+            top_scorers_df = pd.DataFrame([
+                {'Rider': rider, 'Points': points}
+                for rider, points in scorito_analysis['top_scorers'].items()
+            ])
+            
+            fig = px.bar(top_scorers_df, x='Rider', y='Points', title="Top Scorito Scorers")
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Points by team
+        if scorito_analysis['points_by_team']:
+            st.subheader("🏢 Points by Team")
+            team_points_df = pd.DataFrame([
+                {'Team': team, 'Points': points}
+                for team, points in scorito_analysis['points_by_team'].items()
+            ]).sort_values('Points', ascending=False)
+            
+            fig = px.pie(team_points_df, values='Points', names='Team', title="Scorito Points by Team")
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Points distribution
+    if scorito_analysis['total_points_distribution']:
+        st.subheader("📊 Points Distribution")
+        dist_data = scorito_analysis['total_points_distribution']
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Mean Points", f"{dist_data.get('mean', 0):.1f}")
+        with col2:
+            st.metric("Median Points", f"{dist_data.get('50%', 0):.1f}")
+        with col3:
+            st.metric("Std Dev", f"{dist_data.get('std', 0):.1f}")
+        with col4:
+            st.metric("Max Points", f"{dist_data.get('max', 0):.1f}")
+    
+    # Stage points volatility
+    if scorito_analysis['stage_points_volatility']:
+        st.subheader("📈 Stage Points Volatility")
+        stage_volatility_df = pd.DataFrame([
+            {'Stage': stage, 'Volatility': vol}
+            for stage, vol in scorito_analysis['stage_points_volatility'].items()
+        ])
+        
+        fig = px.line(stage_volatility_df, x='Stage', y='Volatility', title="Points Volatility by Stage")
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_rider_insights(results):
+    """Display rider-specific insights"""
+    st.subheader("👥 Rider Insights")
+    
+    rider_consistency = results['rider_consistency']
+    price_value = results['price_value_analysis']
+    youth_analysis = results['youth_analysis']
+    
+    # Rider selector
+    all_riders = list(rider_consistency.keys())
+    selected_rider = st.selectbox("Select Rider", all_riders)
+    
+    if selected_rider in rider_consistency:
+        rider_data = rider_consistency[selected_rider]
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Avg Position", f"{rider_data['avg_position']:.1f}")
+        with col2:
+            st.metric("Consistency Score", f"{rider_data['consistency_score']:.3f}")
+        with col3:
+            st.metric("Top 10 Rate", f"{rider_data['top_10_rate']:.1%}")
+        with col4:
+            st.metric("Stages Completed", rider_data['stages_completed'])
+        
+        # Price value analysis
+        if selected_rider in price_value:
+            price_data = price_value[selected_rider]
+            
+            st.subheader("💰 Price-Value Analysis")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Price", f"€{price_data['price']:.1f}")
+            with col2:
+                st.metric("Avg Points", f"{price_data['avg_points']:.1f}")
+            with col3:
+                st.metric("Points/€", f"{price_data['points_per_euro']:.2f}")
+        
+        # Youth analysis if applicable
+        if selected_rider in youth_analysis:
+            youth_data = youth_analysis[selected_rider]
+            st.subheader("🌱 Youth Performance")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("Youth Consistency", f"{youth_data['youth_consistency']:.3f}")
+            with col2:
+                st.metric("Avg GC Time", f"{youth_data['avg_gc_time']/3600:.1f}h")
+    
+    # Top value riders
+    st.subheader("💎 Best Value Riders")
+    if price_value:
+        value_df = pd.DataFrame([
+            {
+                'Rider': rider,
+                'Price': data['price'],
+                'Avg Points': data['avg_points'],
+                'Points/€': data['points_per_euro'],
+                'Value Score': data['value_score'],
+                'Team': data['team']
+            }
+            for rider, data in price_value.items()
+        ]).sort_values('Value Score', ascending=False).head(15)
+        
+        fig = px.scatter(
+            value_df, 
+            x='Price', 
+            y='Avg Points',
+            size='Value Score',
+            color='Team',
+            hover_data=['Rider', 'Points/€'],
+            title="Price vs Points (Size = Value Score)"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_team_performance_analysis(results):
+    """Display team performance analysis"""
+    st.subheader("🏢 Team Performance Analysis")
+    
+    team_performance = results['team_performance']
+    
+    if team_performance:
+        team_df = pd.DataFrame([
+            {
+                'Team': team,
+                'Riders': data['riders_count'],
+                'Avg Position': data['avg_position'],
+                'Total Points': data['total_points'],
+                'Avg Points/Rider': data['avg_points_per_rider'],
+                'Consistency': data['team_consistency']
+            }
+            for team, data in team_performance.items()
+        ])
+        
+        # Team performance overview
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig = px.bar(
+                team_df.sort_values('Total Points', ascending=False),
+                x='Team', 
+                y='Total Points',
+                title="Total Scorito Points by Team"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            fig = px.scatter(
+                team_df,
+                x='Avg Position', 
+                y='Total Points',
+                size='Riders',
+                color='Team',
+                hover_data=['Avg Points/Rider', 'Consistency'],
+                title="Team Performance: Position vs Points"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Team consistency
+        st.subheader("📊 Team Consistency")
+        consistency_df = team_df.sort_values('Consistency', ascending=False)
+        
+        fig = px.bar(
+            consistency_df,
+            x='Team', 
+            y='Consistency',
+            title="Team Consistency Score (Higher = More Consistent)"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_advanced_metrics(results):
+    """Display advanced analytical metrics"""
+    st.subheader("📈 Advanced Analytics")
+    
+    # Correlation analysis
+    st.subheader("🔗 Performance Correlations")
+    
+    # Combine rider data for correlation analysis
+    rider_consistency = results['rider_consistency']
+    price_value = results['price_value_analysis']
+    
+    correlation_data = []
+    for rider in rider_consistency:
+        if rider in price_value:
+            correlation_data.append({
+                'Rider': rider,
+                'Consistency': rider_consistency[rider]['consistency_score'],
+                'Avg Position': rider_consistency[rider]['avg_position'],
+                'Top 10 Rate': rider_consistency[rider]['top_10_rate'],
+                'Price': price_value[rider]['price'],
+                'Avg Points': price_value[rider]['avg_points'],
+                'Value Score': price_value[rider]['value_score']
+            })
+    
+    if correlation_data:
+        corr_df = pd.DataFrame(correlation_data)
+        
+        # Correlation matrix
+        numeric_cols = ['Consistency', 'Avg Position', 'Top 10 Rate', 'Price', 'Avg Points', 'Value Score']
+        correlation_matrix = corr_df[numeric_cols].corr()
+        
+        fig = px.imshow(
+            correlation_matrix,
+            title="Performance Metrics Correlation Matrix",
+            color_continuous_scale='RdBu',
+            aspect='auto'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Key insights
+        st.subheader("💡 Key Insights")
+        
+        # Price vs Performance correlation
+        price_perf_corr = correlation_matrix.loc['Price', 'Avg Points']
+        st.metric(
+            "Price-Performance Correlation", 
+            f"{price_perf_corr:.3f}",
+            help="Correlation between rider price and average points"
+        )
+        
+        # Consistency vs Performance correlation
+        consistency_perf_corr = correlation_matrix.loc['Consistency', 'Avg Points']
+        st.metric(
+            "Consistency-Performance Correlation", 
+            f"{consistency_perf_corr:.3f}",
+            help="Correlation between rider consistency and average points"
+        )
+    
+    # Risk analysis
+    st.subheader("⚠️ Risk Analysis")
+    abandonment_analysis = results['abandonment_analysis']
+    
+    if abandonment_analysis:
+        # High-risk riders
+        high_risk = {k: v for k, v in abandonment_analysis.items() if v['abandonment_rate'] > 0.05}
+        if high_risk:
+            st.warning(f"Found {len(high_risk)} riders with >5% abandonment risk")
+            
+            risk_df = pd.DataFrame([
+                {
+                    'Rider': rider,
+                    'Abandonment Rate': data['abandonment_rate'],
+                    'Survival Rate': data['survival_rate']
+                }
+                for rider, data in high_risk.items()
+            ]).sort_values('Abandonment Rate', ascending=False)
+            
+            fig = px.bar(
+                risk_df,
+                x='Rider',
+                y='Abandonment Rate',
+                title="High-Risk Riders (Abandonment Rate > 5%)"
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
 def show_optimization_results(optimization_data):
     st.subheader("🎯 Optimization Results")
@@ -1680,22 +2350,6 @@ def show_optimization_results(optimization_data):
             title="Team Composition"
         )
         st.plotly_chart(fig, use_container_width=True)
-
-def run_multi_simulation(num_simulations, progress_callback=None):
-    """Run multiple simulations with progress tracking using the session state rider database"""
-    results = []
-    
-    for i in range(num_simulations):
-        if progress_callback:
-            progress_callback.progress((i + 1) / num_simulations)
-        
-        simulator = TourSimulator()
-        inject_rider_database(simulator, st.session_state.rider_db)
-        
-        simulator.simulate_tour()
-        results.append(simulator)
-    
-    return results
 
 def run_optimizer_simulation(optimizer, num_simulations, rider_db):
     """
@@ -1889,6 +2543,310 @@ def show_stage_types_management():
             import stage_profiles
             stage_profiles.STAGE_PROFILES.update(st.session_state.stage_profiles_edit)
             st.success("✅ Stage types updated! Changes will apply to new simulations.")
+
+def show_scorito_analysis_dashboard(metrics):
+    """Display comprehensive Scorito points analysis"""
+    st.subheader("💰 Scorito Points Analysis")
+    
+    scorito_data = metrics['scorito_analysis']
+    
+    # Generate a unique identifier for this dashboard instance
+    unique_id = int(time.time() * 1000000)  # Microsecond timestamp
+    
+    # Create tabs for different analysis sections
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 Overview", "📈 Variance & Outliers", "🏁 Stage Analysis", "💰 Price Value", "📋 Detailed Stats"
+    ])
+    
+    with tab1:
+        show_scorito_overview(scorito_data, unique_id)
+    
+    with tab2:
+        show_variance_outlier_analysis(scorito_data, unique_id)
+    
+    with tab3:
+        show_stage_by_stage_analysis(scorito_data, unique_id)
+    
+    with tab4:
+        show_price_value_analysis(scorito_data, unique_id)
+    
+    with tab5:
+        show_detailed_scorito_stats(scorito_data)
+
+def show_scorito_overview(scorito_data, unique_id):
+    """Show overview of Scorito points analysis"""
+    st.subheader("📊 Overview")
+    
+    summary = scorito_data['overall_summary']
+    basic_stats = scorito_data['basic_stats']
+    
+    # Key metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Simulations", summary['total_simulations'])
+    
+    with col2:
+        st.metric("Total Points Scored", f"{summary['total_points_scored']:,.0f}")
+    
+    with col3:
+        st.metric("Avg Points/Stage", f"{summary['avg_points_per_stage']:.1f}")
+    
+    with col4:
+        st.metric("Unique Riders", summary['unique_riders'])
+    
+    # Top scorers chart
+    st.subheader("🏆 Top Scorers")
+    top_scorers = basic_stats['top_scorers']
+    
+    if top_scorers:
+        # Create DataFrame for plotting
+        df_top = pd.DataFrame(list(top_scorers.items()), columns=['Rider', 'Total Points'])
+        df_top = df_top.head(15)  # Show top 15
+        
+        fig = px.bar(df_top, x='Total Points', y='Rider', orientation='h',
+                    title="Top 15 Scorers by Total Points",
+                    color='Total Points', color_continuous_scale='viridis')
+        fig.update_layout(height=500)
+        st.plotly_chart(fig, use_container_width=True, key=f"top_scorers_chart_{unique_id}")
+    
+    # Points by team
+    st.subheader("🏢 Points by Team")
+    team_points = basic_stats['points_by_team']
+    
+    if team_points:
+        df_team = pd.DataFrame(list(team_points.items()), columns=['Team', 'Total Points'])
+        df_team = df_team.sort_values('Total Points', ascending=False)
+        
+        fig = px.bar(df_team, x='Team', y='Total Points',
+                    title="Total Scorito Points by Team",
+                    color='Total Points', color_continuous_scale='plasma')
+        fig.update_xaxes(tickangle=45)
+        st.plotly_chart(fig, use_container_width=True, key=f"team_points_chart_{unique_id}")
+
+def show_variance_outlier_analysis(scorito_data, unique_id):
+    """Show variance and outlier analysis"""
+    st.subheader("📈 Variance & Outlier Analysis")
+    
+    variance_data = scorito_data['variance_analysis']
+    outlier_data = scorito_data['outlier_analysis']
+    
+    # Variance overview
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.metric("Overall Variance", f"{variance_data['overall_variance']:.2f}")
+        
+        st.subheader("🔍 High Variance Riders")
+        high_var = variance_data['high_variance_riders']
+        if high_var:
+            df_high = pd.DataFrame(list(high_var.items()), columns=['Rider', 'Standard Deviation'])
+            df_high = df_high.sort_values('Standard Deviation', ascending=False).head(10)
+            st.dataframe(df_high, use_container_width=True)
+    
+    with col2:
+        st.metric("Outlier Threshold", f"{outlier_data['outlier_threshold']:.1f}")
+        st.metric("Outlier Percentage", f"{outlier_data['outlier_percentage']:.1f}%")
+        
+        st.subheader("🎯 Low Variance Riders")
+        low_var = variance_data['low_variance_riders']
+        if low_var:
+            df_low = pd.DataFrame(list(low_var.items()), columns=['Rider', 'Standard Deviation'])
+            df_low = df_low.sort_values('Standard Deviation').head(10)
+            st.dataframe(df_low, use_container_width=True)
+    
+    # Top outliers
+    st.subheader("🚀 Top Outliers")
+    top_outliers = outlier_data['top_outliers']
+    
+    if top_outliers:
+        df_outliers = pd.DataFrame(top_outliers)
+        st.dataframe(df_outliers, use_container_width=True)
+        
+        # Outlier distribution chart
+        outlier_riders = outlier_data['outlier_riders']
+        if outlier_riders:
+            df_outlier_counts = pd.DataFrame(list(outlier_riders.items()), 
+                                           columns=['Rider', 'Outlier Count'])
+            df_outlier_counts = df_outlier_counts.sort_values('Outlier Count', ascending=False).head(10)
+            
+            fig = px.bar(df_outlier_counts, x='Rider', y='Outlier Count',
+                        title="Riders with Most Outlier Performances",
+                        color='Outlier Count', color_continuous_scale='reds')
+            fig.update_xaxes(tickangle=45)
+            st.plotly_chart(fig, use_container_width=True, key=f"outlier_riders_chart_{unique_id}")
+
+def show_stage_by_stage_analysis(scorito_data, unique_id):
+    """Show stage-by-stage analysis"""
+    st.subheader("🏁 Stage-by-Stage Analysis")
+    
+    stage_data = scorito_data['stage_analysis']
+    
+    if not stage_data:
+        st.info("No stage data available")
+        return
+    
+    # Stage overview metrics
+    stages = list(stage_data.keys())
+    total_points = [stage_data[s]['total_points'] for s in stages]
+    avg_points = [stage_data[s]['avg_points'] for s in stages]
+    max_points = [stage_data[s]['max_points'] for s in stages]
+    
+    # Stage points chart
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=stages, y=total_points, mode='lines+markers', 
+                            name='Total Points', line=dict(color='blue')))
+    fig.add_trace(go.Scatter(x=stages, y=avg_points, mode='lines+markers', 
+                            name='Average Points', line=dict(color='green')))
+    fig.add_trace(go.Scatter(x=stages, y=max_points, mode='lines+markers', 
+                            name='Max Points', line=dict(color='red')))
+    
+    fig.update_layout(title="Stage Points Overview", xaxis_title="Stage", yaxis_title="Points",
+                     height=400)
+    st.plotly_chart(fig, use_container_width=True, key=f"stage_overview_chart_{unique_id}")
+    
+    # Stage selector for detailed view
+    selected_stage = st.selectbox("Select Stage for Detailed View:", stages, key=f"stage_selector_{unique_id}")
+    
+    if selected_stage:
+        stage_info = stage_data[selected_stage]
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Points", f"{stage_info['total_points']:,.0f}")
+        
+        with col2:
+            st.metric("Average Points", f"{stage_info['avg_points']:.1f}")
+        
+        with col3:
+            st.metric("Max Points", f"{stage_info['max_points']:.1f}")
+        
+        with col4:
+            st.metric("Standard Deviation", f"{stage_info['points_std']:.1f}")
+        
+        # Top scorers for this stage
+        st.subheader(f"🏆 Top Scorers - Stage {selected_stage}")
+        top_scorers = stage_info['top_scorers']
+        
+        if top_scorers:
+            df_stage = pd.DataFrame(top_scorers)
+            st.dataframe(df_stage, use_container_width=True)
+        
+        # Points distribution for this stage
+        st.subheader(f"📊 Points Distribution - Stage {selected_stage}")
+        distribution = stage_info['points_distribution']
+        
+        if distribution:
+            df_dist = pd.DataFrame(list(distribution.items()), columns=['Range', 'Count'])
+            fig = px.pie(df_dist, values='Count', names='Range', 
+                        title=f"Points Distribution - Stage {selected_stage}")
+            st.plotly_chart(fig, use_container_width=True, key=f"stage_{selected_stage}_distribution_{unique_id}")
+
+def show_price_value_analysis(scorito_data, unique_id):
+    """Show price value analysis"""
+    st.subheader("💰 Price Value Analysis")
+    
+    price_data = scorito_data['price_value_analysis']
+    top_value = scorito_data['top_value_riders']
+    consistency = scorito_data['consistency_analysis']
+    
+    if not price_data:
+        st.info("No price data available")
+        return
+    
+    # Convert to DataFrame for easier manipulation
+    df_price = pd.DataFrame.from_dict(price_data, orient='index')
+    df_price['rider'] = df_price.index
+    
+    # Top value riders
+    st.subheader("💎 Top Value Riders (Points per Euro)")
+    
+    if top_value:
+        df_top_value = pd.DataFrame.from_dict(top_value, orient='index')
+        df_top_value['rider'] = df_top_value.index
+        df_top_value = df_top_value.sort_values('points_per_euro', ascending=False).head(15)
+        
+        fig = px.bar(df_top_value, x='rider', y='points_per_euro',
+                    title="Top 15 Value Riders (Points per Euro)",
+                    color='avg_total_points', color_continuous_scale='viridis',
+                    hover_data=['price', 'avg_total_points', 'team'])
+        fig.update_xaxes(tickangle=45)
+        st.plotly_chart(fig, use_container_width=True, key=f"top_value_riders_chart_{unique_id}")
+    
+    # Consistency analysis
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🎯 Most Consistent Riders")
+        most_consistent = consistency['most_consistent']
+        if most_consistent:
+            df_consistent = pd.DataFrame(most_consistent, columns=['rider', 'data'])
+            df_consistent['consistency'] = df_consistent['data'].apply(lambda x: x['consistency'])
+            df_consistent['avg_points'] = df_consistent['data'].apply(lambda x: x['avg_total_points'])
+            df_consistent['team'] = df_consistent['data'].apply(lambda x: x['team'])
+            
+            st.dataframe(df_consistent[['rider', 'consistency', 'avg_points', 'team']], 
+                        use_container_width=True)
+    
+    with col2:
+        st.subheader("🎲 Least Consistent Riders")
+        least_consistent = consistency['least_consistent']
+        if least_consistent:
+            df_inconsistent = pd.DataFrame(least_consistent, columns=['rider', 'data'])
+            df_inconsistent['consistency'] = df_inconsistent['data'].apply(lambda x: x['consistency'])
+            df_inconsistent['avg_points'] = df_inconsistent['data'].apply(lambda x: x['avg_total_points'])
+            df_inconsistent['team'] = df_inconsistent['data'].apply(lambda x: x['team'])
+            
+            st.dataframe(df_inconsistent[['rider', 'consistency', 'avg_points', 'team']], 
+                        use_container_width=True)
+    
+    # Price vs Points scatter plot
+    st.subheader("📊 Price vs Average Points")
+    
+    fig = px.scatter(df_price, x='price', y='avg_total_points', 
+                    color='team', size='points_per_euro',
+                    hover_data=['rider', 'consistency'],
+                    title="Price vs Average Points (Size = Points per Euro)")
+    st.plotly_chart(fig, use_container_width=True, key=f"price_vs_points_scatter_{unique_id}")
+
+def show_detailed_scorito_stats(scorito_data):
+    """Show detailed Scorito statistics"""
+    st.subheader("📋 Detailed Statistics")
+    
+    basic_stats = scorito_data['basic_stats']
+    
+    # Rider statistics
+    st.subheader("👥 Rider Statistics")
+    
+    if 'total_points_by_rider' in basic_stats:
+        df_riders = pd.DataFrame.from_dict(basic_stats['total_points_by_rider'], 
+                                         orient='index', columns=['Total Points'])
+        df_riders['rider'] = df_riders.index
+        
+        # Add average points
+        if 'avg_points_by_rider' in basic_stats:
+            df_riders['avg_points'] = df_riders['rider'].map(basic_stats['avg_points_by_rider'])
+        
+        # Add standard deviation
+        if 'points_std_by_rider' in basic_stats:
+            df_riders['std_points'] = df_riders['rider'].map(basic_stats['points_std_by_rider'])
+        
+        # Sort by total points
+        df_riders = df_riders.sort_values('Total Points', ascending=False)
+        
+        st.dataframe(df_riders, use_container_width=True)
+    
+    # Team statistics
+    st.subheader("🏢 Team Statistics")
+    
+    if 'points_by_team' in basic_stats:
+        df_teams = pd.DataFrame.from_dict(basic_stats['points_by_team'], 
+                                        orient='index', columns=['Total Points'])
+        df_teams['team'] = df_teams.index
+        df_teams = df_teams.sort_values('Total Points', ascending=False)
+        
+        st.dataframe(df_teams, use_container_width=True)
 
 if __name__ == "__main__":
     main() 

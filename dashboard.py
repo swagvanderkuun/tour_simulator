@@ -200,11 +200,11 @@ def show_overview():
         st.markdown("""
         **📋 5-Step Process:**
         
-        1. **👥 [Rider Management](#rider-management)** - Adjust rider abilities based on recent form
-        2. **🎯 [Single Simulation](#single-simulation)** - Test your settings with one quick simulation  
-        3. **📈 [Multi Simulation](#multi-simulation)** - Run 100+ simulations for reliable predictions
-        4. **⚡ [Team Optimization](#team-optimization)** - Let AI find your perfect team
-        5. **🏁 [Stage Types](#stage-types)** - Fine-tune stage configurations (optional)
+        1. **👥 Rider Management** - Adjust rider abilities based on recent form
+        2. **🎯 Single Simulation** - Test your settings with one quick simulation  
+        3. **📈 Multi Simulation** - Run 100+ simulations for reliable predictions
+        4. **⚡ Team Optimization** - Let AI find your perfect team
+        5. **🏁 Stage Types** - Fine-tune stage configurations (optional)
         """)
     
     with col2:
@@ -242,7 +242,7 @@ def show_overview():
     
     with col1:
         st.markdown("""
-        **🎯 [Single Simulation](#single-simulation)**
+        **🎯 Single Simulation**
         
         Run one complete Tour de France simulation to see how your current settings perform.
         
@@ -255,7 +255,7 @@ def show_overview():
     
     with col2:
         st.markdown("""
-        **📈 [Multi Simulation](#multi-simulation)**
+        **📈 Multi Simulation**
         
         Run hundreds of simulations to get reliable performance predictions for optimization.
         
@@ -268,7 +268,7 @@ def show_overview():
     
     with col3:
         st.markdown("""
-        **⚡ [Team Optimization](#team-optimization)**
+        **⚡ Team Optimization**
         
         AI-powered team selection using advanced optimization algorithms.
         
@@ -283,7 +283,7 @@ def show_overview():
     
     with col1:
         st.markdown("""
-        **👥 [Rider Management](#rider-management)**
+        **👥 Rider Management**
         
         Comprehensive rider data management with interactive tier system.
         
@@ -296,7 +296,7 @@ def show_overview():
     
     with col2:
         st.markdown("""
-        **🏁 [Stage Types](#stage-types)**
+        **🏁 Stage Types**
         
         Configure the 21 Tour de France stages (Sprint, ITT, Mountain, Hills, Punch).
         
@@ -309,7 +309,7 @@ def show_overview():
     
     with col3:
         st.markdown("""
-        **📊 [Results Analysis](#results-analysis)**
+        **📊 Results Analysis**
         
         Deep dive into simulation results and optimization outcomes.
         
@@ -468,7 +468,7 @@ def show_overview():
     st.markdown("""
     ### 🚀 Ready to Build Your Champion Team?
     
-    **Start here**: Head to the [Rider Management](#rider-management) page to adjust rider abilities, then run a [Single Simulation](#single-simulation) to test your settings!
+    **Start here**: Use the sidebar navigation to go to **Rider Management** to adjust rider abilities, then run a **Single Simulation** to test your settings!
     
     **💪 Your Scorito domination starts now!**
     """)
@@ -904,19 +904,6 @@ def show_rider_management():
             </div>
             """, unsafe_allow_html=True)
             
-            # Save Changes button - MOVED TO TOP
-            if st.button("💾 Save Changes", key="save_rider_changes", type="primary"):
-                # Update rider parameters
-                rider.price = new_price
-                rider.chance_of_abandon = new_abandon
-                rider.parameters.sprint_ability = new_sprint
-                rider.parameters.itt_ability = new_itt
-                rider.parameters.mountain_ability = new_mountain
-                rider.parameters.hills_ability = new_hills
-                rider.parameters.punch_ability = new_punch
-                
-                st.success("✅ Rider parameters updated!")
-            
             col1, col2 = st.columns(2)
             
             with col1:
@@ -945,6 +932,19 @@ def show_rider_management():
                 new_mountain = st.slider("Mountain", 0, 100, rider.parameters.mountain_ability, key="edit_mountain")
                 new_hills = st.slider("Hills", 0, 100, rider.parameters.hills_ability, key="edit_hills")
                 new_punch = st.slider("Punch", 0, 100, rider.parameters.punch_ability, key="edit_punch")
+            
+            # Save Changes button - MOVED TO AFTER FORM FIELDS
+            if st.button("💾 Save Changes", key="save_rider_changes", type="primary"):
+                # Update rider parameters
+                rider.price = new_price
+                rider.chance_of_abandon = new_abandon
+                rider.parameters.sprint_ability = new_sprint
+                rider.parameters.itt_ability = new_itt
+                rider.parameters.mountain_ability = new_mountain
+                rider.parameters.hills_ability = new_hills
+                rider.parameters.punch_ability = new_punch
+                
+                st.success("✅ Rider parameters updated!")
     
     with tab5:
         st.subheader("➕ Add New Rider")

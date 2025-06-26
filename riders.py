@@ -617,7 +617,7 @@ class RiderDatabase:
       "hills": "E",
       "punch": "E"
     },
-    "price": 0.5,
+    "price": 1.5,
     "chance_of_abandon": 0.05
   },
   {

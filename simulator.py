@@ -9,8 +9,8 @@ from datetime import datetime
 
 # Points arrays for classifications
 SPRINT_SPRINT_POINTS = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
-HILLS_SPRINT_POINTS = [15, 10, 7, 6, 5, 4, 3, 2, 1, 0]
-HILLS_MOUNTAIN_POINTS = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
+BREAK_AWAY_SPRINT_POINTS = [15, 10, 7, 6, 5, 4, 3, 2, 1, 0]
+BREAK_AWAY_MOUNTAIN_POINTS = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
 MOUNTAIN_MOUNTAIN_POINTS = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
 PUNCH_SPRINT_POINTS = [30, 25, 20, 15, 12, 10, 8, 6, 4, 2]
 PUNCH_MOUNTAIN_POINTS = [10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
@@ -19,7 +19,7 @@ PUNCH_MOUNTAIN_POINTS = [10, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 STAGE_TIME_GAPS = {
     "sprint": 0.1,
     "punch": 0.2,
-    "hills": 1,
+    "break_away": 1,
     "mountain": 20,
     "itt": 5
 }
@@ -97,7 +97,7 @@ class TourSimulator:
                 "punch_ability": rider.parameters.punch_ability,
                 "itt_ability": rider.parameters.itt_ability,
                 "mountain_ability": rider.parameters.mountain_ability,
-                "hills_ability": rider.parameters.hills_ability,
+                "break_away_ability": rider.parameters.break_away_ability,
                 "is_youth": rider.name in self.youth_rider_names,
                 "price": rider.price,
                 "chance_of_abandon": rider.chance_of_abandon
@@ -152,9 +152,9 @@ class TourSimulator:
             if stage_type == "sprint":
                 for idx, result in enumerate(stage.results[:len(SPRINT_SPRINT_POINTS)]):
                     self.sprint_points[result.rider.name] += SPRINT_SPRINT_POINTS[idx]
-            elif stage_type == "hills":
-                for idx, result in enumerate(stage.results[:len(HILLS_SPRINT_POINTS)]):
-                    self.sprint_points[result.rider.name] += HILLS_SPRINT_POINTS[idx]
+            elif stage_type == "break_away":
+                for idx, result in enumerate(stage.results[:len(BREAK_AWAY_SPRINT_POINTS)]):
+                    self.sprint_points[result.rider.name] += BREAK_AWAY_SPRINT_POINTS[idx]
             elif stage_type == "punch":
                 for idx, result in enumerate(stage.results[:len(PUNCH_SPRINT_POINTS)]):
                     self.sprint_points[result.rider.name] += PUNCH_SPRINT_POINTS[idx]
@@ -163,9 +163,9 @@ class TourSimulator:
             if stage_type == "mountain":
                 for idx, result in enumerate(stage.results[:len(MOUNTAIN_MOUNTAIN_POINTS)]):
                     self.mountain_points[result.rider.name] += MOUNTAIN_MOUNTAIN_POINTS[idx]
-            elif stage_type == "hills":
-                for idx, result in enumerate(stage.results[:len(HILLS_MOUNTAIN_POINTS)]):
-                    self.mountain_points[result.rider.name] += HILLS_MOUNTAIN_POINTS[idx]
+            elif stage_type == "break_away":
+                for idx, result in enumerate(stage.results[:len(BREAK_AWAY_MOUNTAIN_POINTS)]):
+                    self.mountain_points[result.rider.name] += BREAK_AWAY_MOUNTAIN_POINTS[idx]
             elif stage_type == "punch":
                 for idx, result in enumerate(stage.results[:len(PUNCH_MOUNTAIN_POINTS)]):
                     self.mountain_points[result.rider.name] += PUNCH_MOUNTAIN_POINTS[idx]

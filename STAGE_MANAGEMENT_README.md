@@ -22,7 +22,7 @@ This tab allows you to change the type of each stage in the Tour de France, whic
 - **Punch**: Short, explosive stages with punchy climbs
 - **Individual Time Trial (ITT)**: Time trial stages
 - **Mountain**: High mountain stages favoring climbers
-- **Hills**: Hilly terrain stages
+- **Break Away**: Break away terrain stages
 
 ### How to Use
 

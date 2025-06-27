@@ -91,7 +91,7 @@ def scrape_with_selenium():
                         "name": rider_name,
                         "team": team_name,
                         "age": age,
-                        "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "hills": "E", "punch": "E"},
+                        "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"},
                         "price": 0.5,
                         "chance_of_abandon": 0.0
                     }

@@ -54,7 +54,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "C"
     },
     "price": 1.5,
@@ -68,7 +68,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -82,7 +82,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.75,
@@ -96,7 +96,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "hills": "C",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -110,7 +110,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "A",
       "mountain": "S",
-      "hills": "A",
+      "break_away": "A",
       "punch": "A"
     },
     "price": 7.5,
@@ -124,7 +124,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "B",
-      "hills": "C",
+      "break_away": "C",
       "punch": "B"
     },
     "price": 4.5,
@@ -138,7 +138,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 2.5,
@@ -152,7 +152,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 2,
@@ -166,7 +166,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 2,
@@ -180,7 +180,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "E"
     },
     "price": 1.5,
@@ -194,7 +194,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "C"
     },
     "price": 2,
@@ -208,7 +208,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1.5,
@@ -222,7 +222,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1.5,
@@ -236,7 +236,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "A",
       "mountain": "B",
-      "hills": "E",
+      "break_away": "E",
       "punch": "C"
     },
     "price": 3.5,
@@ -250,7 +250,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "D"
     },
     "price": 1,
@@ -264,7 +264,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.75,
@@ -278,7 +278,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -292,7 +292,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -306,7 +306,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "B",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 3,
@@ -320,7 +320,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "S",
       "mountain": "A",
-      "hills": "C",
+      "break_away": "C",
       "punch": "C"
     },
     "price": 6,
@@ -334,7 +334,7 @@ class RiderDatabase:
       "sprint": "S",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 3.5,
@@ -348,7 +348,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -362,7 +362,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -376,7 +376,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -390,7 +390,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -404,7 +404,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.75,
@@ -418,7 +418,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -432,7 +432,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -446,7 +446,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "E"
     },
     "price": 0.75,
@@ -460,7 +460,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -474,7 +474,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -488,7 +488,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -502,7 +502,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -516,7 +516,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "C",
       "mountain": "E",
-      "hills": "A",
+      "break_away": "A",
       "punch": "A"
     },
     "price": 2.5,
@@ -530,7 +530,7 @@ class RiderDatabase:
       "sprint": "S",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 4,
@@ -544,7 +544,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 2,
@@ -558,7 +558,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -572,7 +572,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "hills": "B",
+      "break_away": "B",
       "punch": "B"
     },
     "price": 0.75,
@@ -586,7 +586,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "A",
       "mountain": "A",
-      "hills": "D",
+      "break_away": "D",
       "punch": "B"
     },
     "price": 6,
@@ -600,7 +600,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "A",
       "mountain": "E",
-      "hills": "B",
+      "break_away": "B",
       "punch": "B"
     },
     "price": 3.5,
@@ -614,7 +614,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "C",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1.5,
@@ -628,7 +628,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "C",
-      "hills": "B",
+      "break_away": "B",
       "punch": "C"
     },
     "price": 3,
@@ -642,7 +642,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -656,7 +656,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.75,
@@ -670,7 +670,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -684,7 +684,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -698,7 +698,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -712,7 +712,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 2.5,
@@ -726,7 +726,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "A",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -740,7 +740,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 1,
@@ -754,7 +754,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -768,7 +768,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -782,7 +782,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -796,7 +796,7 @@ class RiderDatabase:
       "sprint": "B",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "C"
     },
     "price": 2.5,
@@ -810,7 +810,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -824,7 +824,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -838,7 +838,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -852,7 +852,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -866,7 +866,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -880,7 +880,7 @@ class RiderDatabase:
       "sprint": "A",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 4,
@@ -894,7 +894,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "C",
-      "hills": "C",
+      "break_away": "C",
       "punch": "C"
     },
     "price": 2.5,
@@ -908,7 +908,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -922,7 +922,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -936,7 +936,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -950,7 +950,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -964,7 +964,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -978,7 +978,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "B"
     },
     "price": 1,
@@ -992,7 +992,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1006,7 +1006,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -1020,7 +1020,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1034,7 +1034,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "B"
     },
     "price": 0.75,
@@ -1048,7 +1048,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1062,7 +1062,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -1076,7 +1076,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "C"
     },
     "price": 2,
@@ -1090,7 +1090,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1104,7 +1104,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -1118,7 +1118,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -1132,7 +1132,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -1146,7 +1146,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1160,7 +1160,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.75,
@@ -1174,7 +1174,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1188,7 +1188,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -1202,7 +1202,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 1.5,
@@ -1216,7 +1216,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "D"
     },
     "price": 0.75,
@@ -1230,7 +1230,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1244,7 +1244,7 @@ class RiderDatabase:
       "sprint": "B",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1.5,
@@ -1258,7 +1258,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1272,7 +1272,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1286,7 +1286,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1300,7 +1300,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 1.5,
@@ -1314,7 +1314,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 1.5,
@@ -1328,7 +1328,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1342,7 +1342,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -1356,7 +1356,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1370,7 +1370,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -1384,7 +1384,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1398,7 +1398,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1412,7 +1412,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "D"
     },
     "price": 1.5,
@@ -1426,7 +1426,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 1,
@@ -1440,7 +1440,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1454,7 +1454,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1468,7 +1468,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1482,7 +1482,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1496,7 +1496,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1510,7 +1510,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1524,7 +1524,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1.5,
@@ -1538,7 +1538,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1552,7 +1552,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1566,7 +1566,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1580,7 +1580,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -1594,7 +1594,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1608,7 +1608,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1622,7 +1622,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "C",
+      "break_away": "C",
       "punch": "C"
     },
     "price": 0.75,
@@ -1636,7 +1636,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "D"
     },
     "price": 0.5,
@@ -1650,7 +1650,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.75,
@@ -1664,7 +1664,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1678,7 +1678,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1692,7 +1692,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1706,7 +1706,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "D",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1720,7 +1720,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 0.5,
@@ -1734,7 +1734,7 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "E",
       "mountain": "E",
-      "hills": "E",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 1,
@@ -1751,7 +1751,7 @@ class RiderDatabase:
                 punch_ability=ABILITY_TIERS[rider_info["tiers"]["punch"]],
                 itt_ability=ABILITY_TIERS[rider_info["tiers"]["itt"]],
                 mountain_ability=ABILITY_TIERS[rider_info["tiers"]["mountain"]],
-                hills_ability=ABILITY_TIERS[rider_info["tiers"]["hills"]]
+                break_away_ability=ABILITY_TIERS[rider_info["tiers"]["break_away"]]
             )
             self.riders.append(Rider(
                 rider_info["name"],

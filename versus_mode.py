@@ -63,7 +63,7 @@ class VersusMode:
                 'punch_ability': rider.parameters.punch_ability,
                 'itt_ability': rider.parameters.itt_ability,
                 'mountain_ability': rider.parameters.mountain_ability,
-                'hills_ability': rider.parameters.hills_ability,
+                'break_away_ability': rider.parameters.break_away_ability,
                 'chance_of_abandon': rider.chance_of_abandon
             })
         
@@ -495,14 +495,14 @@ def interactive_team_selection() -> List[str]:
     
     for team_name, team_riders in teams:
         print(f"\n{team_name}:")
-        print(f"{'Name':<25} {'Age':<4} {'Price':<6} {'Sprint':<6} {'Punch':<6} {'ITT':<6} {'Mountain':<8} {'Hills':<6}")
+        print(f"{'Name':<25} {'Age':<4} {'Price':<6} {'Sprint':<6} {'Punch':<6} {'ITT':<6} {'Mountain':<8} {'Break Away':<10}")
         print("-" * 75)
         
         for _, rider in team_riders.iterrows():
             selected_mark = "✓" if rider['name'] in selected_riders else " "
             print(f"{selected_mark} {rider['name']:<24} {rider['age']:<4} {rider['price']:<6.1f} "
                   f"{rider['sprint_ability']:<6.1f} {rider['punch_ability']:<6.1f} "
-                  f"{rider['itt_ability']:<6.1f} {rider['mountain_ability']:<8.1f} {rider['hills_ability']:<6.1f}")
+                  f"{rider['itt_ability']:<6.1f} {rider['mountain_ability']:<8.1f} {rider['break_away_ability']:<10.1f}")
     
     print(f"\nSelected riders: {len(selected_riders)}/20")
     print(f"Remaining budget: {remaining_budget:.1f}")

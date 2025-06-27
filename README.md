@@ -45,7 +45,7 @@ The dashboard will open in your default web browser at `http://localhost:8501`.
 
 ### Simulator (`simulator.py`)
 - Complete Tour de France simulation engine
-- Realistic stage types (sprint, mountain, hills, punch, ITT)
+- Realistic stage types (sprint, mountain, break away, punch, ITT)
 - Multiple classifications (GC, Sprint, Mountain, Youth)
 - Crash and abandonment simulation
 - Scorito points calculation
@@ -63,7 +63,7 @@ The dashboard will open in your default web browser at `http://localhost:8501`.
 
 ### Rider Database (`riders.py`)
 - Comprehensive rider database with realistic parameters
-- Performance attributes (sprint, ITT, mountain, hills, punch)
+- Performance attributes (sprint, ITT, mountain, break away, punch)
 - Team affiliations and pricing
 - Age-based youth classification
 

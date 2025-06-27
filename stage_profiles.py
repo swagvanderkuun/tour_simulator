@@ -11,7 +11,7 @@ class StageType(Enum):
     PUNCH = "punch"
     ITT = "itt"
     MOUNTAIN = "mountain"
-    HILLS = "hills"
+    BREAK_AWAY = "break_away"
 
 # Stage profiles for the Tour de France 2025
 STAGE_PROFILES = {
@@ -25,16 +25,16 @@ STAGE_PROFILES = {
     8: StageType.SPRINT,
     9: StageType.SPRINT,
     10: StageType.MOUNTAIN,
-    11: StageType.HILLS,
+    11: StageType.BREAK_AWAY,
     12: StageType.MOUNTAIN,
     13: StageType.MOUNTAIN,  # Mountain ITT
     14: StageType.MOUNTAIN,
-    15: StageType.HILLS,
+    15: StageType.BREAK_AWAY,
     16: StageType.MOUNTAIN,
     17: StageType.SPRINT,
     18: StageType.MOUNTAIN,
     19: StageType.MOUNTAIN,
-    20: StageType.HILLS,
+    20: StageType.BREAK_AWAY,
     21: StageType.SPRINT
 }
 

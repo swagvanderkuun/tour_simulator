@@ -115,7 +115,7 @@ def inject_rider_database(simulator, rider_db):
             "punch_ability": rider.parameters.punch_ability,
             "itt_ability": rider.parameters.itt_ability,
             "mountain_ability": rider.parameters.mountain_ability,
-            "hills_ability": rider.parameters.hills_ability,
+            "break_away_ability": rider.parameters.break_away_ability,
             "is_youth": rider.name in simulator.youth_rider_names,
             "price": rider.price,
             "chance_of_abandon": rider.chance_of_abandon
@@ -302,7 +302,7 @@ def show_overview():
         st.markdown("""
         **🏁 Stage Types**
         
-        Configure the 21 Tour de France stages (Sprint, ITT, Mountain, Hills, Punch).
+        Configure the 21 Tour de France stages (Sprint, ITT, Mountain, Break Away, Punch).
         
         **Key Features:**
         • Visual stage type grid
@@ -359,10 +359,10 @@ def show_overview():
         for rider in st.session_state.rider_db.get_all_riders():
             abilities = [
                 rider.parameters.sprint_ability,
+                rider.parameters.punch_ability,
                 rider.parameters.itt_ability,
                 rider.parameters.mountain_ability,
-                rider.parameters.hills_ability,
-                rider.parameters.punch_ability
+                rider.parameters.break_away_ability
             ]
             max_ability = max(abilities)
             if max_ability >= 98:
@@ -947,7 +947,8 @@ def show_rider_management():
                 'Sprint': ability_to_tier(rider.parameters.sprint_ability),
                 'ITT': ability_to_tier(rider.parameters.itt_ability),
                 'Mountain': ability_to_tier(rider.parameters.mountain_ability),
-                'Hills': ability_to_tier(rider.parameters.hills_ability),
+                'Break Away': ability_to_tier(rider.parameters.break_away_ability),
+                'Break Away': ability_to_tier(rider.parameters.break_away_ability),
                 'Punch': ability_to_tier(rider.parameters.punch_ability),
                 'Abandon Chance': f"{rider.chance_of_abandon:.2%}"
             })
@@ -963,7 +964,7 @@ def show_rider_management():
         with col2:
             price_filter = st.slider("💰 Price range", float(df['Price'].min()), float(df['Price'].max()), (0.0, 10.0), key="view_price_filter")
         with col3:
-            ability_filter = st.selectbox("⚡ Filter by ability", ["All", "Sprint", "ITT", "Mountain", "Hills", "Punch"], key="view_ability_filter")
+            ability_filter = st.selectbox("⚡ Filter by ability", ["All", "Sprint", "ITT", "Mountain", "Break Away", "Punch"], key="view_ability_filter")
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Export riders - MOVED TO TOP
@@ -1021,7 +1022,7 @@ def show_rider_management():
             teams_count = filtered_df['Team'].nunique()
             st.metric("🏢 Teams", teams_count)
         with col4:
-            top_tier_count = len(filtered_df[filtered_df[['Sprint', 'ITT', 'Mountain', 'Hills', 'Punch']].isin(['S', 'A']).any(axis=1)])
+            top_tier_count = len(filtered_df[filtered_df[['Sprint', 'ITT', 'Mountain', 'Break Away', 'Punch']].isin(['S', 'A']).any(axis=1)])
             st.metric("⭐ Top Tier", top_tier_count)
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -1041,7 +1042,7 @@ def show_rider_management():
             return colors.get(val, '')
         
         # Apply styling
-        styled_df = filtered_df.style.applymap(style_tier, subset=['Sprint', 'ITT', 'Mountain', 'Hills', 'Punch'])
+        styled_df = filtered_df.style.applymap(style_tier, subset=['Sprint', 'ITT', 'Mountain', 'Break Away', 'Punch'])
         
         # Display with custom styling
         st.dataframe(
@@ -1082,7 +1083,8 @@ def show_rider_management():
                     "Sprint": rider.parameters.sprint_ability,
                     "ITT": rider.parameters.itt_ability,
                     "Mountain": rider.parameters.mountain_ability,
-                    "Hills": rider.parameters.hills_ability,
+                    "Break Away": rider.parameters.break_away_ability,
+                    "Break Away": rider.parameters.break_away_ability,
                     "Punch": rider.parameters.punch_ability
                 }
                 
@@ -1095,7 +1097,8 @@ def show_rider_management():
                 new_sprint = st.slider("Sprint", 0, 100, rider.parameters.sprint_ability, key="edit_sprint")
                 new_itt = st.slider("ITT", 0, 100, rider.parameters.itt_ability, key="edit_itt")
                 new_mountain = st.slider("Mountain", 0, 100, rider.parameters.mountain_ability, key="edit_mountain")
-                new_hills = st.slider("Hills", 0, 100, rider.parameters.hills_ability, key="edit_hills")
+                new_break_away = st.slider("Break Away", 0, 100, rider.parameters.break_away_ability, key="edit_break_away")
+                
                 new_punch = st.slider("Punch", 0, 100, rider.parameters.punch_ability, key="edit_punch")
             
             # Save Changes button - MOVED TO AFTER FORM FIELDS
@@ -1106,7 +1109,8 @@ def show_rider_management():
                 rider.parameters.sprint_ability = new_sprint
                 rider.parameters.itt_ability = new_itt
                 rider.parameters.mountain_ability = new_mountain
-                rider.parameters.hills_ability = new_hills
+                rider.parameters.break_away_ability = new_break_away
+                
                 rider.parameters.punch_ability = new_punch
                 
                 st.success("✅ Rider parameters updated!")
@@ -1129,7 +1133,8 @@ def show_rider_management():
             new_sprint = st.slider("Sprint ability", 0, 100, 50, key="add_sprint")
             new_itt = st.slider("ITT ability", 0, 100, 50, key="add_itt")
             new_mountain = st.slider("Mountain ability", 0, 100, 50, key="add_mountain")
-            new_hills = st.slider("Hills ability", 0, 100, 50, key="add_hills")
+            new_break_away = st.slider("Break Away ability", 0, 100, 50, key="add_break_away")
+            
             new_punch = st.slider("Punch ability", 0, 100, 50, key="add_punch")
         
         # Add Rider button - MOVED TO TOP AFTER FORM FIELDS
@@ -1140,7 +1145,8 @@ def show_rider_management():
                     sprint_ability=new_sprint,
                     itt_ability=new_itt,
                     mountain_ability=new_mountain,
-                    hills_ability=new_hills,
+                    break_away_ability=new_break_away,
+                    
                     punch_ability=new_punch
                 )
                 
@@ -1318,7 +1324,7 @@ def show_tier_maker():
     # Skill category selector with fancy styling
     st.markdown('<div class="skill-selector">', unsafe_allow_html=True)
     st.write("**🎯 Select Skill Category**")
-    skill_categories = ["Sprint", "ITT", "Mountain", "Hills", "Punch"]
+    skill_categories = ["Sprint", "ITT", "Mountain", "Break Away", "Punch"]
     selected_skill = st.selectbox("Choose the skill to manage tiers for:", skill_categories, key="tier_skill_select")
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1349,26 +1355,30 @@ def show_tier_maker():
     # Get current tiers for selected skill
     def get_skill_ability(rider, skill):
         if skill == "Sprint":
-            return rider.parameters.sprint_ability
+            return rider.parameters.punch_ability
         elif skill == "ITT":
             return rider.parameters.itt_ability
         elif skill == "Mountain":
             return rider.parameters.mountain_ability
-        elif skill == "Hills":
-            return rider.parameters.hills_ability
+        elif skill == "Break Away":
+            return rider.parameters.break_away_ability
+        elif skill == "Break Away":
+            return rider.parameters.break_away_ability
         elif skill == "Punch":
             return rider.parameters.punch_ability
         return 0
     
     def set_skill_ability(rider, skill, ability):
         if skill == "Sprint":
-            rider.parameters.sprint_ability = ability
+            rider.parameters.punch_ability = ability
         elif skill == "ITT":
             rider.parameters.itt_ability = ability
         elif skill == "Mountain":
             rider.parameters.mountain_ability = ability
-        elif skill == "Hills":
-            rider.parameters.hills_ability = ability
+        elif skill == "Break Away":
+            rider.parameters.break_away_ability = ability
+        elif skill == "Break Away":
+            rider.parameters.break_away_ability = ability
         elif skill == "Punch":
             rider.parameters.punch_ability = ability
     
@@ -2427,7 +2437,7 @@ def show_stage_types_management():
         StageType.PUNCH: "Punch", 
         StageType.ITT: "Individual Time Trial",
         StageType.MOUNTAIN: "Mountain",
-        StageType.HILLS: "Hills"
+        StageType.BREAK_AWAY: "Break Away"
     }
     
     # Display current stage types
@@ -2886,7 +2896,7 @@ def show_versus_mode():
     # Show selected riders with remove option
     if st.session_state['versus_selected_riders']:
         st.subheader("Selected Riders")
-        selected_display = selected_df[['name', 'team', 'age', 'price', 'sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].copy()
+        selected_display = selected_df[['name', 'team', 'age', 'price', 'sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].copy()
         selected_display['Remove'] = [f"❌ {name}" for name in selected_display['name']]
         
         # Create a simple display with remove buttons
@@ -2902,8 +2912,8 @@ def show_versus_mode():
             with col3:
                 itt_tier = ability_to_tier(row['itt_ability'])
                 mountain_tier = ability_to_tier(row['mountain_ability'])
-                st.write(f"ITT: {tier_to_color(itt_tier)} {itt_tier}")
-                st.write(f"Mountain: {tier_to_color(mountain_tier)} {mountain_tier}")
+                st.write(f"Break Away: {tier_to_color(mountain_tier)} {mountain_tier}")
+                st.write(f"Break Away: {tier_to_color(break_away_tier)} {break_away_tier}")
                 if st.button(f"Remove {row['name']}", key=f"selected_remove_{row['name']}"):
                     st.session_state['versus_selected_riders'].remove(row['name'])
                     st.rerun()
@@ -2917,7 +2927,7 @@ def show_versus_mode():
     # Specialty filter
     specialty_filter = st.selectbox(
         "Filter by specialty:",
-        ["All", "Sprint", "Punch", "ITT", "Mountain", "Hills"]
+        ["All", "Sprint", "Punch", "ITT", "Mountain", "Break Away"]
     )
     
     # Group by team
@@ -2938,8 +2948,8 @@ def show_versus_mode():
         
         # Apply specialty filter
         if specialty_filter != "All":
-            team_riders['max_ability'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].max(axis=1)
-            team_riders['specialty'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].idxmax(axis=1)
+            team_riders['max_ability'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].max(axis=1)
+            team_riders['specialty'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].idxmax(axis=1)
             team_riders = team_riders[team_riders['specialty'] == specialty_filter.lower() + '_ability']
         
         if len(team_riders) == 0:
@@ -2955,11 +2965,11 @@ def show_versus_mode():
                 st.warning(f"Maximum 4 riders already selected from {team_name}")
             
             # Sort riders by specialty (highest ability first)
-            team_riders['max_ability'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].max(axis=1)
+            team_riders['max_ability'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].max(axis=1)
             team_riders = team_riders.sort_values('max_ability', ascending=False)
             
             # Group riders by specialty for better organization
-            team_riders['specialty'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].idxmax(axis=1)
+            team_riders['specialty'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].idxmax(axis=1)
             specialty_groups = team_riders.groupby('specialty')
             
             for specialty, specialty_riders in specialty_groups:
@@ -2977,7 +2987,8 @@ def show_versus_mode():
                         'Punch': rider['punch_ability'],
                         'ITT': rider['itt_ability'],
                         'Mountain': rider['mountain_ability'],
-                        'Hills': rider['hills_ability']
+                        'Break Away': rider['break_away_ability'],
+                        'Break Away': rider['break_away_ability']
                     }
                     specialty = max(abilities, key=abilities.get)
                     specialty_value = abilities[specialty]
@@ -3002,8 +3013,8 @@ def show_versus_mode():
                         with col3:
                             itt_tier = ability_to_tier(rider['itt_ability'])
                             mountain_tier = ability_to_tier(rider['mountain_ability'])
-                            st.markdown(f"**ITT:** {tier_to_color(itt_tier)} {itt_tier}")
-                            st.markdown(f"**Mountain:** {tier_to_color(mountain_tier)} {mountain_tier}")
+                            st.markdown(f"**Break Away:** {tier_to_color(mountain_tier)} {mountain_tier}")
+                            st.markdown(f"**Break Away:** {tier_to_color(break_away_tier)} {break_away_tier}")
                         
                         with col4:
                             if is_selected:

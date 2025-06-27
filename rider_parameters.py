@@ -40,7 +40,7 @@ class RiderParameters:
     punch_ability: int   # Ability in punchy stages
     itt_ability: int     # Time trial ability
     mountain_ability: int  # Climbing ability in high mountains
-    hills_ability: int     # Ability in hilly terrain
+    break_away_ability: int     # Ability in break away terrain
 
     def get_probability_range(self, stage_type: str) -> Tuple[float, float, float]:
         """
@@ -79,7 +79,7 @@ class RiderParameters:
             "punch": self.punch_ability,
             "itt": self.itt_ability,
             "mountain": self.mountain_ability,
-            "hills": self.hills_ability
+            "break_away": self.break_away_ability
         }[stage_type]
 
         # Get base probabilities

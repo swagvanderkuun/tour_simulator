@@ -17,7 +17,7 @@ You can edit rider abilities for five different skill categories:
 - **Sprint**: Sprinting ability for flat stages and bunch sprints
 - **Individual Time Trial (ITT)**: Time trial performance
 - **Mountain**: Climbing ability for mountain stages
-- **Hills**: Performance on hilly terrain
+- **Break Away**: Performance in break away situations
 - **Punch**: Short, explosive efforts and punchy climbs
 
 ### 🏅 Tier System

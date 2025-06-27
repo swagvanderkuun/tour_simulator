@@ -18,6 +18,7 @@ from riders import RiderDatabase, Rider
 from rider_parameters import RiderParameters, get_tier_parameters, update_tier_parameters
 from multi_simulator import MultiSimulationAnalyzer
 from versus_mode import VersusMode
+from stage_profiles import StageType
 
 # Page configuration
 st.set_page_config(
@@ -120,6 +121,18 @@ def inject_rider_database(simulator, rider_db):
             "price": rider.price,
             "chance_of_abandon": rider.chance_of_abandon
         })
+
+def inject_stage_profiles(simulator):
+    """Helper function to inject current stage profiles into a simulator"""
+    # Import the stage profiles module
+    import stage_profiles
+    
+    # Get current stage profiles from session state (if available) or use defaults
+    if 'stage_profiles_edit' in st.session_state:
+        # Update the actual STAGE_PROFILES with current dashboard settings
+        stage_profiles.STAGE_PROFILES.update(st.session_state.stage_profiles_edit)
+    
+    # The simulator will now use the updated stage profiles since it imports from stage_profiles
 
 def main():
     # Custom CSS for better styling
@@ -2366,7 +2379,7 @@ def show_optimization_results(optimization_data):
 
 def run_optimizer_simulation(optimizer, num_simulations, rider_db):
     """
-    Custom run_simulation method that uses the modified rider database
+    Custom run_simulation method that uses the modified rider database and current stage profiles
     """
     print(f"Running {num_simulations} simulations to calculate expected points...")
     
@@ -2388,9 +2401,10 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db):
                 'simulation': i
             })
         
-        # Reset simulator for next run but keep the modified rider database
+        # Reset simulator for next run but keep the modified rider database and stage profiles
         optimizer.simulator = TourSimulator()
         inject_rider_database(optimizer.simulator, rider_db)
+        inject_stage_profiles(optimizer.simulator)
     
     # Calculate expected points for each rider
     points_df = pd.DataFrame(all_points)
@@ -2421,11 +2435,13 @@ def show_stage_types_management():
     st.header("🏁 Stage Types Management")
     st.markdown("""
     **Manage the stage types for each stage of the Tour de France.**
-    Changes here will affect how riders perform in simulations.
+    
+    **Create mixed stage types with weights!** For example, a stage can be 60% punch and 40% sprint.
+    All weights must sum to 1.0 (100%).
     """)
     
     # Import stage profiles
-    from stage_profiles import STAGE_PROFILES, StageType
+    from stage_profiles import STAGE_PROFILES, StageType, validate_stage_profile, update_stage_profile
     
     # Create a copy of stage profiles for editing
     if 'stage_profiles_edit' not in st.session_state:
@@ -2440,89 +2456,155 @@ def show_stage_types_management():
         StageType.BREAK_AWAY: "Break Away"
     }
     
-    # Display current stage types
-    st.markdown("### Current Stage Types")
+    # Show advanced stage configuration
+    show_advanced_stage_config(stage_type_options)
+    
+    # Stage type summary
+    st.markdown("---")
+    st.markdown("### Stage Type Summary")
+    show_stage_summary(stage_type_options)
+    
+    # Controls
+    st.markdown("---")
+    show_stage_controls(stage_type_options)
+
+def show_advanced_stage_config(stage_type_options):
+    """Show advanced mixed-type stage configuration"""
+    st.markdown("#### Stage Configuration")
+    st.markdown("Create mixed stage types with weights. All weights must sum to 1.0 (100%).")
     
     # Create a list layout for stages
     for i in range(21):  # 21 stages
         stage_num = i + 1
         
-        # Create a container for each stage
-        with st.container():
-            col1, col2, col3 = st.columns([1, 3, 1])
+        # Get current stage profile
+        current_profile = st.session_state.stage_profiles_edit.get(stage_num, {StageType.SPRINT: 1.0})
+        
+        # Ensure it's a dict
+        if not isinstance(current_profile, dict):
+            current_profile = {current_profile: 1.0}
+        
+        # Create insightful expander title
+        # Find primary type (highest weight)
+        primary_type = max(current_profile.items(), key=lambda x: x[1])[0]
+        primary_weight = current_profile[primary_type]
+        
+        # Count active types (weight > 0)
+        active_types = [st for st, w in current_profile.items() if w > 0]
+        
+        if len(active_types) == 1:
+            # Single type stage
+            expander_title = f"Stage {stage_num} - {stage_type_options[primary_type]} (100%)"
+        else:
+            # Mixed stage
+            profile_summary = ", ".join([f"{stage_type_options[st]}: {w:.0%}" for st, w in current_profile.items() if w > 0])
+            expander_title = f"Stage {stage_num} - Mixed: {profile_summary}"
+        
+        with st.expander(expander_title, expanded=False):
+            # Create weight inputs for each stage type
+            new_profile = {}
+            total_weight = 0.0
             
-            with col1:
-                st.markdown(f"**Stage {stage_num}**")
+            st.markdown("**Set weights for each stage type (must sum to 1.0):**")
             
-            with col2:
-                # Get current stage type
-                current_type = st.session_state.stage_profiles_edit.get(stage_num, StageType.SPRINT)
+            cols = st.columns(len(stage_type_options))
+            for idx, (stage_type, stage_name) in enumerate(stage_type_options.items()):
+                with cols[idx]:
+                    current_weight = current_profile.get(stage_type, 0.0)
+                    weight = st.number_input(
+                        f"{stage_name}",
+                        min_value=0.0,
+                        max_value=1.0,
+                        value=float(current_weight),
+                        step=0.05,  # Changed from 0.1 to 0.05 for finer control
+                        key=f"weight_{stage_num}_{stage_type.value}"
+                    )
+                    new_profile[stage_type] = weight
+                    total_weight += weight
+            
+            # Show total weight
+            st.markdown(f"**Total Weight: {total_weight:.2f}**")
+            
+            # Validate and update
+            if abs(total_weight - 1.0) < 0.001:  # Allow small floating point errors
+                if new_profile != current_profile:
+                    st.session_state.stage_profiles_edit[stage_num] = new_profile
+                    st.success(f"✅ Stage {stage_num} updated with mixed profile")
+                    st.rerun()  # Refresh to update the expander title
                 
-                # Create selectbox for stage type
-                # Handle the case where current_type might not be in the options
-                try:
-                    current_index = list(stage_type_options.keys()).index(current_type)
-                except ValueError:
-                    # If current_type is not in options, default to first option
-                    current_index = 0
-                    current_type = list(stage_type_options.keys())[0]
-                    st.session_state.stage_profiles_edit[stage_num] = current_type
+                # Show the profile
+                profile_text = ", ".join([f"{stage_type_options[st]}: {w:.2f}" for st, w in new_profile.items() if w > 0])
+                st.markdown(f"**Current Profile:** {profile_text}")
+            else:
+                st.error(f"❌ Weights must sum to 1.0 (currently {total_weight:.2f})")
                 
-                new_type = st.selectbox(
-                    f"Select stage type for Stage {stage_num}",
-                    options=list(stage_type_options.keys()),
-                    format_func=lambda x: stage_type_options[x],
-                    index=current_index,
-                    key=f"stage_type_{stage_num}",
-                    label_visibility="collapsed"
-                )
-                
-                # Update if changed
-                if new_type != current_type:
-                    st.session_state.stage_profiles_edit[stage_num] = new_type
-                    st.success(f"✅ Updated to {stage_type_options[new_type]}")
-            
-            with col3:
-                # Show current selection
-                st.markdown(f"*{stage_type_options[current_type]}*")
-            
-            # Add a small divider between stages
-            if stage_num < 21:
-                st.divider()
-    
-    # Stage type summary
-    st.markdown("---")
-    st.markdown("### Stage Type Summary")
-    
+                # Auto-normalize option
+                if st.button(f"Auto-normalize Stage {stage_num}", key=f"normalize_{stage_num}"):
+                    if total_weight > 0:
+                        normalized_profile = {st: w/total_weight for st, w in new_profile.items()}
+                        st.session_state.stage_profiles_edit[stage_num] = normalized_profile
+                        st.success(f"✅ Stage {stage_num} normalized")
+                        st.rerun()
+
+def show_stage_summary(stage_type_options):
+    """Show summary of stage types"""
+    # Calculate type distribution
     type_counts = {}
-    for stage_type in stage_type_options.keys():
-        type_counts[stage_type] = sum(1 for st in st.session_state.stage_profiles_edit.values() if st == stage_type)
+    mixed_stages = []
+    
+    for stage_num in range(1, 22):
+        profile = st.session_state.stage_profiles_edit.get(stage_num, {StageType.SPRINT: 1.0})
+        
+        if isinstance(profile, dict):
+            # Count each type with its weight
+            for stage_type, weight in profile.items():
+                if stage_type not in type_counts:
+                    type_counts[stage_type] = 0
+                type_counts[stage_type] += weight
+            
+            # Check if it's a mixed stage
+            if len([w for w in profile.values() if w > 0]) > 1:
+                mixed_stages.append(stage_num)
+        else:
+            # Legacy single type
+            if profile not in type_counts:
+                type_counts[profile] = 0
+            type_counts[profile] += 1
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("**Current Distribution:**")
         for stage_type, count in type_counts.items():
-            st.write(f"• {stage_type_options[stage_type]}: {count} stages")
+            st.write(f"• {stage_type_options[stage_type]}: {count:.1f} stages")
+        
+        if mixed_stages:
+            st.markdown(f"**Mixed Stages:** {', '.join(map(str, mixed_stages))}")
+        else:
+            st.markdown("**Mixed Stages:** None")
     
     with col2:
         # Create pie chart
-        fig = go.Figure(data=[go.Pie(
-            labels=[stage_type_options[st] for st in type_counts.keys()],
-            values=list(type_counts.values()),
-            hole=0.3
-        )])
-        
-        fig.update_layout(
-            title="Stage Type Distribution",
-            height=400
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        if type_counts:
+            fig = go.Figure(data=[go.Pie(
+                labels=[stage_type_options[st] for st in type_counts.keys()],
+                values=list(type_counts.values()),
+                hole=0.3
+            )])
+            
+            fig.update_layout(
+                title="Stage Type Distribution",
+                height=400
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+
+def show_stage_controls(stage_type_options):
+    """Show stage management controls"""
+    # Import required functions
+    from stage_profiles import STAGE_PROFILES, validate_stage_profile
     
-    # Controls
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         if st.button("🔄 Reset to Default", key="reset_stage_types"):
@@ -2534,12 +2616,26 @@ def show_stage_types_management():
             # Create export data
             export_data = []
             for stage_num in range(1, 22):
-                stage_type = st.session_state.stage_profiles_edit.get(stage_num, StageType.SPRINT)
-                export_data.append({
-                    'Stage': stage_num,
-                    'Type': stage_type_options[stage_type],
-                    'Type_Value': stage_type.value
-                })
+                profile = st.session_state.stage_profiles_edit.get(stage_num, {StageType.SPRINT: 1.0})
+                
+                if isinstance(profile, dict):
+                    # Mixed stage
+                    for stage_type, weight in profile.items():
+                        if weight > 0:
+                            export_data.append({
+                                'Stage': stage_num,
+                                'Type': stage_type_options[stage_type],
+                                'Weight': weight,
+                                'Type_Value': stage_type.value
+                            })
+                else:
+                    # Single type
+                    export_data.append({
+                        'Stage': stage_num,
+                        'Type': stage_type_options[profile],
+                        'Weight': 1.0,
+                        'Type_Value': profile.value
+                    })
             
             df = pd.DataFrame(export_data)
             csv = df.to_csv(index=False)
@@ -2552,10 +2648,36 @@ def show_stage_types_management():
     
     with col3:
         if st.button("💾 Apply Changes", key="apply_stage_changes"):
-            # Update the actual stage profiles
-            import stage_profiles
-            stage_profiles.STAGE_PROFILES.update(st.session_state.stage_profiles_edit)
-            st.success("✅ Stage types updated! Changes will apply to new simulations.")
+            # Validate all profiles
+            invalid_stages = []
+            for stage_num in range(1, 22):
+                profile = st.session_state.stage_profiles_edit.get(stage_num, {StageType.SPRINT: 1.0})
+                if isinstance(profile, dict) and not validate_stage_profile(profile):
+                    invalid_stages.append(stage_num)
+            
+            if invalid_stages:
+                st.error(f"❌ Invalid profiles for stages: {invalid_stages}. Weights must sum to 1.0.")
+            else:
+                # Update the actual stage profiles
+                import stage_profiles
+                stage_profiles.STAGE_PROFILES.update(st.session_state.stage_profiles_edit)
+                st.success("✅ Stage types updated! Changes will apply to new simulations.")
+    
+    with col4:
+        if st.button("🎲 Quick Mix Examples", key="quick_mix_examples"):
+            # Apply some example mixed stages
+            examples = {
+                4: {StageType.PUNCH: 0.6, StageType.SPRINT: 0.4},  # Hilly sprint
+                8: {StageType.SPRINT: 0.5, StageType.PUNCH: 0.3, StageType.BREAK_AWAY: 0.2},  # Complex
+                13: {StageType.BREAK_AWAY: 0.3, StageType.MOUNTAIN: 0.7},  # Mountain with breakaway
+                16: {StageType.MOUNTAIN: 0.8, StageType.BREAK_AWAY: 0.2}  # Mountain with opportunities
+            }
+            
+            for stage_num, profile in examples.items():
+                st.session_state.stage_profiles_edit[stage_num] = profile
+            
+            st.success("✅ Applied example mixed stages to stages 4, 8, 13, and 16!")
+            st.rerun()
 
 def show_scorito_analysis_dashboard(metrics):
     """Display comprehensive Scorito points analysis"""

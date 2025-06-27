@@ -1,6 +1,7 @@
 """
 Stage profiles for the Tour de France 2025.
-Each stage is categorized by its type, which affects how rider parameters influence their probability distributions.
+Each stage can be a mix of different types with weights that sum to 1.
+This affects how rider parameters influence their probability distributions.
 """
 
 from enum import Enum
@@ -14,34 +15,53 @@ class StageType(Enum):
     BREAK_AWAY = "break_away"
 
 # Stage profiles for the Tour de France 2025
+# Each stage can be a mix of different types with weights that sum to 1
 STAGE_PROFILES = {
-    1: StageType.SPRINT,
-    2: StageType.PUNCH,
-    3: StageType.SPRINT,
-    4: StageType.PUNCH,
-    5: StageType.ITT,
-    6: StageType.PUNCH,
-    7: StageType.PUNCH,
-    8: StageType.SPRINT,
-    9: StageType.SPRINT,
-    10: StageType.MOUNTAIN,
-    11: StageType.BREAK_AWAY,
-    12: StageType.MOUNTAIN,
-    13: StageType.MOUNTAIN,  # Mountain ITT
-    14: StageType.MOUNTAIN,
-    15: StageType.BREAK_AWAY,
-    16: StageType.MOUNTAIN,
-    17: StageType.SPRINT,
-    18: StageType.MOUNTAIN,
-    19: StageType.MOUNTAIN,
-    20: StageType.BREAK_AWAY,
-    21: StageType.SPRINT
+    1: {StageType.SPRINT: 1.0},
+    2: {StageType.PUNCH: 0.8, StageType.SPRINT: 0.2},
+    3: {StageType.SPRINT: 1.0},
+    4: {StageType.PUNCH: 0.7, StageType.SPRINT: 0.3},
+    5: {StageType.ITT: 1.0},
+    6: {StageType.PUNCH: 0.7, StageType.SPRINT: 0.1, StageType.MOUNTAIN: 0.2},
+    7: {StageType.PUNCH: 0.7, StageType.MOUNTAIN: 0.3},
+    8: {StageType.SPRINT: 0.9, StageType.PUNCH: 0.1},
+    9: {StageType.SPRINT: 1.0},
+    10: {StageType.MOUNTAIN: 0.5, StageType.BREAK_AWAY: 0.5},
+    11: {StageType.BREAK_AWAY: 0.2, StageType.SPRINT: 0.2, StageType.PUNCH: 0.6},
+    12: {StageType.MOUNTAIN: 1.0},
+    13: {StageType.ITT: 0.2, StageType.MOUNTAIN: 0.8},
+    14: {StageType.MOUNTAIN: 1.0},
+    15: {StageType.BREAK_AWAY: 0.8, StageType.SPRINT: 0.2},
+    16: {StageType.MOUNTAIN: 1.0},
+    17: {StageType.BREAK_AWAY: 0.5, StageType.SPRINT: 0.5},
+    18: {StageType.MOUNTAIN: 1.0},
+    19: {StageType.MOUNTAIN: 1.0},
+    20: {StageType.BREAK_AWAY: 0.8, StageType.SPRINT: 0.2},
+    21: {StageType.SPRINT: 0.6, StageType.PUNCH: 0.4}
 }
 
-def get_stage_type(stage_number: int) -> StageType:
-    """Get the type of a specific stage."""
+def get_stage_profile(stage_number: int) -> Dict[StageType, float]:
+    """Get the weighted profile of a specific stage."""
     return STAGE_PROFILES[stage_number]
 
+def get_stage_type(stage_number: int) -> StageType:
+    """Get the primary type of a specific stage (for backward compatibility)."""
+    profile = STAGE_PROFILES[stage_number]
+    # Return the stage type with the highest weight
+    return max(profile.items(), key=lambda x: x[1])[0]
+
 def get_stages_of_type(stage_type: StageType) -> List[int]:
-    """Get all stage numbers of a specific type."""
-    return [stage for stage, type_ in STAGE_PROFILES.items() if type_ == stage_type] 
+    """Get all stage numbers where a specific type has the highest weight."""
+    return [stage for stage, profile in STAGE_PROFILES.items() 
+            if max(profile.items(), key=lambda x: x[1])[0] == stage_type]
+
+def validate_stage_profile(profile: Dict[StageType, float]) -> bool:
+    """Validate that stage profile weights sum to 1.0."""
+    total_weight = sum(profile.values())
+    return abs(total_weight - 1.0) < 0.001  # Allow small floating point errors
+
+def update_stage_profile(stage_number: int, profile: Dict[StageType, float]):
+    """Update a stage profile with validation."""
+    if not validate_stage_profile(profile):
+        raise ValueError(f"Stage profile weights must sum to 1.0, got {sum(profile.values())}")
+    STAGE_PROFILES[stage_number] = profile 

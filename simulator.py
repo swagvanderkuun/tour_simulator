@@ -2,13 +2,44 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict
 from riders import RiderDatabase, Rider
-from stage_profiles import get_stage_type, StageType
+from stage_profiles import get_stage_type, StageType, get_stage_profile
 from dataclasses import dataclass
 from collections import defaultdict
 from datetime import datetime
 
 # Points arrays for classifications
-SPRINT_SPRINT_POINTS = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
+# New sprint classification categories
+SPRINT_CATEGORY_1_POINTS = [75, 55, 45, 30, 20, 18, 16, 10, 8, 7, 6, 5, 4, 3, 2]
+SPRINT_CATEGORY_2_POINTS = [30, 25, 22, 19, 17, 15, 13, 11, 9, 7, 6, 5, 3, 2]
+SPRINT_CATEGORY_3_POINTS = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+SPRINT_CATEGORY_4_POINTS = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
+# Stage to sprint category mapping
+SPRINT_CATEGORY_MAPPING = {
+    1: 1,   # Stage 1: Category 1
+    2: 2,   # Stage 2: Category 2
+    3: 1,   # Stage 3: Category 1
+    4: 2,   # Stage 4: Category 2
+    5: 3,   # Stage 5: Category 3
+    6: 2,   # Stage 6: Category 2
+    7: 2,   # Stage 7: Category 2
+    8: 1,   # Stage 8: Category 1
+    9: 1,   # Stage 9: Category 1
+    10: 3,  # Stage 10: Category 3
+    11: 1,  # Stage 11: Category 1
+    12: 3,  # Stage 12: Category 3
+    13: 3,  # Stage 13: Category 3
+    14: 3,  # Stage 14: Category 3
+    15: 2,  # Stage 15: Category 2
+    16: 3,  # Stage 16: Category 3
+    17: 1,  # Stage 17: Category 1
+    18: 3,  # Stage 18: Category 3
+    19: 3,  # Stage 19: Category 3
+    20: 2,  # Stage 20: Category 2
+    21: 1   # Stage 21: Category 1
+}
+
+# Legacy points arrays (kept for mountain classification)
 BREAK_AWAY_SPRINT_POINTS = [15, 10, 7, 6, 5, 4, 3, 2, 1, 0]
 BREAK_AWAY_MOUNTAIN_POINTS = [20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
 MOUNTAIN_MOUNTAIN_POINTS = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5]
@@ -115,7 +146,12 @@ class TourSimulator:
             print(f"\nSimulating Stage {stage_idx+1}")
             print("-------------------")
             stage.simulate(self.rider_db, self.abandoned_riders)  # Pass rider_db and abandoned_riders to stage simulation
-            stage_type = get_stage_type(stage_idx+1).value
+            stage_profile = get_stage_profile(stage_idx+1)
+            
+            # Calculate weighted time gap based on stage profile
+            weighted_time_gap = 0.0
+            for stage_type, weight in stage_profile.items():
+                weighted_time_gap += STAGE_TIME_GAPS[stage_type.value] * weight
 
             # --- Handle Crashes/Abandonments (except for stage 22) ---
             if stage_idx < 21:  # Stages 1-20 (0-indexed, so stages 1-21)
@@ -138,8 +174,8 @@ class TourSimulator:
                 print(f"Riders remaining: {len(self.rider_db.get_all_riders()) - len(self.abandoned_riders)}")
 
             # --- General Classification (GC) ---
-            base_time = 0 
-            time_gap = STAGE_TIME_GAPS[stage_type]
+            base_time = 0
+            time_gap = weighted_time_gap
             for place, result in enumerate(stage.results):
                 rider_name = result.rider.name
                 # Winner gets base_time, others get +gap per place
@@ -149,26 +185,36 @@ class TourSimulator:
                     self.youth_times[rider_name] = self.gc_times[rider_name]  # Use same time as GC
 
             # --- Sprint Classification ---
-            if stage_type == "sprint":
-                for idx, result in enumerate(stage.results[:len(SPRINT_SPRINT_POINTS)]):
-                    self.sprint_points[result.rider.name] += SPRINT_SPRINT_POINTS[idx]
-            elif stage_type == "break_away":
-                for idx, result in enumerate(stage.results[:len(BREAK_AWAY_SPRINT_POINTS)]):
-                    self.sprint_points[result.rider.name] += BREAK_AWAY_SPRINT_POINTS[idx]
-            elif stage_type == "punch":
-                for idx, result in enumerate(stage.results[:len(PUNCH_SPRINT_POINTS)]):
-                    self.sprint_points[result.rider.name] += PUNCH_SPRINT_POINTS[idx]
+            # Get sprint category for this stage
+            stage_number = stage_idx + 1
+            sprint_category = SPRINT_CATEGORY_MAPPING.get(stage_number, 3)  # Default to category 3
+            
+            # Select the appropriate points array based on category
+            if sprint_category == 1:
+                sprint_points_array = SPRINT_CATEGORY_1_POINTS
+            elif sprint_category == 2:
+                sprint_points_array = SPRINT_CATEGORY_2_POINTS
+            elif sprint_category == 3:
+                sprint_points_array = SPRINT_CATEGORY_3_POINTS
+            else:  # category 4 (same as 3)
+                sprint_points_array = SPRINT_CATEGORY_4_POINTS
+            
+            # Award sprint points based on stage finish position
+            for idx, result in enumerate(stage.results[:len(sprint_points_array)]):
+                self.sprint_points[result.rider.name] += sprint_points_array[idx]
 
             # --- Mountain Classification ---
-            if stage_type == "mountain":
-                for idx, result in enumerate(stage.results[:len(MOUNTAIN_MOUNTAIN_POINTS)]):
-                    self.mountain_points[result.rider.name] += MOUNTAIN_MOUNTAIN_POINTS[idx]
-            elif stage_type == "break_away":
-                for idx, result in enumerate(stage.results[:len(BREAK_AWAY_MOUNTAIN_POINTS)]):
-                    self.mountain_points[result.rider.name] += BREAK_AWAY_MOUNTAIN_POINTS[idx]
-            elif stage_type == "punch":
-                for idx, result in enumerate(stage.results[:len(PUNCH_MOUNTAIN_POINTS)]):
-                    self.mountain_points[result.rider.name] += PUNCH_MOUNTAIN_POINTS[idx]
+            # Calculate weighted mountain points based on stage profile
+            for stage_type, weight in stage_profile.items():
+                if stage_type == StageType.MOUNTAIN:
+                    for idx, result in enumerate(stage.results[:len(MOUNTAIN_MOUNTAIN_POINTS)]):
+                        self.mountain_points[result.rider.name] += int(MOUNTAIN_MOUNTAIN_POINTS[idx] * weight)
+                elif stage_type == StageType.BREAK_AWAY:
+                    for idx, result in enumerate(stage.results[:len(BREAK_AWAY_MOUNTAIN_POINTS)]):
+                        self.mountain_points[result.rider.name] += int(BREAK_AWAY_MOUNTAIN_POINTS[idx] * weight)
+                elif stage_type == StageType.PUNCH:
+                    for idx, result in enumerate(stage.results[:len(PUNCH_MOUNTAIN_POINTS)]):
+                        self.mountain_points[result.rider.name] += int(PUNCH_MOUNTAIN_POINTS[idx] * weight)
 
             # --- Collect Data for DataFrames ---
             # Stage results

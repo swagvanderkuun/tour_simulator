@@ -1,7 +1,7 @@
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
-from stage_profiles import StageType, get_stage_type
+from stage_profiles import StageType, get_stage_type, get_stage_profile
 from rider_parameters import RiderParameters
 
 # Define ability tiers and their corresponding scores
@@ -35,8 +35,8 @@ class Rider:
 
     def get_stage_probability(self, stage_number: int) -> Tuple[float, float, float]:
         """Get probability range for a specific stage based on rider's parameters."""
-        stage_type = get_stage_type(stage_number)
-        return self.parameters.get_probability_range(stage_type.value)
+        stage_profile = get_stage_profile(stage_number)
+        return self.parameters.get_weighted_probability_range(stage_profile)
 
 class RiderDatabase:
     def __init__(self):
@@ -46,16 +46,44 @@ class RiderDatabase:
     def _initialize_riders(self):
         # Initialize all riders from the 2025 Tour de France startlist
         rider_data = [
+  {"name": "PITHIE Laurence", "team": "Red Bull - BORA - hansgrohe (WT)", 
+   "age": 24, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "VAN DIJKE Mick", "team": "Red Bull - BORA - hansgrohe (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "MOSCON Gianni", "team": "Red Bull - BORA - hansgrohe (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "MEEUS Jordi", "team": "Red Bull - BORA - hansgrohe (WT)", 
+   "age": 25, "tiers": {'sprint': 'B', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 1.5, "chance_of_abandon": 0.05}
+  {"name": "BRAET Vito", "team": "Intermarché - Wanty (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "RUTSCH Jonas", "team": "Intermarché - Wanty (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "VAN SINTMAARTENSDIJK Roel", "team": "Intermarché - Wanty (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "GRADEK Kamil", "team": "Bahrain - Victorious (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "HAIG Jack", "team": "Bahrain - Victorious (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'D', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "STANNARD Robert", "team": "Bahrain - Victorious (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "WRIGHT Fred", "team": "Bahrain - Victorious (WT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "BOIVIN Guillaume", "team": "Israel - Premier Tech (PRT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "LOUVEL Matis", "team": "Israel - Premier Tech (PRT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
+  {"name": "NEILANDS Krists", "team": "Israel - Premier Tech (PRT)", 
+   "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'D', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05}
   {
     "name": "CARAPAZ Richard",
     "team": "EF Education - EasyPost (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
-      "itt": "D",
+      "itt": "E",
       "mountain": "C",
-      "break_away": "D",
-      "punch": "C"
+      "break_away": "B",
+      "punch": "D"
     },
     "price": 1.5,
     "chance_of_abandon": 0.05
@@ -68,7 +96,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -82,7 +110,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "E",
-      "break_away": "C",
+      "break_away": "B",
       "punch": "D"
     },
     "price": 0.75,
@@ -96,7 +124,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "break_away": "C",
+      "break_away": "B",
       "punch": "D"
     },
     "price": 0.5,
@@ -107,10 +135,10 @@ class RiderDatabase:
     "team": "UAE Team Emirates - XRG (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "D",
+      "sprint": "E",
       "itt": "A",
       "mountain": "S",
-      "break_away": "A",
+      "break_away": "E",
       "punch": "A"
     },
     "price": 7.5,
@@ -124,7 +152,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "B",
-      "break_away": "C",
+      "break_away": "E",
       "punch": "B"
     },
     "price": 4.5,
@@ -138,7 +166,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "C",
-      "break_away": "D",
+      "break_away": "E",
       "punch": "D"
     },
     "price": 2.5,
@@ -152,7 +180,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "D",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 2,
@@ -180,7 +208,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "C",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 1.5,
@@ -194,7 +222,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "C",
+      "break_away": "D",
       "punch": "C"
     },
     "price": 2,
@@ -243,20 +271,6 @@ class RiderDatabase:
     "chance_of_abandon": 0.05
   },
   {
-    "name": "MART\u00cdNEZ Daniel Felipe",
-    "team": "Red Bull - BORA - hansgrohe (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "D",
-      "mountain": "D",
-      "break_away": "E",
-      "punch": "D"
-    },
-    "price": 1,
-    "chance_of_abandon": 0.05
-  },
-  {
     "name": "VLASOV Aleksandr",
     "team": "Red Bull - BORA - hansgrohe (WT)",
     "age": 25,
@@ -271,25 +285,11 @@ class RiderDatabase:
     "chance_of_abandon": 0.05
   },
   {
-    "name": "TRATNIK Jan",
-    "team": "Red Bull - BORA - hansgrohe (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.05
-  },
-  {
     "name": "VAN POPPEL Danny",
     "team": "Red Bull - BORA - hansgrohe (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "C",
+      "sprint": "D",
       "itt": "E",
       "mountain": "E",
       "break_away": "E",
@@ -306,7 +306,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "B",
-      "break_away": "D",
+      "break_away": "E",
       "punch": "D"
     },
     "price": 3,
@@ -320,7 +320,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "S",
       "mountain": "A",
-      "break_away": "C",
+      "break_away": "E",
       "punch": "C"
     },
     "price": 6,
@@ -362,7 +362,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -376,7 +376,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -390,7 +390,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -472,7 +472,7 @@ class RiderDatabase:
     "age": 25,
     "tiers": {
       "sprint": "E",
-      "itt": "C",
+      "itt": "D",
       "mountain": "E",
       "break_away": "D",
       "punch": "E"
@@ -488,7 +488,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -502,7 +502,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -530,8 +530,8 @@ class RiderDatabase:
       "sprint": "S",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
-      "punch": "E"
+      "break_away": "E",
+      "punch": "D"
     },
     "price": 4,
     "chance_of_abandon": 0.05
@@ -541,7 +541,7 @@ class RiderDatabase:
     "team": "Alpecin - Deceuninck (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "C",
+      "sprint": "D",
       "itt": "E",
       "mountain": "E",
       "break_away": "E",
@@ -586,7 +586,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "A",
       "mountain": "A",
-      "break_away": "D",
+      "break_away": "E",
       "punch": "B"
     },
     "price": 6,
@@ -600,7 +600,7 @@ class RiderDatabase:
       "sprint": "C",
       "itt": "A",
       "mountain": "E",
-      "break_away": "B",
+      "break_away": "A",
       "punch": "B"
     },
     "price": 3.5,
@@ -628,7 +628,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "C",
-      "break_away": "B",
+      "break_away": "E",
       "punch": "C"
     },
     "price": 3,
@@ -712,7 +712,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "C",
-      "break_away": "D",
+      "break_away": "E",
       "punch": "D"
     },
     "price": 2.5,
@@ -726,8 +726,8 @@ class RiderDatabase:
       "sprint": "D",
       "itt": "A",
       "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
+      "break_away": "D",
+      "punch": "C"
     },
     "price": 1,
     "chance_of_abandon": 0.05
@@ -754,7 +754,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "B",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 1,
@@ -837,23 +837,9 @@ class RiderDatabase:
     "tiers": {
       "sprint": "E",
       "itt": "E",
-      "mountain": "E",
+      "mountain": "D",
       "break_away": "D",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.05
-  },
-  {
-    "name": "GOOSSENS Kobe",
-    "team": "Intermarch\u00e9 - Wanty (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
+      "punch": "D"
     },
     "price": 0.5,
     "chance_of_abandon": 0.05
@@ -880,7 +866,7 @@ class RiderDatabase:
       "sprint": "A",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "E",
       "punch": "E"
     },
     "price": 4,
@@ -894,7 +880,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "C",
-      "break_away": "C",
+      "break_away": "D",
       "punch": "C"
     },
     "price": 2.5,
@@ -905,7 +891,7 @@ class RiderDatabase:
     "team": "Lidl - Trek (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "D",
+      "sprint": "E",
       "itt": "E",
       "mountain": "E",
       "break_away": "D",
@@ -919,7 +905,7 @@ class RiderDatabase:
     "team": "Lidl - Trek (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "D",
+      "sprint": "E",
       "itt": "E",
       "mountain": "E",
       "break_away": "D",
@@ -933,7 +919,7 @@ class RiderDatabase:
     "team": "Lidl - Trek (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "D",
+      "sprint": "E",
       "itt": "E",
       "mountain": "E",
       "break_away": "E",
@@ -957,20 +943,6 @@ class RiderDatabase:
     "chance_of_abandon": 0.05
   },
   {
-    "name": "GEOGHEGAN HART Tao",
-    "team": "Lidl - Trek (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "D",
-      "mountain": "D",
-      "break_away": "D",
-      "punch": "E"
-    },
-    "price": 0.75,
-    "chance_of_abandon": 0.05
-  },
-  {
     "name": "NYS Thibau",
     "team": "Lidl - Trek (WT)",
     "age": 24,
@@ -978,24 +950,10 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "C",
+      "break_away": "B",
       "punch": "B"
     },
     "price": 1,
-    "chance_of_abandon": 0.05
-  },
-  {
-    "name": "GAUDU David",
-    "team": "Groupama - FDJ (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "D",
-      "break_away": "D",
-      "punch": "D"
-    },
-    "price": 0.5,
     "chance_of_abandon": 0.05
   },
   {
@@ -1006,7 +964,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "E"
     },
     "price": 0.75,
@@ -1019,8 +977,8 @@ class RiderDatabase:
     "tiers": {
       "sprint": "E",
       "itt": "E",
-      "mountain": "E",
-      "break_away": "D",
+      "mountain": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1032,7 +990,7 @@ class RiderDatabase:
     "age": 24,
     "tiers": {
       "sprint": "E",
-      "itt": "E",
+      "itt": "D",
       "mountain": "E",
       "break_away": "C",
       "punch": "B"
@@ -1076,8 +1034,8 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "C",
-      "break_away": "D",
-      "punch": "C"
+      "break_away": "E",
+      "punch": "D"
     },
     "price": 2,
     "chance_of_abandon": 0.05
@@ -1160,7 +1118,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.75,
@@ -1216,8 +1174,8 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "E",
-      "punch": "D"
+      "break_away": "D",
+      "punch": "E"
     },
     "price": 0.75,
     "chance_of_abandon": 0.05
@@ -1230,7 +1188,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1255,7 +1213,7 @@ class RiderDatabase:
     "team": "Team Jayco AlUla (WT)",
     "age": 25,
     "tiers": {
-      "sprint": "D",
+      "sprint": "E",
       "itt": "E",
       "mountain": "E",
       "break_away": "E",
@@ -1356,7 +1314,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1370,7 +1328,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "D",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.75,
@@ -1383,8 +1341,8 @@ class RiderDatabase:
     "tiers": {
       "sprint": "E",
       "itt": "E",
-      "mountain": "E",
-      "break_away": "D",
+      "mountain": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1398,7 +1356,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1454,7 +1412,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1510,7 +1468,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "C",
       "mountain": "E",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1594,7 +1552,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "E",
+      "break_away": "D",
       "punch": "E"
     },
     "price": 0.5,
@@ -1608,7 +1566,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "E"
     },
     "price": 0.5,
@@ -1633,10 +1591,10 @@ class RiderDatabase:
     "team": "Uno-X Mobility (PRT)",
     "age": 25,
     "tiers": {
-      "sprint": "D",
+      "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "D"
     },
     "price": 0.5,
@@ -1678,7 +1636,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "D",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "E"
     },
     "price": 0.5,
@@ -1706,7 +1664,7 @@ class RiderDatabase:
       "sprint": "E",
       "itt": "E",
       "mountain": "E",
-      "break_away": "D",
+      "break_away": "C",
       "punch": "E"
     },
     "price": 0.5,

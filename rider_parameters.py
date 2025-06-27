@@ -13,6 +13,7 @@ Parameters are on a scale of 0-100, where:
 
 from dataclasses import dataclass
 from typing import Dict, Tuple
+from stage_profiles import StageType
 
 # Global tier parameters that can be modified by the dashboard
 TIER_PARAMETERS = {
@@ -47,7 +48,6 @@ class RiderParameters:
         Convert rider parameters into probability ranges for stage results.
         Returns (min, mode, max) for triangular distribution.
         Lower numbers = better result (1 = winner)
-
         """
         # Base conversion of ability to probabilities using configurable parameters
         def ability_to_prob(ability: int) -> Tuple[float, float, float]:
@@ -86,3 +86,60 @@ class RiderParameters:
         min_val, mode_val, max_val = ability_to_prob(ability)
 
         return (min_val, mode_val, max_val)
+
+    def get_weighted_probability_range(self, stage_profile: Dict[StageType, float]) -> Tuple[float, float, float]:
+        """
+        Convert rider parameters into weighted probability ranges for mixed stage types.
+        Returns (min, mode, max) for triangular distribution.
+        Lower numbers = better result (1 = winner)
+        
+        Args:
+            stage_profile: Dictionary mapping StageType to weight (must sum to 1.0)
+        """
+        # Base conversion of ability to probabilities using configurable parameters
+        def ability_to_prob(ability: int) -> Tuple[float, float, float]:
+            if ability >= 98:  # Exceptional
+                params = TIER_PARAMETERS["exceptional"]
+                return (params["min"], params["mode"], params["max"])
+            elif ability >= 95:  # World Class
+                params = TIER_PARAMETERS["world_class"]
+                return (params["min"], params["mode"], params["max"])
+            elif ability >= 90:  # Elite
+                params = TIER_PARAMETERS["elite"]
+                return (params["min"], params["mode"], params["max"])
+            elif ability >= 80:  # Very Good
+                params = TIER_PARAMETERS["very_good"]
+                return (params["min"], params["mode"], params["max"])
+            elif ability >= 70:  # Good
+                params = TIER_PARAMETERS["good"]
+                return (params["min"], params["mode"], params["max"])
+            elif ability >= 50:  # Average
+                params = TIER_PARAMETERS["average"]
+                return (params["min"], params["mode"], params["max"])
+            else:  # Below Average
+                params = TIER_PARAMETERS["below_average"]
+                return (params["min"], params["mode"], params["max"])
+
+        # Map stage types to abilities
+        ability_map = {
+            StageType.SPRINT: self.sprint_ability,
+            StageType.PUNCH: self.punch_ability,
+            StageType.ITT: self.itt_ability,
+            StageType.MOUNTAIN: self.mountain_ability,
+            StageType.BREAK_AWAY: self.break_away_ability
+        }
+
+        # Calculate weighted average of probability parameters
+        weighted_min = 0.0
+        weighted_mode = 0.0
+        weighted_max = 0.0
+
+        for stage_type, weight in stage_profile.items():
+            ability = ability_map[stage_type]
+            min_val, mode_val, max_val = ability_to_prob(ability)
+            
+            weighted_min += min_val * weight
+            weighted_mode += mode_val * weight
+            weighted_max += max_val * weight
+
+        return (weighted_min, weighted_mode, weighted_max)

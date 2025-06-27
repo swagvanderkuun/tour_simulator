@@ -48,137 +48,104 @@ class MultiSimulationAnalyzer:
     
     def _analyze_scorito_points(self) -> Dict:
         """Analyze Scorito points distribution and patterns"""
-        scorito_data = []
+        
+        # 1. Calculate total points per rider per simulation (for overall rankings)
+        # Use the final stage (stage 22) which contains the total cumulative points
+        rider_total_points = {}  # {rider_name: [points_sim1, points_sim2, ...]}
         
         for sim in self.results:
+            # Get final cumulative points for each rider (stage 22 or last stage)
+            sim_totals = {}
             for record in sim.scorito_points_records:
-                # Get team for this rider
-                team = None
-                for rider in sim.rider_db.get_all_riders():
-                    if rider.name == record['rider']:
-                        team = rider.team
-                        break
+                rider = record['rider']
+                stage = record['stage']
+                points = record['scorito_points']
                 
-                scorito_data.append({
-                    'rider': record['rider'],
-                    'stage': record['stage'],
-                    'points': record['scorito_points'],
-                    'team': team
-                })
+                # For final stage (22), this is the total cumulative points
+                if stage == 22:
+                    sim_totals[rider] = points
+            
+            # Store this simulation's totals
+            for rider, total in sim_totals.items():
+                if rider not in rider_total_points:
+                    rider_total_points[rider] = []
+                rider_total_points[rider].append(total)
         
-        df = pd.DataFrame(scorito_data)
+        # Calculate average total points per rider across all simulations
+        total_points_by_rider = {}
+        avg_points_by_rider = {}
+        points_std_by_rider = {}
         
-        # Basic statistics
-        total_points_by_rider = df.groupby('rider')['points'].sum()
-        avg_points_by_rider = df.groupby('rider')['points'].mean()
-        points_std_by_rider = df.groupby('rider')['points'].std()
+        for rider, points_list in rider_total_points.items():
+            total_points_by_rider[rider] = np.mean(points_list)  # Average total points per simulation
+            avg_points_by_rider[rider] = np.mean(points_list) / 21  # Average points per stage per simulation (21 stages)
+            points_std_by_rider[rider] = np.std(points_list)  # Standard deviation of total points
         
-        # Variance analysis
-        variance_analysis = {
-            'overall_variance': df['points'].var(),
-            'rider_variance': points_std_by_rider.to_dict(),
-            'high_variance_riders': points_std_by_rider[points_std_by_rider > points_std_by_rider.quantile(0.75)].to_dict(),
-            'low_variance_riders': points_std_by_rider[points_std_by_rider < points_std_by_rider.quantile(0.25)].to_dict()
-        }
-        
-        # Outlier analysis
-        q1 = df['points'].quantile(0.25)
-        q3 = df['points'].quantile(0.75)
-        iqr = q3 - q1
-        outlier_threshold = q3 + 1.5 * iqr
-        
-        outliers = df[df['points'] > outlier_threshold]
-        outlier_analysis = {
-            'outlier_threshold': outlier_threshold,
-            'outlier_count': len(outliers),
-            'outlier_percentage': len(outliers) / len(df) * 100,
-            'top_outliers': outliers.nlargest(10, 'points')[['rider', 'stage', 'points', 'team']].to_dict('records'),
-            'outlier_riders': outliers.groupby('rider')['points'].count().to_dict()
-        }
-        
-        # Stage-by-stage analysis
+        # 2. Calculate stage-by-stage points per rider per simulation
         stage_analysis = {}
-        for stage in range(1, self.num_stages + 1):
-            stage_data = df[df['stage'] == stage]
-            if not stage_data.empty:
-                stage_analysis[stage] = {
-                    'total_points': stage_data['points'].sum(),
-                    'avg_points': stage_data['points'].mean(),
-                    'points_std': stage_data['points'].std(),
-                    'max_points': stage_data['points'].max(),
-                    'min_points': stage_data['points'].min(),
-                    'top_scorers': stage_data.nlargest(5, 'points')[['rider', 'points', 'team']].to_dict('records'),
-                    'points_distribution': {
-                        '0-10': len(stage_data[stage_data['points'] <= 10]),
-                        '11-25': len(stage_data[(stage_data['points'] > 10) & (stage_data['points'] <= 25)]),
-                        '26-50': len(stage_data[(stage_data['points'] > 25) & (stage_data['points'] <= 50)]),
-                        '51-100': len(stage_data[(stage_data['points'] > 50) & (stage_data['points'] <= 100)]),
-                        '100+': len(stage_data[stage_data['points'] > 100])
-                    }
-                }
         
-        # Points per price analysis
-        price_data = {}
-        for sim in self.results:
-            for rider in sim.rider_db.get_all_riders():
-                if rider.name not in price_data:
-                    price_data[rider.name] = {
-                        'price': rider.price,
-                        'total_points': [],
-                        'team': rider.team
-                    }
-                
-                # Get total Scorito points for this rider in this simulation
-                rider_points = sum([record['scorito_points'] for record in sim.scorito_points_records if record['rider'] == rider.name])
-                price_data[rider.name]['total_points'].append(rider_points)
-        
-        price_value_analysis = {}
-        for rider, data in price_data.items():
-            if data['total_points']:
-                avg_points = np.mean(data['total_points'])
-                points_std = np.std(data['total_points'])
-                
-                price_value_analysis[rider] = {
-                    'price': data['price'],
-                    'avg_total_points': avg_points,
-                    'points_std': points_std,
-                    'points_per_euro': avg_points / data['price'] if data['price'] > 0 else 0,
-                    'value_score': avg_points / (data['price'] * (1 + points_std/100)),  # Higher is better
-                    'team': data['team'],
-                    'consistency': 1 / (1 + points_std)  # Higher is more consistent
-                }
-        
-        # Top value riders (high points per euro)
-        value_riders = sorted(price_value_analysis.items(), key=lambda x: x[1]['points_per_euro'], reverse=True)
-        top_value_riders = dict(value_riders[:20])
-        
-        # Consistency analysis
-        consistency_analysis = {
-            'most_consistent': sorted(price_value_analysis.items(), key=lambda x: x[1]['consistency'], reverse=True)[:10],
-            'least_consistent': sorted(price_value_analysis.items(), key=lambda x: x[1]['consistency'])[:10]
-        }
+        for stage in range(1, 23):  # Stages 1-22 (including final stage)
+            stage_points = {}  # {rider_name: [points_sim1, points_sim2, ...]}
+            
+            for sim in self.results:
+                # Calculate points earned in this specific stage
+                if stage == 1:
+                    # For stage 1, use the points directly
+                    for record in sim.scorito_points_records:
+                        if record['stage'] == 1:
+                            rider = record['rider']
+                            if rider not in stage_points:
+                                stage_points[rider] = []
+                            stage_points[rider].append(record['scorito_points'])
+                else:
+                    # For stages 2-22, calculate the difference
+                    prev_stage_points = {}
+                    curr_stage_points = {}
+                    
+                    # Get points for previous stage and current stage
+                    for record in sim.scorito_points_records:
+                        rider = record['rider']
+                        record_stage = record['stage']
+                        points = record['scorito_points']
+                        
+                        if record_stage == stage - 1:
+                            prev_stage_points[rider] = points
+                        elif record_stage == stage:
+                            curr_stage_points[rider] = points
+                    
+                    # Calculate difference for each rider
+                    for rider in curr_stage_points:
+                        if rider in prev_stage_points:
+                            points_earned = curr_stage_points[rider] - prev_stage_points[rider]
+                            if rider not in stage_points:
+                                stage_points[rider] = []
+                            stage_points[rider].append(points_earned)
+            
+            # Calculate statistics for this stage
+            stage_rider_stats = []
+            for rider, points_list in stage_points.items():
+                if points_list:  # Only include riders who scored points in this stage
+                    stage_rider_stats.append({
+                        'rider': rider,
+                        'mean': np.mean(points_list),  # Average points for this stage per simulation
+                        'std': np.std(points_list),
+                        'count': len(points_list)
+                    })
+            
+            stage_analysis[stage] = {
+                'rider_stats': stage_rider_stats,
+                'total_points': sum([np.mean(points) for points in stage_points.values()]) if stage_points else 0,
+                'avg_points': np.mean([np.mean(points) for points in stage_points.values()]) if stage_points else 0
+            }
         
         return {
             'basic_stats': {
-                'total_points_by_rider': total_points_by_rider.to_dict(),
-                'avg_points_by_rider': avg_points_by_rider.to_dict(),
-                'points_std_by_rider': points_std_by_rider.to_dict(),
-                'top_scorers': total_points_by_rider.nlargest(20).to_dict(),
-                'points_by_team': df.groupby('team')['points'].sum().to_dict()
+                'total_points_by_rider': total_points_by_rider,
+                'avg_points_by_rider': avg_points_by_rider,
+                'points_std_by_rider': points_std_by_rider,
+                'top_scorers': dict(sorted(total_points_by_rider.items(), key=lambda x: x[1], reverse=True)[:20])
             },
-            'variance_analysis': variance_analysis,
-            'outlier_analysis': outlier_analysis,
-            'stage_analysis': stage_analysis,
-            'price_value_analysis': price_value_analysis,
-            'top_value_riders': top_value_riders,
-            'consistency_analysis': consistency_analysis,
-            'overall_summary': {
-                'total_simulations': self.num_simulations,
-                'total_points_scored': df['points'].sum(),
-                'avg_points_per_stage': df['points'].mean(),
-                'unique_riders': df['rider'].nunique(),
-                'unique_teams': df['team'].nunique()
-            }
+            'stage_analysis': stage_analysis
         }
     
     def _create_simulation_summary(self) -> Dict:

@@ -43,17 +43,18 @@ class TeamOptimizer:
         self.simulator = TourSimulator()
         self.rider_db = RiderDatabase()
         
-    def run_simulation(self, num_simulations: int = 100) -> pd.DataFrame:
+    def run_simulation(self, num_simulations: int = 100, metric: str = 'mean') -> pd.DataFrame:
         """
         Run multiple simulations to get expected points for each rider.
         
         Args:
             num_simulations: Number of simulations to run
+            metric: Metric to use for expected points ('mean', 'median', 'mode')
             
         Returns:
             DataFrame with rider names and their expected points
         """
-        print(f"Running {num_simulations} simulations to calculate expected points...")
+        print(f"Running {num_simulations} simulations to calculate expected points using {metric}...")
         
         # Store points from all simulations
         all_points = []
@@ -76,10 +77,51 @@ class TeamOptimizer:
             # Reset simulator for next run
             self.simulator = TourSimulator()
         
-        # Calculate expected points for each rider
+        # Calculate expected points for each rider using the specified metric
         points_df = pd.DataFrame(all_points)
-        expected_points = points_df.groupby('rider_name')['points'].agg(['mean', 'std']).reset_index()
-        expected_points.columns = ['rider_name', 'expected_points', 'points_std']
+        
+        # Group by rider and calculate multiple statistics
+        rider_stats = points_df.groupby('rider_name')['points'].agg([
+            'mean', 'median', 'std', 'count'
+        ]).reset_index()
+        
+        # Calculate mode (most frequent value) for each rider
+        mode_values = []
+        for rider_name in rider_stats['rider_name']:
+            rider_points = points_df[points_df['rider_name'] == rider_name]['points'].values
+            # Use scipy's mode function, but handle cases where there might be multiple modes
+            try:
+                from scipy import stats
+                mode_result = stats.mode(rider_points, keepdims=False)
+                mode_values.append(mode_result.mode if hasattr(mode_result, 'mode') else mode_result)
+            except ImportError:
+                # Fallback to manual mode calculation
+                from collections import Counter
+                counter = Counter(rider_points)
+                mode_values.append(counter.most_common(1)[0][0])
+        
+        rider_stats['mode'] = mode_values
+        
+        # Select the expected points based on the metric
+        if metric == 'mean':
+            expected_points = rider_stats['mean']
+        elif metric == 'median':
+            expected_points = rider_stats['median']
+        elif metric == 'mode':
+            expected_points = rider_stats['mode']
+        else:
+            raise ValueError(f"Unknown metric: {metric}. Must be 'mean', 'median', or 'mode'")
+        
+        # Create the final expected points dataframe
+        expected_points_df = pd.DataFrame({
+            'rider_name': rider_stats['rider_name'],
+            'expected_points': expected_points,
+            'points_std': rider_stats['std'],
+            'points_mean': rider_stats['mean'],
+            'points_median': rider_stats['median'],
+            'points_mode': rider_stats['mode'],
+            'simulation_count': rider_stats['count']
+        })
         
         # Add rider information
         rider_info = []
@@ -95,9 +137,13 @@ class TeamOptimizer:
         rider_info_df = pd.DataFrame(rider_info)
         
         # Merge with expected points
-        final_df = rider_info_df.merge(expected_points, on='rider_name', how='left')
+        final_df = rider_info_df.merge(expected_points_df, on='rider_name', how='left')
         final_df['expected_points'] = final_df['expected_points'].fillna(0)
         final_df['points_std'] = final_df['points_std'].fillna(0)
+        final_df['points_mean'] = final_df['points_mean'].fillna(0)
+        final_df['points_median'] = final_df['points_median'].fillna(0)
+        final_df['points_mode'] = final_df['points_mode'].fillna(0)
+        final_df['simulation_count'] = final_df['simulation_count'].fillna(0)
         
         return final_df
     
@@ -602,8 +648,50 @@ def main():
     # Initialize optimizer
     optimizer = TeamOptimizer(budget=48.0, team_size=20)
     
+    # Test different metrics
+    metrics = ['mean', 'median', 'mode']
+    
+    for metric in metrics:
+        print(f"\n{'='*20} Testing {metric.upper()} metric {'='*20}")
+        
+        # Run simulations to get expected points
+        rider_data = optimizer.run_simulation(num_simulations=50, metric=metric)
+        
+        print(f"\nAnalyzed {len(rider_data)} riders using {metric}")
+        print(f"Average expected points: {rider_data['expected_points'].mean():.2f}")
+        print(f"Total budget available: {optimizer.budget}")
+        
+        # Optimize team
+        print(f"\nOptimizing team selection with stage-by-stage analysis using {metric}...")
+        optimal_team = optimizer.optimize_with_stage_selection(rider_data, num_simulations=50, risk_aversion=0.0, abandon_penalty=1.0)
+        
+        print(f"\nOptimal Team ({metric}):")
+        print(optimal_team)
+        
+        # Show some key statistics
+        print(f"\nKey Statistics for {metric} metric:")
+        print(f"  - Total Expected Points: {optimal_team.expected_points:.2f}")
+        print(f"  - Total Cost: {optimal_team.total_cost:.2f}")
+        print(f"  - Points per Euro: {optimal_team.expected_points / optimal_team.total_cost:.2f}")
+        
+        # Show top 5 riders by expected points
+        rider_points = []
+        for rider in optimal_team.riders:
+            rider_row = rider_data[rider_data['rider_name'] == rider.name]
+            if not rider_row.empty:
+                expected_points = rider_row.iloc[0]['expected_points']
+                rider_points.append((rider.name, expected_points))
+        
+        rider_points.sort(key=lambda x: x[1], reverse=True)
+        print(f"\nTop 5 riders by {metric} expected points:")
+        for i, (rider_name, points) in enumerate(rider_points[:5], 1):
+            print(f"  {i}. {rider_name}: {points:.2f} points")
+    
+    # For the main example, use mean metric
+    print(f"\n{'='*20} Main Example (using MEAN metric) {'='*20}")
+    
     # Run simulations to get expected points
-    rider_data = optimizer.run_simulation(num_simulations=50)
+    rider_data = optimizer.run_simulation(num_simulations=50, metric='mean')
     
     print(f"\nAnalyzed {len(rider_data)} riders")
     print(f"Average expected points: {rider_data['expected_points'].mean():.2f}")

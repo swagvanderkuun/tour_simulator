@@ -168,18 +168,21 @@ def main():
     if 'optimization_results' not in st.session_state:
         st.session_state.optimization_results = None
     
-    # Navigation
+    # Sidebar navigation
+    st.sidebar.title("🚴‍♂️ Tour de France Simulator")
+    
     page = st.sidebar.selectbox(
         "Navigation",
-        ["📊 Overview", "🎯 Single Simulation", "📈 Multi Simulation", "⚡ Team Optimization", "🆚 Versus Mode", "👥 Rider Management", "🏁 Stage Types"]
+        ["📊 Overview", "🎯 Single Simulation", "🔍 Exploration", "⚡ Team Optimization", "🆚 Versus Mode", "👥 Rider Management", "🏁 Stage Types"]
     )
     
+    # Page routing
     if page == "📊 Overview":
         show_overview()
     elif page == "🎯 Single Simulation":
         show_single_simulation()
-    elif page == "📈 Multi Simulation":
-        show_multi_simulation()
+    elif page == "🔍 Exploration":
+        show_exploration()
     elif page == "⚡ Team Optimization":
         show_team_optimization()
     elif page == "🆚 Versus Mode":
@@ -215,13 +218,14 @@ def show_overview():
     
     with col1:
         st.markdown("""
-        **📋 5-Step Process:**
+        **📋 6-Step Process:**
         
         1. **👥 Rider Management** - Adjust rider abilities based on recent form
-        2. **🎯 Single Simulation** - Test your settings with one quick simulation  
-        3. **📈 Multi Simulation** - Run 100+ simulations for reliable predictions
-        4. **⚡ Team Optimization** - Let AI find your perfect team
-        5. **🏁 Stage Types** - Fine-tune stage configurations (optional)
+        2. **🏁 Stage Types** - Configure the 21 Tour stages (optional)
+        3. **🎯 Single Simulation** - Test your settings with one quick simulation  
+        4. **🔍 Exploration** - Run 100+ simulations for reliable predictions
+        5. **⚡ Team Optimization** - Let AI find your perfect team
+        6. **🆚 Versus Mode** - Compare your team against the optimal team
         """)
     
     with col2:
@@ -229,8 +233,10 @@ def show_overview():
         **💡 Pro Tips:**
         
         • **Tier Maker Magic**: Use the visual tier system to adjust rider abilities
+        • **Mixed Stage Types**: Create stages with multiple characteristics (e.g., 60% punch + 40% sprint)
         • **Export Everything**: Download results for external analysis
         • **Test Scenarios**: Run different rider configurations to find hidden gems
+        • **Versus Mode**: Challenge yourself by selecting your own team and comparing it to the AI's choice
         """)
     
     # System Capabilities Summary
@@ -245,6 +251,8 @@ def show_overview():
         "💥 **Realistic Racing**: Crash/abandonment system based on rider risk profiles",
         "📈 **Multiple Classifications**: GC, Sprint, Mountain, and Youth point tracking",
         "🎮 **Interactive Tier Maker**: Drag-and-drop rider ability adjustments",
+        "🏁 **Advanced Stage Types**: Mixed stage configurations with weighted characteristics",
+        "🆚 **Versus Mode**: Compare your team selection against AI-optimized teams",
         "📊 **Data Export**: Excel files with detailed stage-by-stage analysis"
     ]
     
@@ -272,7 +280,7 @@ def show_overview():
     
     with col2:
         st.markdown("""
-        **📈 Multi Simulation**
+        **🔍 Exploration**
         
         Run hundreds of simulations to get reliable performance predictions for optimization.
         
@@ -315,9 +323,10 @@ def show_overview():
         st.markdown("""
         **🏁 Stage Types**
         
-        Configure the 21 Tour de France stages (Sprint, ITT, Mountain, Break Away, Punch).
+        Configure the 21 Tour de France stages with advanced mixed-type capabilities.
         
         **Key Features:**
+        • Mixed stage types (e.g., 60% punch + 40% sprint)
         • Visual stage type grid
         • Performance impact analysis
         • Export configurations
@@ -326,15 +335,16 @@ def show_overview():
     
     with col3:
         st.markdown("""
-        **📊 Results Analysis**
+        **🆚 Versus Mode**
         
-        Deep dive into simulation results and optimization outcomes.
+        Select your own team and compare it against the AI-optimized team.
         
         **Key Features:**
-        • Performance visualizations
-        • Team composition analysis
-        • Statistical breakdowns
-        • Comparative analysis
+        • Interactive team selection
+        • Stage-by-stage optimization
+        • Performance comparison
+        • Detailed Excel reports
+        • Multiple simulation runs
         """)
     
     # System Statistics
@@ -403,10 +413,10 @@ def show_overview():
     with col3:
         if st.session_state.multi_simulation_results is not None:
             st.metric("Optimization Ready", "✅")
-            st.caption("Multi-sim data available")
+            st.caption("Exploration data available")
         else:
             st.metric("Optimization Ready", "⏳")
-            st.caption("Run multi-simulation first")
+            st.caption("Run exploration first")
     
     with col4:
         if st.session_state.optimization_results is not None:
@@ -420,7 +430,7 @@ def show_overview():
     st.markdown("---")
     st.subheader("🕒 System Status")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         if st.session_state.simulation_results is not None:
@@ -432,10 +442,10 @@ def show_overview():
     
     with col2:
         if st.session_state.multi_simulation_results is not None:
-            st.success("✅ Multi-Simulation Complete")
+            st.success("✅ Exploration Complete")
             st.caption("Ready for optimization")
         else:
-            st.info("⏳ No Multi-Simulation")
+            st.info("⏳ No Exploration")
             st.caption("Generate predictions")
     
     with col3:
@@ -445,6 +455,14 @@ def show_overview():
         else:
             st.info("⏳ No Optimization")
             st.caption("Find your perfect team")
+    
+    with col4:
+        if 'versus_results' in st.session_state and st.session_state.versus_results is not None:
+            st.success("✅ Versus Mode Complete")
+            st.caption("Team comparison ready")
+        else:
+            st.info("⏳ No Versus Mode")
+            st.caption("Compare your team")
     
     # Technical Deep Dive (Condensed)
     st.markdown("---")
@@ -463,6 +481,8 @@ def show_overview():
         **Probability Models**: Tier-based triangular distributions for position predictions
         
         **Abandonment Management**: Crash probability adjustment
+        
+        **Mixed Stage Types**: Weighted stage characteristics for realistic racing
         """)
     
     with col2:
@@ -472,10 +492,12 @@ def show_overview():
         1. **Rider Database** → **Stage Simulation** → **Results**
         2. **Multiple Simulations** → **Expected Points** → **Optimization**
         3. **Constraints Applied** → **Optimal Team** → **Export**
+        4. **Versus Mode** → **Team Comparison** → **Performance Analysis**
         
         **🎮 Interactive Features:**
         • Real-time tier adjustments
         • Visual stage type management
+        • Interactive team selection
         • Export capabilities
         • Statistical analysis
         """)
@@ -550,21 +572,20 @@ def show_single_simulation():
             else:
                 st.warning("No simulation results available.")
 
-def show_multi_simulation():
-    st.header("📊 Multi-Simulation Analysis")
+def show_exploration():
+    st.header("🔍 Exploration Analysis")
     
     st.subheader("Simulation Parameters")
     
     num_simulations = st.slider("Number of simulations", 10, 500, 100, 10, key="multi_sim_count")
     show_progress = st.checkbox("Show progress", value=True, key="multi_sim_progress")
     
-    if st.button("🔄 Run Multi-Simulation", type="primary", key="run_multi_sim"):
+    if st.button("🔄 Run Exploration", type="primary", key="run_multi_sim"):
         with st.spinner(f"Running {num_simulations} simulations..."):
             if show_progress:
                 progress_bar = st.progress(0)
                 status_text = st.empty()
             
-            # Run multi-simulation using the new analyzer
             analyzer = MultiSimulationAnalyzer(num_simulations)
             
             def progress_callback(current, total):
@@ -583,23 +604,188 @@ def show_multi_simulation():
             
             # Store results in session state
             st.session_state.multi_sim_results = metrics
-            
-            # Display the analysis
-            show_scorito_analysis_dashboard(metrics)
     
     # Show results if available
     if 'multi_sim_results' in st.session_state:
-        show_scorito_analysis_dashboard(st.session_state.multi_sim_results)
+        show_exploration_analysis(st.session_state.multi_sim_results)
+
+def show_exploration_analysis(metrics):
+    """Display comprehensive exploration analysis"""
+    st.subheader("📊 Exploration Results")
+    
+    # Get the scorito analysis data
+    scorito_data = metrics['scorito_analysis']
+    basic_stats = scorito_data['basic_stats']
+    
+    # Create tabs for different views
+    tab1, tab2 = st.tabs(["🏆 Overall Rankings", "🏁 Stage-by-Stage Rankings"])
+    
+    with tab1:
+        show_overall_rankings(basic_stats)
+    
+    with tab2:
+        show_stage_rankings(scorito_data)
+
+def show_overall_rankings(basic_stats):
+    """Show top 50 riders by overall expected points"""
+    st.subheader("🏆 Top 50 Riders - Expected Scorito Points (Entire Tour)")
+    
+    # Get rider data
+    total_points_by_rider = basic_stats['total_points_by_rider']
+    avg_points_by_rider = basic_stats['avg_points_by_rider']
+    points_std_by_rider = basic_stats['points_std_by_rider']
+    
+    # Create comprehensive rider data
+    rider_data = []
+    for rider_name in total_points_by_rider.keys():
+        # Get rider info from database
+        rider = st.session_state.rider_db.get_rider(rider_name)
+        if rider:
+            rider_data.append({
+                'Rider': rider_name,
+                'Team': rider.team,
+                'Price': rider.price,
+                'Expected Points (Tour)': total_points_by_rider.get(rider_name, 0),
+                'Avg Points (Tour)': avg_points_by_rider.get(rider_name, 0),
+                'Standard Deviation': points_std_by_rider.get(rider_name, 0),
+                'Points per Euro': total_points_by_rider.get(rider_name, 0) / rider.price if rider.price > 0 else 0
+            })
+    
+    # Create DataFrame
+    df = pd.DataFrame(rider_data)
+    
+    # Create two different rankings
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("📈 By Expected Points")
+        df_total = df.sort_values('Expected Points (Tour)', ascending=False).head(50)
+        st.dataframe(df_total[['Rider', 'Team', 'Expected Points (Tour)', 'Points per Euro']], 
+                    use_container_width=True)
+    
+    with col2:
+        st.subheader("📊 By Average")
+        df_avg = df.sort_values('Avg Points (Tour)', ascending=False).head(50)
+        st.dataframe(df_avg[['Rider', 'Team', 'Avg Points (Tour)', 'Standard Deviation']], 
+                    use_container_width=True)
+    
+    # Value-based ranking
+    st.subheader("💰 By Value (Points per Euro)")
+    df_value = df.sort_values('Points per Euro', ascending=False).head(50)
+    st.dataframe(df_value[['Rider', 'Team', 'Points per Euro', 'Expected Points (Tour)', 'Price']], 
+                use_container_width=True)
+    
+    # Detailed table with all metrics
+    st.subheader("📋 Complete Rankings (Top 50)")
+    df_complete = df.sort_values('Expected Points (Tour)', ascending=False).head(50)
+    st.dataframe(df_complete, use_container_width=True)
+
+def show_stage_rankings(scorito_data):
+    """Show top riders for each stage"""
+    st.subheader("🏁 Stage-by-Stage Rankings")
+    
+    stage_data = scorito_data['stage_analysis']
+    
+    if not stage_data:
+        st.info("No stage data available")
+        return
+    
+    # Stage selector
+    selected_stage = st.selectbox("Select Stage:", sorted(stage_data.keys()), key="exploration_stage_selector_unique")
+    
+    if selected_stage:
+        stage_info = stage_data[selected_stage]
+        
+        st.subheader(f"Stage {selected_stage} Rankings - Expected Scorito Points")
+        
+        # Stage statistics
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Expected Points (Stage)", f"{stage_info['total_points']:,.0f}")
+        with col2:
+            st.metric("Average Points (Stage)", f"{stage_info['avg_points']:.1f}")
+        
+        # Get rider statistics for this stage
+        rider_stats = stage_info.get('rider_stats', [])
+        
+        if rider_stats:
+            # Create comprehensive stage data
+            stage_rider_data = []
+            for stat in rider_stats:
+                rider_name = stat['rider']
+                rider = st.session_state.rider_db.get_rider(rider_name)
+                if rider:
+                    stage_rider_data.append({
+                        'Rider': rider_name,
+                        'Team': rider.team,
+                        'Price': rider.price,
+                        'Expected Points (Stage)': stat['mean'],
+                        'Standard Deviation': stat['std'],
+                        'Simulations': stat['count'],
+                        'Points per Euro': stat['mean'] / rider.price if rider.price > 0 else 0
+                    })
+            
+            df_stage = pd.DataFrame(stage_rider_data)
+            
+            # Create two different rankings for this stage
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader(f"📈 By Expected Points - Stage {selected_stage}")
+                df_total = df_stage.sort_values('Expected Points (Stage)', ascending=False).head(50)
+                st.dataframe(df_total[['Rider', 'Team', 'Expected Points (Stage)', 'Points per Euro']], 
+                            use_container_width=True)
+            
+            with col2:
+                st.subheader(f"📊 By Standard Deviation - Stage {selected_stage}")
+                df_std = df_stage.sort_values('Standard Deviation', ascending=False).head(50)
+                st.dataframe(df_std[['Rider', 'Team', 'Standard Deviation', 'Expected Points (Stage)']], 
+                            use_container_width=True)
+            
+            # Value-based ranking for this stage
+            st.subheader(f"💰 By Value (Points per Euro) - Stage {selected_stage}")
+            df_value = df_stage.sort_values('Points per Euro', ascending=False).head(50)
+            st.dataframe(df_value[['Rider', 'Team', 'Points per Euro', 'Expected Points (Stage)', 'Price']], 
+                        use_container_width=True)
+        else:
+            st.info("No rider statistics available for this stage")
 
 def show_team_optimization():
     st.header("⚡ Team Optimization")
     
     st.subheader("Optimization Parameters")
     
-    budget = st.slider("Budget", 30.0, 60.0, 48.0, 0.5, key="opt_budget")
-    team_size = st.slider("Team size", 15, 25, 20, 1, key="opt_team_size")
-    num_simulations = st.slider("Simulations for expected points", 50, 200, 100, 10, key="opt_sim_count")
-    abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="opt_abandon_penalty")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        budget = st.slider("Budget", 30.0, 60.0, 48.0, 0.5, key="opt_budget")
+        team_size = st.slider("Team size", 15, 25, 20, 1, key="opt_team_size")
+        num_simulations = st.slider("Simulations for expected points", 50, 200, 100, 10, key="opt_sim_count")
+    
+    with col2:
+        abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="opt_abandon_penalty")
+        
+        # Add metric selector
+        metric_options = {
+            'mean': 'Average (Mean)',
+            'median': 'Median',
+            'mode': 'Mode (Most Frequent)'
+        }
+        selected_metric = st.selectbox(
+            "Expected Points Metric",
+            options=list(metric_options.keys()),
+            format_func=lambda x: metric_options[x],
+            index=0,
+            key="opt_metric"
+        )
+        
+        # Show explanation of the selected metric
+        metric_explanations = {
+            'mean': "Average of all simulation results. Good for normally distributed data.",
+            'median': "Middle value when results are sorted. Less sensitive to outliers than mean.",
+            'mode': "Most frequently occurring result. Good for discrete or skewed distributions."
+        }
+        st.info(f"**{metric_options[selected_metric]}**: {metric_explanations[selected_metric]}")
     
     if st.button("🎯 Optimize Team", type="primary", key="run_optimization"):
         with st.spinner("Running optimization..."):
@@ -608,8 +794,8 @@ def show_team_optimization():
             optimizer.rider_db = st.session_state.rider_db
             inject_rider_database(optimizer.simulator, st.session_state.rider_db)
             
-            # Get expected points using our custom method
-            rider_data = run_optimizer_simulation(optimizer, num_simulations, st.session_state.rider_db)
+            # Get expected points using our custom method with the selected metric
+            rider_data = run_optimizer_simulation(optimizer, num_simulations, st.session_state.rider_db, metric=selected_metric)
             
             # Optimize team (with stage-by-stage selection)
             team_selection = optimizer.optimize_with_stage_selection(
@@ -622,10 +808,12 @@ def show_team_optimization():
             st.session_state.optimization_results = {
                 'team_selection': team_selection,
                 'rider_data': rider_data,
-                'optimizer': optimizer
+                'optimizer': optimizer,
+                'metric_used': selected_metric,
+                'metric_name': metric_options[selected_metric]
             }
             
-            st.success("✅ Team optimization completed!")
+            st.success(f"✅ Team optimization completed using {metric_options[selected_metric]}!")
     
     # Display results below the button
     if hasattr(st.session_state, 'optimization_results') and st.session_state.optimization_results is not None:
@@ -633,6 +821,11 @@ def show_team_optimization():
         
         team_selection = st.session_state.optimization_results['team_selection']
         rider_data = st.session_state.optimization_results['rider_data']
+        metric_used = st.session_state.optimization_results.get('metric_used', 'mean')
+        metric_name = st.session_state.optimization_results.get('metric_name', 'Average (Mean)')
+        
+        # Show which metric was used
+        st.info(f"📈 **Optimization performed using: {metric_name}**")
         
         # Key metrics in columns
         col1, col2, col3, col4 = st.columns(4)
@@ -672,11 +865,19 @@ def show_team_optimization():
             rider_row = rider_data[rider_data['rider_name'] == rider.name]
             if not rider_row.empty:
                 expected_points = rider_row.iloc[0]['expected_points']
+                # Also get other metrics for comparison
+                mean_points = rider_row.iloc[0]['points_mean']
+                median_points = rider_row.iloc[0]['points_median']
+                mode_points = rider_row.iloc[0]['points_mode']
+                
                 rider_points.append({
                     'Rider': rider.name,
                     'Team': rider.team,
                     'Price': rider.price,
                     'Expected Points': expected_points,
+                    'Mean': mean_points,
+                    'Median': median_points,
+                    'Mode': mode_points,
                     'Points per Euro': expected_points / rider.price if rider.price > 0 else 0
                 })
         
@@ -693,12 +894,49 @@ def show_team_optimization():
             x='Rider',
             y='Expected Points',
             color='Team',
-            title="Expected Points per Rider",
+            title=f"Expected Points per Rider ({metric_name})",
             text='Expected Points'
         )
         fig.update_traces(texttemplate='%{text:.1f}', textposition='outside')
         fig.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Comparison of different metrics for selected riders
+        st.subheader("📈 Metric Comparison for Selected Riders")
+        
+        # Create comparison chart
+        comparison_data = []
+        for rider in team_selection.riders:
+            rider_row = rider_data[rider_data['rider_name'] == rider.name]
+            if not rider_row.empty:
+                comparison_data.append({
+                    'Rider': rider.name,
+                    'Mean': rider_row.iloc[0]['points_mean'],
+                    'Median': rider_row.iloc[0]['points_median'],
+                    'Mode': rider_row.iloc[0]['points_mode']
+                })
+        
+        if comparison_data:
+            comparison_df = pd.DataFrame(comparison_data)
+            
+            # Melt the dataframe for plotting
+            comparison_melted = comparison_df.melt(
+                id_vars=['Rider'], 
+                value_vars=['Mean', 'Median', 'Mode'],
+                var_name='Metric', 
+                value_name='Points'
+            )
+            
+            fig = px.bar(
+                comparison_melted,
+                x='Rider',
+                y='Points',
+                color='Metric',
+                title="Comparison of Different Metrics for Selected Riders",
+                barmode='group'
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
         
         # Stage selections
         if hasattr(team_selection, 'stage_selections') and team_selection.stage_selections:
@@ -961,7 +1199,6 @@ def show_rider_management():
                 'ITT': ability_to_tier(rider.parameters.itt_ability),
                 'Mountain': ability_to_tier(rider.parameters.mountain_ability),
                 'Break Away': ability_to_tier(rider.parameters.break_away_ability),
-                'Break Away': ability_to_tier(rider.parameters.break_away_ability),
                 'Punch': ability_to_tier(rider.parameters.punch_ability),
                 'Abandon Chance': f"{rider.chance_of_abandon:.2%}"
             })
@@ -1096,7 +1333,6 @@ def show_rider_management():
                     "Sprint": rider.parameters.sprint_ability,
                     "ITT": rider.parameters.itt_ability,
                     "Mountain": rider.parameters.mountain_ability,
-                    "Break Away": rider.parameters.break_away_ability,
                     "Break Away": rider.parameters.break_away_ability,
                     "Punch": rider.parameters.punch_ability
                 }
@@ -1368,13 +1604,11 @@ def show_tier_maker():
     # Get current tiers for selected skill
     def get_skill_ability(rider, skill):
         if skill == "Sprint":
-            return rider.parameters.punch_ability
+            return rider.parameters.sprint_ability
         elif skill == "ITT":
             return rider.parameters.itt_ability
         elif skill == "Mountain":
             return rider.parameters.mountain_ability
-        elif skill == "Break Away":
-            return rider.parameters.break_away_ability
         elif skill == "Break Away":
             return rider.parameters.break_away_ability
         elif skill == "Punch":
@@ -1383,13 +1617,11 @@ def show_tier_maker():
     
     def set_skill_ability(rider, skill, ability):
         if skill == "Sprint":
-            rider.parameters.punch_ability = ability
+            rider.parameters.sprint_ability = ability
         elif skill == "ITT":
             rider.parameters.itt_ability = ability
         elif skill == "Mountain":
             rider.parameters.mountain_ability = ability
-        elif skill == "Break Away":
-            rider.parameters.break_away_ability = ability
         elif skill == "Break Away":
             rider.parameters.break_away_ability = ability
         elif skill == "Punch":
@@ -1880,25 +2112,18 @@ def show_overview_metrics(results):
         )
     
     with col2:
-        st.metric(
-            "Total Riders", 
-            f"{summary['total_riders']:,}",
-            help="Number of riders in the simulation"
-        )
+        st.metric("Total Riders", 
+                  f"{summary['total_riders']:,}",
+                  help="Number of riders in the simulation")
     
     with col3:
-        st.metric(
-            "Avg Abandonments", 
-            f"{summary['avg_abandonments']:.1f}",
-            help="Average number of riders who abandon per simulation"
-        )
+        st.metric("Avg Abandonments", 
+                  f"{summary['avg_abandonments']:.1f}",
+                  help="Average number of riders who abandon per simulation")
     
     with col4:
-        st.metric(
-            "Avg Total Points", 
-            f"{summary['avg_total_points']:.0f}",
-            help="Average total Scorito points per simulation"
-        )
+        st.metric("Avg Points/Stage (per sim)", 
+                  f"{summary['avg_points_per_stage']:.1f}")
     
     # Abandonment analysis
     st.subheader("💥 Abandonment Analysis")
@@ -2377,11 +2602,17 @@ def show_optimization_results(optimization_data):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-def run_optimizer_simulation(optimizer, num_simulations, rider_db):
+def run_optimizer_simulation(optimizer, num_simulations, rider_db, metric='mean'):
     """
     Custom run_simulation method that uses the modified rider database and current stage profiles
+    
+    Args:
+        optimizer: TeamOptimizer instance
+        num_simulations: Number of simulations to run
+        rider_db: RiderDatabase instance
+        metric: Metric to use for expected points ('mean', 'median', 'mode')
     """
-    print(f"Running {num_simulations} simulations to calculate expected points...")
+    print(f"Running {num_simulations} simulations to calculate expected points using {metric}...")
     
     # Store points from all simulations
     all_points = []
@@ -2406,10 +2637,51 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db):
         inject_rider_database(optimizer.simulator, rider_db)
         inject_stage_profiles(optimizer.simulator)
     
-    # Calculate expected points for each rider
+    # Calculate expected points for each rider using the specified metric
     points_df = pd.DataFrame(all_points)
-    expected_points = points_df.groupby('rider_name')['points'].agg(['mean', 'std']).reset_index()
-    expected_points.columns = ['rider_name', 'expected_points', 'points_std']
+    
+    # Group by rider and calculate multiple statistics
+    rider_stats = points_df.groupby('rider_name')['points'].agg([
+        'mean', 'median', 'std', 'count'
+    ]).reset_index()
+    
+    # Calculate mode (most frequent value) for each rider
+    mode_values = []
+    for rider_name in rider_stats['rider_name']:
+        rider_points = points_df[points_df['rider_name'] == rider_name]['points'].values
+        # Use numpy's mode function, but handle cases where there might be multiple modes
+        try:
+            from scipy import stats
+            mode_result = stats.mode(rider_points, keepdims=False)
+            mode_values.append(mode_result.mode if hasattr(mode_result, 'mode') else mode_result)
+        except ImportError:
+            # Fallback to manual mode calculation
+            from collections import Counter
+            counter = Counter(rider_points)
+            mode_values.append(counter.most_common(1)[0][0])
+    
+    rider_stats['mode'] = mode_values
+    
+    # Select the expected points based on the metric
+    if metric == 'mean':
+        expected_points = rider_stats['mean']
+    elif metric == 'median':
+        expected_points = rider_stats['median']
+    elif metric == 'mode':
+        expected_points = rider_stats['mode']
+    else:
+        raise ValueError(f"Unknown metric: {metric}. Must be 'mean', 'median', or 'mode'")
+    
+    # Create the final expected points dataframe
+    expected_points_df = pd.DataFrame({
+        'rider_name': rider_stats['rider_name'],
+        'expected_points': expected_points,
+        'points_std': rider_stats['std'],
+        'points_mean': rider_stats['mean'],
+        'points_median': rider_stats['median'],
+        'points_mode': rider_stats['mode'],
+        'simulation_count': rider_stats['count']
+    })
     
     # Add rider information
     rider_info = []
@@ -2425,9 +2697,13 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db):
     rider_info_df = pd.DataFrame(rider_info)
     
     # Merge with expected points
-    final_df = rider_info_df.merge(expected_points, on='rider_name', how='left')
+    final_df = rider_info_df.merge(expected_points_df, on='rider_name', how='left')
     final_df['expected_points'] = final_df['expected_points'].fillna(0)
     final_df['points_std'] = final_df['points_std'].fillna(0)
+    final_df['points_mean'] = final_df['points_mean'].fillna(0)
+    final_df['points_median'] = final_df['points_median'].fillna(0)
+    final_df['points_mode'] = final_df['points_mode'].fillna(0)
+    final_df['simulation_count'] = final_df['simulation_count'].fillna(0)
     
     return final_df
 
@@ -2722,7 +2998,7 @@ def show_scorito_overview(scorito_data, unique_id):
         st.metric("Total Simulations", summary['total_simulations'])
     
     with col2:
-        st.metric("Total Points Scored", f"{summary['total_points_scored']:,.0f}")
+        st.metric("Total Points Scored (per sim)", f"{summary['total_points_scored']:,.0f}")
     
     with col3:
         st.metric("Avg Points/Stage", f"{summary['avg_points_per_stage']:.1f}")
@@ -3135,7 +3411,9 @@ def show_versus_mode():
                         with col3:
                             itt_tier = ability_to_tier(rider['itt_ability'])
                             mountain_tier = ability_to_tier(rider['mountain_ability'])
-                            st.markdown(f"**Break Away:** {tier_to_color(mountain_tier)} {mountain_tier}")
+                            break_away_tier = ability_to_tier(rider['break_away_ability'])
+                            st.markdown(f"**ITT:** {tier_to_color(itt_tier)} {itt_tier}")
+                            st.markdown(f"**Mountain:** {tier_to_color(mountain_tier)} {mountain_tier}")
                             st.markdown(f"**Break Away:** {tier_to_color(break_away_tier)} {break_away_tier}")
                         
                         with col4:
@@ -3178,29 +3456,60 @@ def show_versus_mode():
     if is_valid:
         if 'versus_results' not in st.session_state:
             st.session_state['versus_results'] = None
+        
+        # Add metric selector for versus mode
+        st.subheader("Simulation Settings")
+        metric_options = {
+            'mean': 'Average (Mean)',
+            'median': 'Median',
+            'mode': 'Mode (Most Frequent)'
+        }
+        selected_metric = st.selectbox(
+            "Expected Points Metric",
+            options=list(metric_options.keys()),
+            format_func=lambda x: metric_options[x],
+            index=0,
+            key="versus_metric"
+        )
+        
+        # Show explanation of the selected metric
+        metric_explanations = {
+            'mean': "Average of all simulation results. Good for normally distributed data.",
+            'median': "Middle value when results are sorted. Less sensitive to outliers than mean.",
+            'mode': "Most frequently occurring result. Good for discrete or skewed distributions."
+        }
+        st.info(f"**{metric_options[selected_metric]}**: {metric_explanations[selected_metric]}")
+        
         run_sim = st.button('Run Versus Simulation', type='primary')
         if run_sim:
             with st.spinner('Running simulations and optimizing... (this may take a minute)'):
                 # Run the full versus mode pipeline
                 user_team = versus.create_user_team(st.session_state['versus_selected_riders'])
-                rider_data = versus.team_optimizer.run_simulation(num_simulations=30)
+                rider_data = versus.team_optimizer.run_simulation(num_simulations=30, metric=selected_metric)
                 user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=30)
                 simulation_results = versus.run_user_team_simulations(user_team, num_simulations=50)
-                optimal_team = versus.get_optimal_team(num_simulations=30)
+                optimal_team = versus.get_optimal_team(num_simulations=30, metric=selected_metric)
                 comparison = versus.compare_teams(user_team, optimal_team)
                 st.session_state['versus_results'] = {
                     'user_team': user_team,
                     'optimal_team': optimal_team,
                     'comparison': comparison,
-                    'rider_data': rider_data
+                    'rider_data': rider_data,
+                    'metric_used': selected_metric,
+                    'metric_name': metric_options[selected_metric]
                 }
-                st.success('Simulation complete! See results below.')
+                st.success(f'Simulation complete using {metric_options[selected_metric]}! See results below.')
         # Show results if available
         if st.session_state['versus_results']:
             comparison = st.session_state['versus_results']['comparison']
             user_team = st.session_state['versus_results']['user_team']
             optimal_team = st.session_state['versus_results']['optimal_team']
             rider_data = st.session_state['versus_results']['rider_data']
+            metric_used = st.session_state['versus_results'].get('metric_used', 'mean')
+            metric_name = st.session_state['versus_results'].get('metric_name', 'Average (Mean)')
+            
+            # Show which metric was used
+            st.info(f"📈 **Analysis performed using: {metric_name}**")
             
             st.subheader('2. Results Summary')
             col1, col2 = st.columns(2)

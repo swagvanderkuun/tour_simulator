@@ -251,12 +251,13 @@ class VersusMode:
         user_team.simulation_results = simulation_results
         return simulation_results
     
-    def get_optimal_team(self, num_simulations: int = 50) -> TeamSelection:
+    def get_optimal_team(self, num_simulations: int = 50, metric: str = 'mean') -> TeamSelection:
         """
         Get the optimal team using the team optimizer.
         
         Args:
             num_simulations: Number of simulations for optimization
+            metric: Metric to use for expected points ('mean', 'median', 'mode')
             
         Returns:
             Optimal team selection
@@ -264,7 +265,7 @@ class VersusMode:
         print("Generating optimal team for comparison...")
         
         # Run simulations to get expected points
-        rider_data = self.team_optimizer.run_simulation(num_simulations)
+        rider_data = self.team_optimizer.run_simulation(num_simulations, metric=metric)
         
         # Optimize team with stage selection
         optimal_team = self.team_optimizer.optimize_with_stage_selection(
@@ -608,7 +609,7 @@ def main():
     
     # Get rider performance data
     print("\nStep 2: Analyzing rider performance...")
-    rider_data = versus.team_optimizer.run_simulation(num_simulations=50)
+    rider_data = versus.team_optimizer.run_simulation(num_simulations=50, metric='mean')
     
     # Optimize stage selection for user team
     print("\nStep 3: Optimizing stage selection for your team...")
@@ -620,7 +621,7 @@ def main():
     
     # Get optimal team for comparison
     print("\nStep 5: Generating optimal team for comparison...")
-    optimal_team = versus.get_optimal_team(num_simulations=50)
+    optimal_team = versus.get_optimal_team(num_simulations=50, metric='mean')
     
     # Compare teams
     print("\nStep 6: Comparing teams...")

@@ -160,7 +160,7 @@ def main():
     
     # Initialize session state
     if 'rider_db' not in st.session_state:
-        st.session_state.rider_db = rider_db
+        st.session_state.rider_db = RiderDatabase()
     if 'simulation_results' not in st.session_state:
         st.session_state.simulation_results = None
     if 'multi_simulation_results' not in st.session_state:

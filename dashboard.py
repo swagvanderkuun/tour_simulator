@@ -17,6 +17,7 @@ from team_optimization import TeamOptimizer
 from riders import RiderDatabase, Rider
 from rider_parameters import RiderParameters, get_tier_parameters, update_tier_parameters
 from multi_simulator import MultiSimulationAnalyzer
+from versus_mode import VersusMode
 
 # Page configuration
 st.set_page_config(
@@ -157,7 +158,7 @@ def main():
     # Navigation
     page = st.sidebar.selectbox(
         "Navigation",
-        ["📊 Overview", "🎯 Single Simulation", "📈 Multi Simulation", "⚡ Team Optimization", "👥 Rider Management", "🏁 Stage Types"]
+        ["📊 Overview", "🎯 Single Simulation", "📈 Multi Simulation", "⚡ Team Optimization", "🆚 Versus Mode", "👥 Rider Management", "🏁 Stage Types"]
     )
     
     if page == "📊 Overview":
@@ -168,6 +169,8 @@ def main():
         show_multi_simulation()
     elif page == "⚡ Team Optimization":
         show_team_optimization()
+    elif page == "🆚 Versus Mode":
+        show_versus_mode()
     elif page == "👥 Rider Management":
         show_rider_management()
     elif page == "🏁 Stage Types":
@@ -2847,6 +2850,368 @@ def show_detailed_scorito_stats(scorito_data):
         df_teams = df_teams.sort_values('Total Points', ascending=False)
         
         st.dataframe(df_teams, use_container_width=True)
+
+def show_versus_mode():
+    st.header('🆚 Versus Mode')
+    st.markdown('''
+    **Versus Mode** allows you to select your own team of 20 riders (budget 48, max 4/team), run simulations, and compare your team against the optimal team.
+    ''')
+
+    versus = VersusMode()
+    available_riders = versus.get_available_riders()
+
+    # Initialize session state for selected riders
+    if 'versus_selected_riders' not in st.session_state:
+        st.session_state['versus_selected_riders'] = []
+
+    # Team selection section
+    st.subheader('1. Select Your Team')
+    st.caption('Pick up to 20 riders. Budget: 48. Max 4 per team.')
+
+    # Show current selection stats
+    selected_df = available_riders[available_riders['name'].isin(st.session_state['versus_selected_riders'])]
+    total_cost = selected_df['price'].sum()
+    team_counts = selected_df['team'].value_counts().to_dict()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Selected", f"{len(st.session_state['versus_selected_riders'])}/20")
+    with col2:
+        st.metric("Budget Used", f"{total_cost:.1f}/48")
+    with col3:
+        st.metric("Remaining", f"{48 - total_cost:.1f}")
+    with col4:
+        st.metric("Teams", len(team_counts))
+
+    # Show selected riders with remove option
+    if st.session_state['versus_selected_riders']:
+        st.subheader("Selected Riders")
+        selected_display = selected_df[['name', 'team', 'age', 'price', 'sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].copy()
+        selected_display['Remove'] = [f"❌ {name}" for name in selected_display['name']]
+        
+        # Create a simple display with remove buttons
+        for idx, row in selected_display.iterrows():
+            col1, col2, col3 = st.columns([3, 1, 1])
+            with col1:
+                st.write(f"**{row['name']}** ({row['team']}) - Age: {row['age']}, Price: {row['price']:.1f}")
+            with col2:
+                sprint_tier = ability_to_tier(row['sprint_ability'])
+                punch_tier = ability_to_tier(row['punch_ability'])
+                st.write(f"Sprint: {tier_to_color(sprint_tier)} {sprint_tier}")
+                st.write(f"Punch: {tier_to_color(punch_tier)} {punch_tier}")
+            with col3:
+                itt_tier = ability_to_tier(row['itt_ability'])
+                mountain_tier = ability_to_tier(row['mountain_ability'])
+                st.write(f"ITT: {tier_to_color(itt_tier)} {itt_tier}")
+                st.write(f"Mountain: {tier_to_color(mountain_tier)} {mountain_tier}")
+                if st.button(f"Remove {row['name']}", key=f"selected_remove_{row['name']}"):
+                    st.session_state['versus_selected_riders'].remove(row['name'])
+                    st.rerun()
+
+    # Rider selection by team
+    st.subheader("Available Riders by Team")
+    
+    # Search/filter
+    search = st.text_input('🔍 Search riders (name/team):', '')
+    
+    # Specialty filter
+    specialty_filter = st.selectbox(
+        "Filter by specialty:",
+        ["All", "Sprint", "Punch", "ITT", "Mountain", "Hills"]
+    )
+    
+    # Group by team
+    teams = available_riders.groupby('team')
+    
+    # Create tabs for each team
+    team_names = sorted(teams.groups.keys())
+    if len(team_names) > 10:  # If too many teams, use selectbox
+        selected_team = st.selectbox("Select Team:", team_names)
+        team_tabs = [selected_team]
+    else:
+        team_tabs = team_names
+    
+    for team_name in team_tabs:
+        team_riders = teams.get_group(team_name)
+        if search:
+            team_riders = team_riders[team_riders.apply(lambda row: search.lower() in row['name'].lower() or search.lower() in row['team'].lower(), axis=1)]
+        
+        # Apply specialty filter
+        if specialty_filter != "All":
+            team_riders['max_ability'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].max(axis=1)
+            team_riders['specialty'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].idxmax(axis=1)
+            team_riders = team_riders[team_riders['specialty'] == specialty_filter.lower() + '_ability']
+        
+        if len(team_riders) == 0:
+            continue
+            
+        # Count selected riders from this team
+        team_selected = [r for r in st.session_state['versus_selected_riders'] if r in team_riders['name'].values]
+        team_selected_count = len(team_selected)
+        
+        # Create expandable section for each team
+        with st.expander(f"🏢 {team_name} ({team_selected_count}/4 riders selected)", expanded=team_selected_count > 0):
+            if team_selected_count >= 4:
+                st.warning(f"Maximum 4 riders already selected from {team_name}")
+            
+            # Sort riders by specialty (highest ability first)
+            team_riders['max_ability'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].max(axis=1)
+            team_riders = team_riders.sort_values('max_ability', ascending=False)
+            
+            # Group riders by specialty for better organization
+            team_riders['specialty'] = team_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'hills_ability']].idxmax(axis=1)
+            specialty_groups = team_riders.groupby('specialty')
+            
+            for specialty, specialty_riders in specialty_groups:
+                specialty_name = specialty.replace('_ability', '').title()
+                st.markdown(f"**{specialty_name} Riders:**")
+                
+                # Display riders in a grid
+                for idx, rider in specialty_riders.iterrows():
+                    rider_name = rider['name']
+                    is_selected = rider_name in st.session_state['versus_selected_riders']
+                    
+                    # Determine specialty
+                    abilities = {
+                        'Sprint': rider['sprint_ability'],
+                        'Punch': rider['punch_ability'],
+                        'ITT': rider['itt_ability'],
+                        'Mountain': rider['mountain_ability'],
+                        'Hills': rider['hills_ability']
+                    }
+                    specialty = max(abilities, key=abilities.get)
+                    specialty_value = abilities[specialty]
+                    
+                    # Create a card-like display for each rider
+                    with st.container():
+                        col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                        
+                        with col1:
+                            status = "✅" if is_selected else "⭕"
+                            st.markdown(f"{status} **{rider_name}** (Age: {rider['age']})")
+                            specialty_tier = ability_to_tier(specialty_value)
+                            specialty_icon = tier_to_color(specialty_tier)
+                            st.markdown(f"💰 **Price:** {rider['price']:.1f} | 🎯 **{specialty}:** {specialty_icon} {specialty_tier}")
+                        
+                        with col2:
+                            sprint_tier = ability_to_tier(rider['sprint_ability'])
+                            punch_tier = ability_to_tier(rider['punch_ability'])
+                            st.markdown(f"**Sprint:** {tier_to_color(sprint_tier)} {sprint_tier}")
+                            st.markdown(f"**Punch:** {tier_to_color(punch_tier)} {punch_tier}")
+                        
+                        with col3:
+                            itt_tier = ability_to_tier(rider['itt_ability'])
+                            mountain_tier = ability_to_tier(rider['mountain_ability'])
+                            st.markdown(f"**ITT:** {tier_to_color(itt_tier)} {itt_tier}")
+                            st.markdown(f"**Mountain:** {tier_to_color(mountain_tier)} {mountain_tier}")
+                        
+                        with col4:
+                            if is_selected:
+                                if st.button(f"❌ Remove", key=f"team_remove_{team_name}_{rider_name}", help="Remove from team"):
+                                    st.session_state['versus_selected_riders'].remove(rider_name)
+                                    st.rerun()
+                            else:
+                                # Check if we can add this rider
+                                can_add = (len(st.session_state['versus_selected_riders']) < 20 and 
+                                         total_cost + rider['price'] <= 48 and 
+                                         team_selected_count < 4)
+                                
+                                if can_add:
+                                    if st.button(f"➕ Add", key=f"team_add_{team_name}_{rider_name}", help="Add to team"):
+                                        st.session_state['versus_selected_riders'].append(rider_name)
+                                        st.rerun()
+                                else:
+                                    reason = ""
+                                    if len(st.session_state['versus_selected_riders']) >= 20:
+                                        reason = "Team full"
+                                    elif total_cost + rider['price'] > 48:
+                                        reason = "Budget exceeded"
+                                    elif team_selected_count >= 4:
+                                        reason = "Team limit reached"
+                                    
+                                    st.button(f"➕ Add", key=f"team_add_{team_name}_{rider_name}", disabled=True, help=f"Cannot add: {reason}")
+                        
+                        # Add a subtle divider between riders
+                        st.markdown("---")
+
+    # Validation
+    is_valid, error_message = versus.validate_team_selection(st.session_state['versus_selected_riders'])
+    if is_valid:
+        st.success('✅ Team selection is valid!')
+    else:
+        st.warning(f'⚠️ {error_message}')
+
+    # Step 2: Run simulation and show results
+    if is_valid:
+        if 'versus_results' not in st.session_state:
+            st.session_state['versus_results'] = None
+        run_sim = st.button('Run Versus Simulation', type='primary')
+        if run_sim:
+            with st.spinner('Running simulations and optimizing... (this may take a minute)'):
+                # Run the full versus mode pipeline
+                user_team = versus.create_user_team(st.session_state['versus_selected_riders'])
+                rider_data = versus.team_optimizer.run_simulation(num_simulations=30)
+                user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=30)
+                simulation_results = versus.run_user_team_simulations(user_team, num_simulations=50)
+                optimal_team = versus.get_optimal_team(num_simulations=30)
+                comparison = versus.compare_teams(user_team, optimal_team)
+                st.session_state['versus_results'] = {
+                    'user_team': user_team,
+                    'optimal_team': optimal_team,
+                    'comparison': comparison,
+                    'rider_data': rider_data
+                }
+                st.success('Simulation complete! See results below.')
+        # Show results if available
+        if st.session_state['versus_results']:
+            comparison = st.session_state['versus_results']['comparison']
+            user_team = st.session_state['versus_results']['user_team']
+            optimal_team = st.session_state['versus_results']['optimal_team']
+            rider_data = st.session_state['versus_results']['rider_data']
+            
+            st.subheader('2. Results Summary')
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown('**Your Team**')
+                st.write(f"Cost: {comparison['user_team']['total_cost']:.2f}")
+                st.write(f"Average Points: {comparison['user_team']['avg_simulation_points']:.2f} ± {comparison['user_team']['simulation_std']:.2f}")
+                st.write(f"Riders: {', '.join(comparison['user_team']['riders'])}")
+            with col2:
+                st.markdown('**Optimal Team**')
+                st.write(f"Cost: {comparison['optimal_team']['total_cost']:.2f}")
+                st.write(f"Expected Points: {comparison['optimal_team']['expected_points']:.2f}")
+                st.write(f"Riders: {', '.join(comparison['optimal_team']['riders'])}")
+            st.markdown('---')
+            st.write(f"**Cost Difference:** {comparison['comparison']['cost_difference']:.2f}")
+            st.write(f"**Performance Difference:** {comparison['comparison']['performance_difference']:.2f}")
+            st.write(f"**Common Riders:** {len(comparison['comparison']['common_riders'])}")
+            st.write(f"**Your Unique Riders:** {len(comparison['comparison']['user_only_riders'])}")
+            st.write(f"**Optimal Unique Riders:** {len(comparison['comparison']['optimal_only_riders'])}")
+            if comparison['comparison']['common_riders']:
+                st.write(f"Common Riders: {', '.join(comparison['comparison']['common_riders'])}")
+            if comparison['comparison']['user_only_riders']:
+                st.write(f"Your Unique Riders: {', '.join(comparison['comparison']['user_only_riders'])}")
+            if comparison['comparison']['optimal_only_riders']:
+                st.write(f"Optimal Unique Riders: {', '.join(comparison['comparison']['optimal_only_riders'])}")
+            
+            # Stage-by-stage comparison
+            if user_team.stage_selections and optimal_team.stage_selections:
+                st.subheader('3. Stage-by-Stage Comparison')
+                stages = list(range(1, 23))
+                stage_comparison_data = []
+                for stage in stages:
+                    user_stage_points = sum(user_team.stage_points.get(stage, {}).values())
+                    optimal_stage_points = sum(optimal_team.stage_points.get(stage, {}).values())
+                    stage_comparison_data.append({
+                        'Stage': stage,
+                        'User_Team_Points': user_stage_points,
+                        'Optimal_Team_Points': optimal_stage_points,
+                        'Difference': user_stage_points - optimal_stage_points
+                    })
+                
+                stage_df = pd.DataFrame(stage_comparison_data)
+                
+                # Stage comparison chart
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=stage_df['Stage'], y=stage_df['User_Team_Points'], 
+                                       mode='lines+markers', name='Your Team', line=dict(color='blue')))
+                fig.add_trace(go.Scatter(x=stage_df['Stage'], y=stage_df['Optimal_Team_Points'], 
+                                       mode='lines+markers', name='Optimal Team', line=dict(color='red')))
+                fig.update_layout(title='Stage-by-Stage Points Comparison', 
+                                xaxis_title='Stage', yaxis_title='Points',
+                                height=400)
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Stage difference chart
+                fig2 = go.Figure()
+                colors = ['green' if x >= 0 else 'red' for x in stage_df['Difference']]
+                fig2.add_trace(go.Bar(x=stage_df['Stage'], y=stage_df['Difference'], 
+                                    marker_color=colors, name='Difference'))
+                fig2.update_layout(title='Stage-by-Stage Difference (Your Team - Optimal Team)', 
+                                 xaxis_title='Stage', yaxis_title='Points Difference',
+                                 height=400)
+                st.plotly_chart(fig2, use_container_width=True)
+                
+                # Stage comparison table
+                st.dataframe(stage_df, use_container_width=True)
+            
+            # Rider-by-rider comparison
+            st.subheader('4. Rider-by-Rider Comparison')
+            all_riders = set(user_team.rider_names + optimal_team.rider_names)
+            rider_comparison_data = []
+            
+            for rider_name in sorted(all_riders):
+                in_user = rider_name in user_team.rider_names
+                in_optimal = rider_name in optimal_team.rider_names
+                
+                # Get rider info
+                rider_info = rider_data[rider_data['rider_name'] == rider_name]
+                if not rider_info.empty:
+                    rider_row = rider_info.iloc[0]
+                    rider_comparison_data.append({
+                        'Rider': rider_name,
+                        'Team': rider_row['team'],
+                        'Age': rider_row['age'],
+                        'Price': rider_row['price'],
+                        'Expected_Points': rider_row['expected_points'],
+                        'In_User_Team': 'Yes' if in_user else 'No',
+                        'In_Optimal_Team': 'Yes' if in_optimal else 'No',
+                        'Selection': 'Both' if in_user and in_optimal else 
+                                   ('User Only' if in_user else 'Optimal Only')
+                    })
+            
+            rider_comp_df = pd.DataFrame(rider_comparison_data)
+            st.dataframe(rider_comp_df, use_container_width=True)
+            
+            # Download Excel report
+            st.subheader('5. Download Results')
+            if st.button('Download Excel Report'):
+                try:
+                    filename = versus.save_versus_results(user_team, optimal_team, comparison, rider_data)
+                    with open(filename, 'rb') as f:
+                        excel_data = f.read()
+                    
+                    st.download_button(
+                        label='Click to download Excel file',
+                        data=excel_data,
+                        file_name=filename,
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                    st.success(f'Excel report saved as {filename}')
+                except Exception as e:
+                    st.error(f'Error generating Excel report: {e}')
+    else:
+        st.button('Run Versus Simulation', disabled=True)
+
+def ability_to_tier(ability: int) -> str:
+    """Convert ability score to tier name"""
+    if ability >= 98:
+        return "Exceptional"
+    elif ability >= 95:
+        return "World Class"
+    elif ability >= 90:
+        return "Elite"
+    elif ability >= 80:
+        return "Very Good"
+    elif ability >= 70:
+        return "Good"
+    elif ability >= 50:
+        return "Average"
+    else:
+        return "Below Average"
+
+def tier_to_color(tier: str) -> str:
+    """Get color for tier display"""
+    colors = {
+        "Exceptional": "💎",
+        "World Class": "🟢", 
+        "Elite": "🟢",
+        "Very Good": "🟢",
+        "Good": "🟡",
+        "Average": "🟠",
+        "Below Average": "🔴"
+    }
+    return colors.get(tier, "⚪")
 
 if __name__ == "__main__":
     main() 

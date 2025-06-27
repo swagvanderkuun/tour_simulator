@@ -512,30 +512,59 @@ class TourSimulator:
     def get_final_youth(self):
         return sorted(self.youth_times.items(), key=lambda x: x[1])
 
+def run_versus_mode():
+    """Run the Versus Mode functionality."""
+    try:
+        from versus_mode import main as versus_main
+        versus_main()
+    except ImportError:
+        print("Versus Mode not available. Make sure versus_mode.py is in the same directory.")
+    except Exception as e:
+        print(f"Error running Versus Mode: {e}")
+
 def main():
-    simulator = TourSimulator()
-    simulator.simulate_tour()
+    print("=== TOUR DE FRANCE SIMULATOR ===")
+    print("Choose an option:")
+    print("1. Run regular tour simulation")
+    print("2. Run Versus Mode (compare your team against optimal team)")
     
-    # Export results with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    simulator.write_results_to_excel(f"tour_simulation_results_{timestamp}.xlsx")
-    
-    print("\nFINAL GENERAL CLASSIFICATION (TOP 10):")
-    for name, t in simulator.get_final_gc():
-        if name not in simulator.abandoned_riders:
-            print(f"{name}: {t/3600:.2f}h")
-    print("\nFINAL SPRINT CLASSIFICATION (TOP 10):")
-    for name, pts in simulator.get_final_sprint():
-        if name not in simulator.abandoned_riders:
-            print(f"{name}: {pts} pts")
-    print("\nFINAL MOUNTAIN CLASSIFICATION (TOP 10):")
-    for name, pts in simulator.get_final_mountain():
-        if name not in simulator.abandoned_riders:
-            print(f"{name}: {pts} pts")
-    print("\nFINAL YOUTH CLASSIFICATION (TOP 10):")
-    for name, t in simulator.get_final_youth():
-        if name not in simulator.abandoned_riders:
-            print(f"{name}: {t/3600:.2f}h")
+    while True:
+        choice = input("\nEnter your choice (1 or 2): ").strip()
+        
+        if choice == "1":
+            print("\nRunning regular tour simulation...")
+            simulator = TourSimulator()
+            simulator.simulate_tour()
+            
+            # Export results with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            simulator.write_results_to_excel(f"tour_simulation_results_{timestamp}.xlsx")
+            
+            print("\nFINAL GENERAL CLASSIFICATION (TOP 10):")
+            for name, t in simulator.get_final_gc():
+                if name not in simulator.abandoned_riders:
+                    print(f"{name}: {t/3600:.2f}h")
+            print("\nFINAL SPRINT CLASSIFICATION (TOP 10):")
+            for name, pts in simulator.get_final_sprint():
+                if name not in simulator.abandoned_riders:
+                    print(f"{name}: {pts} pts")
+            print("\nFINAL MOUNTAIN CLASSIFICATION (TOP 10):")
+            for name, pts in simulator.get_final_mountain():
+                if name not in simulator.abandoned_riders:
+                    print(f"{name}: {pts} pts")
+            print("\nFINAL YOUTH CLASSIFICATION (TOP 10):")
+            for name, t in simulator.get_final_youth():
+                if name not in simulator.abandoned_riders:
+                    print(f"{name}: {t/3600:.2f}h")
+            break
+            
+        elif choice == "2":
+            print("\nStarting Versus Mode...")
+            run_versus_mode()
+            break
+            
+        else:
+            print("Invalid choice. Please enter 1 or 2.")
 
 if __name__ == "__main__":
     main() 

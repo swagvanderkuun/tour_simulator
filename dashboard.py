@@ -13,12 +13,12 @@ import matplotlib.pyplot as plt
 
 # Import our custom modules
 from simulator import TourSimulator
-from team_optimization import TeamOptimizer
+from team_optimization import TeamOptimizer, TeamSelection
 from riders import RiderDatabase, Rider
 from rider_parameters import RiderParameters, get_tier_parameters, update_tier_parameters
 from multi_simulator import MultiSimulationAnalyzer
 from versus_mode import VersusMode
-from stage_profiles import StageType
+from stage_profiles import StageType, STAGE_PROFILES, validate_stage_profile, update_stage_profile
 
 # Page configuration
 st.set_page_config(
@@ -798,9 +798,11 @@ def show_team_optimization():
             rider_data = run_optimizer_simulation(optimizer, num_simulations, st.session_state.rider_db, metric=selected_metric)
             
             # Optimize team (with stage-by-stage selection)
-            team_selection = optimizer.optimize_with_stage_selection(
+            team_selection = optimize_with_stage_selection_with_injection(
+                optimizer,
                 rider_data,
                 num_simulations=num_simulations,
+                rider_db=st.session_state.rider_db,
                 risk_aversion=0.0,  # You can expose this as a parameter if desired
                 abandon_penalty=abandon_penalty
             )
@@ -2621,6 +2623,10 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db, metric='mean'
         if i % 10 == 0:
             print(f"Simulation {i+1}/{num_simulations}")
         
+        # Ensure the simulator has the correct rider database and stage profiles
+        inject_rider_database(optimizer.simulator, rider_db)
+        inject_stage_profiles(optimizer.simulator)
+        
         # Run simulation
         optimizer.simulator.simulate_tour()
         
@@ -2634,6 +2640,7 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db, metric='mean'
         
         # Reset simulator for next run but keep the modified rider database and stage profiles
         optimizer.simulator = TourSimulator()
+        # Immediately inject the rider database and stage profiles after reset
         inject_rider_database(optimizer.simulator, rider_db)
         inject_stage_profiles(optimizer.simulator)
     
@@ -2707,6 +2714,214 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db, metric='mean'
     
     return final_df
 
+def get_stage_performance_data_with_injection(optimizer, num_simulations, rider_db):
+    """
+    Custom method to get stage performance data with proper rider database injection
+    
+    Args:
+        optimizer: TeamOptimizer instance
+        num_simulations: Number of simulations to run
+        rider_db: RiderDatabase instance
+        
+    Returns:
+        Dictionary mapping (rider_name, stage) to expected points
+    """
+    stage_points = {}
+    
+    for sim in range(num_simulations):
+        if sim % 10 == 0:
+            print(f"Stage analysis simulation {sim+1}/{num_simulations}")
+        
+        # Ensure the simulator has the correct rider database and stage profiles
+        inject_rider_database(optimizer.simulator, rider_db)
+        inject_stage_profiles(optimizer.simulator)
+        
+        # Run simulation and collect stage-by-stage points
+        optimizer.simulator.simulate_tour()
+        
+        # Extract stage points from the records and calculate per-stage points
+        stage_records = optimizer.simulator.scorito_points_records
+        
+        # Group records by rider and stage
+        rider_stage_points = {}
+        for record in stage_records:
+            rider_name = record['rider']
+            stage = record['stage']
+            cumulative_points = record['scorito_points']
+            
+            if rider_name not in rider_stage_points:
+                rider_stage_points[rider_name] = {}
+            rider_stage_points[rider_name][stage] = cumulative_points
+        
+        # Calculate per-stage points by taking differences
+        for rider_name, stage_data in rider_stage_points.items():
+            stages = sorted(stage_data.keys())
+            for i, stage in enumerate(stages):
+                if i == 0:
+                    # First stage: points earned = cumulative points
+                    points_earned = stage_data[stage]
+                else:
+                    # Other stages: points earned = current cumulative - previous cumulative
+                    points_earned = stage_data[stage] - stage_data[stages[i-1]]
+                
+                key = (rider_name, stage)
+                if key not in stage_points:
+                    stage_points[key] = []
+                stage_points[key].append(points_earned)
+        
+        # Reset simulator and immediately inject the rider database and stage profiles
+        optimizer.simulator = TourSimulator()
+        inject_rider_database(optimizer.simulator, rider_db)
+        inject_stage_profiles(optimizer.simulator)
+    
+    # Calculate expected points for each rider-stage combination
+    expected_stage_points = {}
+    for key, points_list in stage_points.items():
+        expected_stage_points[key] = np.mean(points_list)
+    
+    return expected_stage_points
+
+def optimize_with_stage_selection_with_injection(optimizer, rider_data, num_simulations, rider_db, risk_aversion=0.0, abandon_penalty=1.0):
+    """
+    Custom version of optimize_with_stage_selection that uses proper rider database injection
+    
+    Args:
+        optimizer: TeamOptimizer instance
+        rider_data: DataFrame with rider information and expected points
+        num_simulations: Number of simulations for stage analysis
+        rider_db: RiderDatabase instance
+        risk_aversion: Factor to penalize high variance (0 = no penalty, 1 = high penalty)
+        abandon_penalty: Factor to penalize high abandon probability (0 = no penalty, 1 = high penalty)
+        
+    Returns:
+        TeamSelection object with optimal team
+    """
+    from team_optimization import TeamSelection
+    from pulp import LpProblem, LpMaximize, LpVariable, lpSum, LpStatusOptimal, LpStatus
+    
+    print("Running advanced optimization with stage selection...")
+    
+    # Use our custom method to get stage-by-stage performance data
+    stage_performance = get_stage_performance_data_with_injection(optimizer, num_simulations, rider_db)
+    
+    # Create optimization problem
+    prob = LpProblem("Advanced_Team_Optimization", LpMaximize)
+    
+    riders = list(rider_data['rider_name'])
+    stages = list(range(1, 23))  # 22 stages
+    
+    # Decision variables
+    # x[i] = 1 if rider i is selected for the team
+    rider_vars = LpVariable.dicts("Rider", riders, cat='Binary')
+    
+    # y[i,j] = 1 if rider i is selected for stage j
+    stage_vars = LpVariable.dicts("Stage", 
+                                [(r, s) for r in riders for s in stages], 
+                                cat='Binary')
+    
+    # Objective: maximize total points across all stages
+    objective_terms = []
+    for rider in riders:
+        for stage in stages:
+            if (rider, stage) in stage_performance:
+                points = stage_performance[(rider, stage)]
+                
+                # Apply risk aversion if specified
+                if risk_aversion > 0:
+                    # Get rider's variance from the rider_data
+                    rider_row = rider_data[rider_data['rider_name'] == rider]
+                    if not rider_row.empty and 'points_std' in rider_row.columns:
+                        points_std = rider_row.iloc[0]['points_std']
+                        # Risk-adjusted points = expected points - (risk_aversion * standard deviation)
+                        points = points - (risk_aversion * points_std)
+                
+                # Apply abandon penalty if specified
+                if abandon_penalty > 0:
+                    # Get rider's abandon probability from the rider_data
+                    abandon_prob = rider_data[rider_data['rider_name'] == rider].iloc[0]['chance_of_abandon']
+                    # Penalize points based on abandon probability
+                    points = points * (1 - abandon_penalty * abandon_prob)
+                
+                objective_terms.append(stage_vars[(rider, stage)] * points)
+    
+    prob += lpSum(objective_terms)
+    
+    # Constraint 1: Exactly team_size riders in team
+    prob += lpSum(rider_vars[rider] for rider in riders) == optimizer.team_size
+    
+    # Constraint 2: Budget constraint
+    cost_terms = []
+    for _, row in rider_data.iterrows():
+        rider_name = row['rider_name']
+        price = row['price']
+        cost_terms.append(rider_vars[rider_name] * price)
+    prob += lpSum(cost_terms) <= optimizer.budget
+    
+    # Constraint 3: Can only select riders for stages if they're in the team
+    for rider in riders:
+        for stage in stages:
+            prob += stage_vars[(rider, stage)] <= rider_vars[rider]
+    
+    # Constraint 4: Stage selection limits
+    for stage in stages:
+        if stage == 22:  # Final stage: all riders
+            prob += lpSum(stage_vars[(rider, stage)] for rider in riders) == optimizer.final_stage_riders
+        else:  # Regular stages: riders_per_stage
+            prob += lpSum(stage_vars[(rider, stage)] for rider in riders) == optimizer.riders_per_stage
+    
+    # Constraint 5: Maximum 4 riders per team (Scorito rule)
+    teams = rider_data['team'].unique()
+    for team in teams:
+        team_riders = rider_data[rider_data['team'] == team]['rider_name'].tolist()
+        if team_riders:
+            prob += lpSum(rider_vars[rider] for rider in team_riders) <= 4
+    
+    # Solve
+    prob.solve()
+    
+    if prob.status != LpStatusOptimal:
+        raise ValueError(f"Advanced optimization failed with status: {LpStatus[prob.status]}")
+    
+    # Extract solution
+    selected_riders = []
+    total_cost = 0
+    total_points = 0
+    stage_selections = {}
+    stage_points = {}
+    
+    for rider_name in riders:
+        if rider_vars[rider_name].value() == 1:
+            rider_row = rider_data[rider_data['rider_name'] == rider_name].iloc[0]
+            rider_obj = optimizer.rider_db.get_rider(rider_name)
+            selected_riders.append(rider_obj)
+            total_cost += rider_row['price']
+            
+            # Calculate total points for this rider across all stages
+            rider_stage_points = 0
+            for stage in stages:
+                if stage_vars[(rider_name, stage)].value() == 1:
+                    if (rider_name, stage) in stage_performance:
+                        points = stage_performance[(rider_name, stage)]
+                        rider_stage_points += points
+                        
+                        # Store stage selections and points
+                        if stage not in stage_selections:
+                            stage_selections[stage] = []
+                            stage_points[stage] = {}
+                        stage_selections[stage].append(rider_name)
+                        stage_points[stage][rider_name] = points
+            
+            total_points += rider_stage_points
+    
+    return TeamSelection(
+        riders=selected_riders,
+        total_cost=total_cost,
+        expected_points=total_points,
+        rider_names=[r.name for r in selected_riders],
+        stage_selections=stage_selections,
+        stage_points=stage_points
+    )
+
 def show_stage_types_management():
     st.header("🏁 Stage Types Management")
     st.markdown("""
@@ -2715,9 +2930,6 @@ def show_stage_types_management():
     **Create mixed stage types with weights!** For example, a stage can be 60% punch and 40% sprint.
     All weights must sum to 1.0 (100%).
     """)
-    
-    # Import stage profiles
-    from stage_profiles import STAGE_PROFILES, StageType, validate_stage_profile, update_stage_profile
     
     # Create a copy of stage profiles for editing
     if 'stage_profiles_edit' not in st.session_state:
@@ -2877,9 +3089,6 @@ def show_stage_summary(stage_type_options):
 
 def show_stage_controls(stage_type_options):
     """Show stage management controls"""
-    # Import required functions
-    from stage_profiles import STAGE_PROFILES, validate_stage_profile
-    
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -2955,309 +3164,32 @@ def show_stage_controls(stage_type_options):
             st.success("✅ Applied example mixed stages to stages 4, 8, 13, and 16!")
             st.rerun()
 
-def show_scorito_analysis_dashboard(metrics):
-    """Display comprehensive Scorito points analysis"""
-    st.subheader("💰 Scorito Points Analysis")
-    
-    scorito_data = metrics['scorito_analysis']
-    
-    # Generate a unique identifier for this dashboard instance
-    unique_id = int(time.time() * 1000000)  # Microsecond timestamp
-    
-    # Create tabs for different analysis sections
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Overview", "📈 Variance & Outliers", "🏁 Stage Analysis", "💰 Price Value", "📋 Detailed Stats"
-    ])
-    
-    with tab1:
-        show_scorito_overview(scorito_data, unique_id)
-    
-    with tab2:
-        show_variance_outlier_analysis(scorito_data, unique_id)
-    
-    with tab3:
-        show_stage_by_stage_analysis(scorito_data, unique_id)
-    
-    with tab4:
-        show_price_value_analysis(scorito_data, unique_id)
-    
-    with tab5:
-        show_detailed_scorito_stats(scorito_data)
+def ability_to_tier(ability: int) -> str:
+    """Convert ability score to tier name"""
+    if ability >= 98:
+        return "S"
+    elif ability >= 95:
+        return "A"
+    elif ability >= 90:
+        return "B"
+    elif ability >= 80:
+        return "C"
+    elif ability >= 70:
+        return "D"
+    else:
+        return "E"
 
-def show_scorito_overview(scorito_data, unique_id):
-    """Show overview of Scorito points analysis"""
-    st.subheader("📊 Overview")
-    
-    summary = scorito_data['overall_summary']
-    basic_stats = scorito_data['basic_stats']
-    
-    # Key metrics
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Simulations", summary['total_simulations'])
-    
-    with col2:
-        st.metric("Total Points Scored (per sim)", f"{summary['total_points_scored']:,.0f}")
-    
-    with col3:
-        st.metric("Avg Points/Stage", f"{summary['avg_points_per_stage']:.1f}")
-    
-    with col4:
-        st.metric("Unique Riders", summary['unique_riders'])
-    
-    # Top scorers chart
-    st.subheader("🏆 Top Scorers")
-    top_scorers = basic_stats['top_scorers']
-    
-    if top_scorers:
-        # Create DataFrame for plotting
-        df_top = pd.DataFrame(list(top_scorers.items()), columns=['Rider', 'Total Points'])
-        df_top = df_top.head(15)  # Show top 15
-        
-        fig = px.bar(df_top, x='Total Points', y='Rider', orientation='h',
-                    title="Top 15 Scorers by Total Points",
-                    color='Total Points', color_continuous_scale='viridis')
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True, key=f"top_scorers_chart_{unique_id}")
-    
-    # Points by team
-    st.subheader("🏢 Points by Team")
-    team_points = basic_stats['points_by_team']
-    
-    if team_points:
-        df_team = pd.DataFrame(list(team_points.items()), columns=['Team', 'Total Points'])
-        df_team = df_team.sort_values('Total Points', ascending=False)
-        
-        fig = px.bar(df_team, x='Team', y='Total Points',
-                    title="Total Scorito Points by Team",
-                    color='Total Points', color_continuous_scale='plasma')
-        fig.update_xaxes(tickangle=45)
-        st.plotly_chart(fig, use_container_width=True, key=f"team_points_chart_{unique_id}")
-
-def show_variance_outlier_analysis(scorito_data, unique_id):
-    """Show variance and outlier analysis"""
-    st.subheader("📈 Variance & Outlier Analysis")
-    
-    variance_data = scorito_data['variance_analysis']
-    outlier_data = scorito_data['outlier_analysis']
-    
-    # Variance overview
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.metric("Overall Variance", f"{variance_data['overall_variance']:.2f}")
-        
-        st.subheader("🔍 High Variance Riders")
-        high_var = variance_data['high_variance_riders']
-        if high_var:
-            df_high = pd.DataFrame(list(high_var.items()), columns=['Rider', 'Standard Deviation'])
-            df_high = df_high.sort_values('Standard Deviation', ascending=False).head(10)
-            st.dataframe(df_high, use_container_width=True)
-    
-    with col2:
-        st.metric("Outlier Threshold", f"{outlier_data['outlier_threshold']:.1f}")
-        st.metric("Outlier Percentage", f"{outlier_data['outlier_percentage']:.1f}%")
-        
-        st.subheader("🎯 Low Variance Riders")
-        low_var = variance_data['low_variance_riders']
-        if low_var:
-            df_low = pd.DataFrame(list(low_var.items()), columns=['Rider', 'Standard Deviation'])
-            df_low = df_low.sort_values('Standard Deviation').head(10)
-            st.dataframe(df_low, use_container_width=True)
-    
-    # Top outliers
-    st.subheader("🚀 Top Outliers")
-    top_outliers = outlier_data['top_outliers']
-    
-    if top_outliers:
-        df_outliers = pd.DataFrame(top_outliers)
-        st.dataframe(df_outliers, use_container_width=True)
-        
-        # Outlier distribution chart
-        outlier_riders = outlier_data['outlier_riders']
-        if outlier_riders:
-            df_outlier_counts = pd.DataFrame(list(outlier_riders.items()), 
-                                           columns=['Rider', 'Outlier Count'])
-            df_outlier_counts = df_outlier_counts.sort_values('Outlier Count', ascending=False).head(10)
-            
-            fig = px.bar(df_outlier_counts, x='Rider', y='Outlier Count',
-                        title="Riders with Most Outlier Performances",
-                        color='Outlier Count', color_continuous_scale='reds')
-            fig.update_xaxes(tickangle=45)
-            st.plotly_chart(fig, use_container_width=True, key=f"outlier_riders_chart_{unique_id}")
-
-def show_stage_by_stage_analysis(scorito_data, unique_id):
-    """Show stage-by-stage analysis"""
-    st.subheader("🏁 Stage-by-Stage Analysis")
-    
-    stage_data = scorito_data['stage_analysis']
-    
-    if not stage_data:
-        st.info("No stage data available")
-        return
-    
-    # Stage overview metrics
-    stages = list(stage_data.keys())
-    total_points = [stage_data[s]['total_points'] for s in stages]
-    avg_points = [stage_data[s]['avg_points'] for s in stages]
-    max_points = [stage_data[s]['max_points'] for s in stages]
-    
-    # Stage points chart
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=stages, y=total_points, mode='lines+markers', 
-                            name='Total Points', line=dict(color='blue')))
-    fig.add_trace(go.Scatter(x=stages, y=avg_points, mode='lines+markers', 
-                            name='Average Points', line=dict(color='green')))
-    fig.add_trace(go.Scatter(x=stages, y=max_points, mode='lines+markers', 
-                            name='Max Points', line=dict(color='red')))
-    
-    fig.update_layout(title="Stage Points Overview", xaxis_title="Stage", yaxis_title="Points",
-                     height=400)
-    st.plotly_chart(fig, use_container_width=True, key=f"stage_overview_chart_{unique_id}")
-    
-    # Stage selector for detailed view
-    selected_stage = st.selectbox("Select Stage for Detailed View:", stages, key=f"stage_selector_{unique_id}")
-    
-    if selected_stage:
-        stage_info = stage_data[selected_stage]
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("Total Points", f"{stage_info['total_points']:,.0f}")
-        
-        with col2:
-            st.metric("Average Points", f"{stage_info['avg_points']:.1f}")
-        
-        with col3:
-            st.metric("Max Points", f"{stage_info['max_points']:.1f}")
-        
-        with col4:
-            st.metric("Standard Deviation", f"{stage_info['points_std']:.1f}")
-        
-        # Top scorers for this stage
-        st.subheader(f"🏆 Top Scorers - Stage {selected_stage}")
-        top_scorers = stage_info['top_scorers']
-        
-        if top_scorers:
-            df_stage = pd.DataFrame(top_scorers)
-            st.dataframe(df_stage, use_container_width=True)
-        
-        # Points distribution for this stage
-        st.subheader(f"📊 Points Distribution - Stage {selected_stage}")
-        distribution = stage_info['points_distribution']
-        
-        if distribution:
-            df_dist = pd.DataFrame(list(distribution.items()), columns=['Range', 'Count'])
-            fig = px.pie(df_dist, values='Count', names='Range', 
-                        title=f"Points Distribution - Stage {selected_stage}")
-            st.plotly_chart(fig, use_container_width=True, key=f"stage_{selected_stage}_distribution_{unique_id}")
-
-def show_price_value_analysis(scorito_data, unique_id):
-    """Show price value analysis"""
-    st.subheader("💰 Price Value Analysis")
-    
-    price_data = scorito_data['price_value_analysis']
-    top_value = scorito_data['top_value_riders']
-    consistency = scorito_data['consistency_analysis']
-    
-    if not price_data:
-        st.info("No price data available")
-        return
-    
-    # Convert to DataFrame for easier manipulation
-    df_price = pd.DataFrame.from_dict(price_data, orient='index')
-    df_price['rider'] = df_price.index
-    
-    # Top value riders
-    st.subheader("💎 Top Value Riders (Points per Euro)")
-    
-    if top_value:
-        df_top_value = pd.DataFrame.from_dict(top_value, orient='index')
-        df_top_value['rider'] = df_top_value.index
-        df_top_value = df_top_value.sort_values('points_per_euro', ascending=False).head(15)
-        
-        fig = px.bar(df_top_value, x='rider', y='points_per_euro',
-                    title="Top 15 Value Riders (Points per Euro)",
-                    color='avg_total_points', color_continuous_scale='viridis',
-                    hover_data=['price', 'avg_total_points', 'team'])
-        fig.update_xaxes(tickangle=45)
-        st.plotly_chart(fig, use_container_width=True, key=f"top_value_riders_chart_{unique_id}")
-    
-    # Consistency analysis
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("🎯 Most Consistent Riders")
-        most_consistent = consistency['most_consistent']
-        if most_consistent:
-            df_consistent = pd.DataFrame(most_consistent, columns=['rider', 'data'])
-            df_consistent['consistency'] = df_consistent['data'].apply(lambda x: x['consistency'])
-            df_consistent['avg_points'] = df_consistent['data'].apply(lambda x: x['avg_total_points'])
-            df_consistent['team'] = df_consistent['data'].apply(lambda x: x['team'])
-            
-            st.dataframe(df_consistent[['rider', 'consistency', 'avg_points', 'team']], 
-                        use_container_width=True)
-    
-    with col2:
-        st.subheader("🎲 Least Consistent Riders")
-        least_consistent = consistency['least_consistent']
-        if least_consistent:
-            df_inconsistent = pd.DataFrame(least_consistent, columns=['rider', 'data'])
-            df_inconsistent['consistency'] = df_inconsistent['data'].apply(lambda x: x['consistency'])
-            df_inconsistent['avg_points'] = df_inconsistent['data'].apply(lambda x: x['avg_total_points'])
-            df_inconsistent['team'] = df_inconsistent['data'].apply(lambda x: x['team'])
-            
-            st.dataframe(df_inconsistent[['rider', 'consistency', 'avg_points', 'team']], 
-                        use_container_width=True)
-    
-    # Price vs Points scatter plot
-    st.subheader("📊 Price vs Average Points")
-    
-    fig = px.scatter(df_price, x='price', y='avg_total_points', 
-                    color='team', size='points_per_euro',
-                    hover_data=['rider', 'consistency'],
-                    title="Price vs Average Points (Size = Points per Euro)")
-    st.plotly_chart(fig, use_container_width=True, key=f"price_vs_points_scatter_{unique_id}")
-
-def show_detailed_scorito_stats(scorito_data):
-    """Show detailed Scorito statistics"""
-    st.subheader("📋 Detailed Statistics")
-    
-    basic_stats = scorito_data['basic_stats']
-    
-    # Rider statistics
-    st.subheader("👥 Rider Statistics")
-    
-    if 'total_points_by_rider' in basic_stats:
-        df_riders = pd.DataFrame.from_dict(basic_stats['total_points_by_rider'], 
-                                         orient='index', columns=['Total Points'])
-        df_riders['rider'] = df_riders.index
-        
-        # Add average points
-        if 'avg_points_by_rider' in basic_stats:
-            df_riders['avg_points'] = df_riders['rider'].map(basic_stats['avg_points_by_rider'])
-        
-        # Add standard deviation
-        if 'points_std_by_rider' in basic_stats:
-            df_riders['std_points'] = df_riders['rider'].map(basic_stats['points_std_by_rider'])
-        
-        # Sort by total points
-        df_riders = df_riders.sort_values('Total Points', ascending=False)
-        
-        st.dataframe(df_riders, use_container_width=True)
-    
-    # Team statistics
-    st.subheader("🏢 Team Statistics")
-    
-    if 'points_by_team' in basic_stats:
-        df_teams = pd.DataFrame.from_dict(basic_stats['points_by_team'], 
-                                        orient='index', columns=['Total Points'])
-        df_teams['team'] = df_teams.index
-        df_teams = df_teams.sort_values('Total Points', ascending=False)
-        
-        st.dataframe(df_teams, use_container_width=True)
+def tier_to_color(tier: str) -> str:
+    """Get color for tier display"""
+    colors = {
+        "S": "💎",
+        "A": "🟢", 
+        "B": "🟢",
+        "C": "🟡",
+        "D": "🟠",
+        "E": "🔴"
+    }
+    return colors.get(tier, "⚪")
 
 def show_versus_mode():
     st.header('🆚 Versus Mode')
@@ -3266,6 +3198,12 @@ def show_versus_mode():
     ''')
 
     versus = VersusMode()
+    
+    # Inject the session state rider database into the versus mode
+    versus.rider_db = st.session_state.rider_db
+    versus.team_optimizer.rider_db = st.session_state.rider_db
+    inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
+    
     available_riders = versus.get_available_riders()
 
     # Initialize session state for selected riders
@@ -3310,7 +3248,9 @@ def show_versus_mode():
             with col3:
                 itt_tier = ability_to_tier(row['itt_ability'])
                 mountain_tier = ability_to_tier(row['mountain_ability'])
-                st.write(f"Break Away: {tier_to_color(mountain_tier)} {mountain_tier}")
+                break_away_tier = ability_to_tier(row['break_away_ability'])
+                st.write(f"ITT: {tier_to_color(itt_tier)} {itt_tier}")
+                st.write(f"Mountain: {tier_to_color(mountain_tier)} {mountain_tier}")
                 st.write(f"Break Away: {tier_to_color(break_away_tier)} {break_away_tier}")
                 if st.button(f"Remove {row['name']}", key=f"selected_remove_{row['name']}"):
                     st.session_state['versus_selected_riders'].remove(row['name'])
@@ -3385,7 +3325,6 @@ def show_versus_mode():
                         'Punch': rider['punch_ability'],
                         'ITT': rider['itt_ability'],
                         'Mountain': rider['mountain_ability'],
-                        'Break Away': rider['break_away_ability'],
                         'Break Away': rider['break_away_ability']
                     }
                     specialty = max(abilities, key=abilities.get)
@@ -3485,10 +3424,23 @@ def show_versus_mode():
             with st.spinner('Running simulations and optimizing... (this may take a minute)'):
                 # Run the full versus mode pipeline
                 user_team = versus.create_user_team(st.session_state['versus_selected_riders'])
-                rider_data = versus.team_optimizer.run_simulation(num_simulations=30, metric=selected_metric)
+                
+                # Use custom simulation method to ensure modified rider database is used
+                rider_data = run_optimizer_simulation(versus.team_optimizer, 30, st.session_state.rider_db, metric=selected_metric)
+                
                 user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=30)
                 simulation_results = versus.run_user_team_simulations(user_team, num_simulations=50)
-                optimal_team = versus.get_optimal_team(num_simulations=30, metric=selected_metric)
+                
+                # Get optimal team using custom simulation method
+                optimal_team = optimize_with_stage_selection_with_injection(
+                    versus.team_optimizer,
+                    rider_data,
+                    num_simulations=30,
+                    rider_db=st.session_state.rider_db,
+                    risk_aversion=0.0,
+                    abandon_penalty=1.0
+                )
+                
                 comparison = versus.compare_teams(user_team, optimal_team)
                 st.session_state['versus_results'] = {
                     'user_team': user_team,
@@ -3499,6 +3451,7 @@ def show_versus_mode():
                     'metric_name': metric_options[selected_metric]
                 }
                 st.success(f'Simulation complete using {metric_options[selected_metric]}! See results below.')
+        
         # Show results if available
         if st.session_state['versus_results']:
             comparison = st.session_state['versus_results']['comparison']
@@ -3624,36 +3577,6 @@ def show_versus_mode():
                     st.error(f'Error generating Excel report: {e}')
     else:
         st.button('Run Versus Simulation', disabled=True)
-
-def ability_to_tier(ability: int) -> str:
-    """Convert ability score to tier name"""
-    if ability >= 98:
-        return "Exceptional"
-    elif ability >= 95:
-        return "World Class"
-    elif ability >= 90:
-        return "Elite"
-    elif ability >= 80:
-        return "Very Good"
-    elif ability >= 70:
-        return "Good"
-    elif ability >= 50:
-        return "Average"
-    else:
-        return "Below Average"
-
-def tier_to_color(tier: str) -> str:
-    """Get color for tier display"""
-    colors = {
-        "Exceptional": "💎",
-        "World Class": "🟢", 
-        "Elite": "🟢",
-        "Very Good": "🟢",
-        "Good": "🟡",
-        "Average": "🟠",
-        "Below Average": "🔴"
-    }
-    return colors.get(tier, "⚪")
 
 if __name__ == "__main__":
     main() 

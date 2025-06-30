@@ -231,15 +231,34 @@ class VersusMode:
             
             # Create a new simulator for this simulation
             simulator = TourSimulator()
+            simulator.rider_db = self.rider_db  # Ensure rider database is set
             
             # Run simulation
             simulator.simulate_tour()
             
-            # Calculate total points for user's team
+            # Calculate total points for user's team using stage-by-stage selection
+            # This is the CORRECT way - only count points from riders selected for each stage
             team_points = 0
-            for rider_name in user_team.rider_names:
-                if rider_name in simulator.scorito_points:
-                    team_points += simulator.scorito_points[rider_name]
+            
+            if user_team.stage_selections:
+                # Use the optimized stage selections and calculate stage-specific points
+                for stage, selected_riders in user_team.stage_selections.items():
+                    stage_points = 0
+                    for rider_name in selected_riders:
+                        if rider_name in simulator.scorito_points:
+                            # Calculate points earned on this specific stage
+                            # We need to extract stage-specific points from the simulation records
+                            rider_stage_points = self._get_rider_stage_points(simulator, rider_name, stage)
+                            stage_points += rider_stage_points
+                    team_points += stage_points
+            else:
+                # Fallback: if no stage selections, use a more accurate approximation
+                print("Warning: No stage selections available, using stage-optimized scoring")
+                # Calculate what the optimal stage selection would be for this simulation
+                optimal_stage_points = self._calculate_optimal_stage_points_for_simulation(
+                    simulator, user_team.rider_names
+                )
+                team_points = optimal_stage_points
             
             simulation_results.append({
                 'simulation': i + 1,
@@ -250,6 +269,99 @@ class VersusMode:
         
         user_team.simulation_results = simulation_results
         return simulation_results
+    
+    def _get_rider_stage_points(self, simulator, rider_name: str, stage: int) -> float:
+        """
+        Get the points earned by a rider on a specific stage from simulation records.
+        
+        Args:
+            simulator: TourSimulator instance that has completed a simulation
+            rider_name: Name of the rider
+            stage: Stage number
+            
+        Returns:
+            Points earned on the specific stage
+        """
+        # Extract stage points from the simulation records
+        stage_records = simulator.scorito_points_records
+        
+        # Find records for this rider
+        rider_records = [r for r in stage_records if r['rider'] == rider_name]
+        
+        if not rider_records:
+            return 0.0
+        
+        # Find the record for this specific stage
+        stage_record = None
+        for record in rider_records:
+            if record['stage'] == stage:
+                stage_record = record
+                break
+        
+        if not stage_record:
+            return 0.0
+        
+        # Calculate points earned on this stage
+        cumulative_points = stage_record['scorito_points']
+        
+        if stage == 1:
+            # First stage: points earned = cumulative points
+            return cumulative_points
+        else:
+            # Find the previous stage's cumulative points
+            prev_stage_record = None
+            for record in rider_records:
+                if record['stage'] == stage - 1:
+                    prev_stage_record = record
+                    break
+            
+            if prev_stage_record:
+                # Points earned = current cumulative - previous cumulative
+                return cumulative_points - prev_stage_record['scorito_points']
+            else:
+                # Fallback: distribute evenly
+                return cumulative_points / 22
+    
+    def _calculate_optimal_stage_points_for_simulation(self, simulator, rider_names: List[str]) -> float:
+        """
+        Calculate optimal stage selection points for a given simulation.
+        This is used as a fallback when no stage selections are available.
+        
+        Args:
+            simulator: TourSimulator instance that has completed a simulation
+            rider_names: List of rider names in the team
+            
+        Returns:
+            Total points with optimal stage selection
+        """
+        total_points = 0
+        
+        # For each stage, select the best 9 riders (or all 20 for final stage)
+        for stage in range(1, 23):
+            if stage == 22:
+                # Final stage: all 20 riders
+                selected_riders = rider_names
+            else:
+                # Regular stages: select best 9 riders
+                rider_stage_points = []
+                for rider_name in rider_names:
+                    if rider_name in simulator.scorito_points:
+                        stage_points = self._get_rider_stage_points(simulator, rider_name, stage)
+                        rider_stage_points.append((rider_name, stage_points))
+                
+                # Sort by stage points and select top 9
+                rider_stage_points.sort(key=lambda x: x[1], reverse=True)
+                selected_riders = [rider for rider, _ in rider_stage_points[:9]]
+            
+            # Sum points for selected riders on this stage
+            stage_points = 0
+            for rider_name in selected_riders:
+                if rider_name in simulator.scorito_points:
+                    stage_points += self._get_rider_stage_points(simulator, rider_name, stage)
+            
+            total_points += stage_points
+        
+        return total_points
     
     def get_optimal_team(self, num_simulations: int = 50, metric: str = 'mean') -> TeamSelection:
         """
@@ -297,7 +409,9 @@ class VersusMode:
                 'total_cost': optimal_team.total_cost,
                 'rider_count': len(optimal_team.rider_names),
                 'riders': optimal_team.rider_names,
-                'expected_points': optimal_team.expected_points
+                'expected_points': optimal_team.expected_points,
+                'avg_simulation_points': 0,
+                'simulation_std': 0
             },
             'comparison': {
                 'cost_difference': user_team.total_cost - optimal_team.total_cost,
@@ -313,11 +427,31 @@ class VersusMode:
             points_list = [result['team_points'] for result in user_team.simulation_results]
             comparison['user_team']['avg_simulation_points'] = np.mean(points_list)
             comparison['user_team']['simulation_std'] = np.std(points_list)
+        
+        # Run simulations for optimal team to get fair comparison
+        print("Running simulations for optimal team to ensure fair comparison...")
+        optimal_simulation_results = self.run_user_team_simulations(
+            UserTeam(
+                riders=optimal_team.riders,
+                total_cost=optimal_team.total_cost,
+                rider_names=optimal_team.rider_names,
+                stage_selections=optimal_team.stage_selections,
+                stage_points=optimal_team.stage_points
+            ),
+            num_simulations=len(user_team.simulation_results) if user_team.simulation_results else 100
+        )
+        
+        # Calculate simulation statistics for optimal team
+        if optimal_simulation_results:
+            optimal_points_list = [result['team_points'] for result in optimal_simulation_results]
+            comparison['optimal_team']['avg_simulation_points'] = np.mean(optimal_points_list)
+            comparison['optimal_team']['simulation_std'] = np.std(optimal_points_list)
             
-            # Calculate performance difference
-            comparison['comparison']['performance_difference'] = (
-                comparison['user_team']['avg_simulation_points'] - optimal_team.expected_points
-            )
+            # Calculate performance difference using simulation results for both teams
+            if user_team.simulation_results:
+                comparison['comparison']['performance_difference'] = (
+                    comparison['user_team']['avg_simulation_points'] - comparison['optimal_team']['avg_simulation_points']
+                )
         
         # Find common and unique riders
         user_rider_set = set(user_team.rider_names)
@@ -467,6 +601,216 @@ class VersusMode:
                 stage_comp_df.to_excel(writer, sheet_name='Stage_Comparison', index=False)
         
         return filename
+    
+    def calculate_individual_rider_sum(self, user_team: UserTeam, rider_data: pd.DataFrame) -> float:
+        """
+        Calculate the sum of individual rider expected points for comparison.
+        This represents the theoretical maximum if all riders could be selected every stage.
+        
+        Args:
+            user_team: User's team
+            rider_data: DataFrame with rider performance data
+            
+        Returns:
+            Sum of individual rider expected points
+        """
+        total_sum = 0.0
+        for rider_name in user_team.rider_names:
+            rider_row = rider_data[rider_data['rider_name'] == rider_name]
+            if not rider_row.empty:
+                total_sum += rider_row.iloc[0]['expected_points']
+        return total_sum
+    
+    def calculate_bench_points_analysis(self, user_team: UserTeam, optimal_team: TeamSelection, rider_data: pd.DataFrame) -> Dict:
+        """
+        Calculate bench points analysis for both user team and optimal team.
+        
+        Args:
+            user_team: User's team
+            optimal_team: Optimal team
+            rider_data: DataFrame with rider performance data
+            
+        Returns:
+            Dictionary with bench points analysis
+        """
+        analysis = {
+            'user_team': {
+                'total_selected_points': 0,
+                'total_bench_points': 0,
+                'selection_efficiency': 0,
+                'stage_breakdown': [],
+                'top_bench_performers': []
+            },
+            'optimal_team': {
+                'total_selected_points': 0,
+                'total_bench_points': 0,
+                'selection_efficiency': 0,
+                'stage_breakdown': [],
+                'top_bench_performers': []
+            }
+        }
+        
+        # Analyze user team bench points
+        if user_team.stage_selections:
+            user_total_selected = 0
+            user_total_bench = 0
+            user_stage_breakdown = []
+            user_bench_totals = {}
+            
+            for stage in sorted(user_team.stage_selections.keys()):
+                selected_riders = user_team.stage_selections[stage]
+                stage_points = user_team.stage_points.get(stage, {})
+                
+                # Calculate selected points from stage selections
+                selected_points = sum(stage_points.get(rider, 0) for rider in selected_riders)
+                
+                # Calculate bench points using actual stage performance data
+                bench_points = 0
+                for rider in user_team.rider_names:
+                    if rider not in selected_riders:
+                        # Use actual stage performance data if available
+                        if hasattr(user_team, 'stage_performance_data') and (rider, stage) in user_team.stage_performance_data:
+                            stage_expected_points = user_team.stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to estimated approach if stage data not available
+                            rider_row = rider_data[rider_data['rider_name'] == rider]
+                            if not rider_row.empty:
+                                total_expected_points = rider_row.iloc[0]['expected_points']
+                                # Estimate stage-specific points based on total expected points
+                                # Different stages have different point distributions
+                                if stage <= 21:  # Regular stages
+                                    # Most riders score points on regular stages, but not huge amounts
+                                    # Estimate 3-8% of total expected points per stage
+                                    stage_factor = 0.05  # 5% of total expected points per stage
+                                else:  # Final stage (stage 22)
+                                    # Final stage often has more points available
+                                    stage_factor = 0.08  # 8% of total expected points
+                                
+                                stage_expected_points = total_expected_points * stage_factor
+                            else:
+                                stage_expected_points = 0
+                        
+                        bench_points += stage_expected_points
+                        
+                        # Track bench points per rider
+                        if rider not in user_bench_totals:
+                            user_bench_totals[rider] = 0
+                        user_bench_totals[rider] += stage_expected_points
+                
+                user_total_selected += selected_points
+                user_total_bench += bench_points
+                
+                user_stage_breakdown.append({
+                    'stage': stage,
+                    'selected_points': selected_points,
+                    'bench_points': bench_points,
+                    'total_stage_points': selected_points + bench_points,
+                    'selection_efficiency': selected_points / (selected_points + bench_points) if (selected_points + bench_points) > 0 else 0
+                })
+            
+            # Create top bench performers list for user team
+            user_top_bench = []
+            for rider, total_bench_points in user_bench_totals.items():
+                if total_bench_points > 0:
+                    rider_obj = next((r for r in user_team.riders if r.name == rider), None)
+                    user_top_bench.append({
+                        'rider': rider,
+                        'team': rider_obj.team if rider_obj else 'Unknown',
+                        'total_bench_points': total_bench_points,
+                        'average_bench_points': total_bench_points / len(user_team.stage_selections)
+                    })
+            
+            user_top_bench.sort(key=lambda x: x['total_bench_points'], reverse=True)
+            
+            analysis['user_team'].update({
+                'total_selected_points': user_total_selected,
+                'total_bench_points': user_total_bench,
+                'selection_efficiency': user_total_selected / (user_total_selected + user_total_bench) if (user_total_selected + user_total_bench) > 0 else 0,
+                'stage_breakdown': user_stage_breakdown,
+                'top_bench_performers': user_top_bench
+            })
+        
+        # Analyze optimal team bench points
+        if optimal_team.stage_selections:
+            optimal_total_selected = 0
+            optimal_total_bench = 0
+            optimal_stage_breakdown = []
+            optimal_bench_totals = {}
+            
+            for stage in sorted(optimal_team.stage_selections.keys()):
+                selected_riders = optimal_team.stage_selections[stage]
+                stage_points = optimal_team.stage_points.get(stage, {})
+                
+                # Calculate selected points from stage selections
+                selected_points = sum(stage_points.get(rider, 0) for rider in selected_riders)
+                
+                # Calculate bench points using actual stage performance data
+                bench_points = 0
+                for rider in optimal_team.rider_names:
+                    if rider not in selected_riders:
+                        # Use actual stage performance data if available
+                        if hasattr(optimal_team, 'stage_performance_data') and (rider, stage) in optimal_team.stage_performance_data:
+                            stage_expected_points = optimal_team.stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to estimated approach if stage data not available
+                            rider_row = rider_data[rider_data['rider_name'] == rider]
+                            if not rider_row.empty:
+                                total_expected_points = rider_row.iloc[0]['expected_points']
+                                # Estimate stage-specific points based on total expected points
+                                # Different stages have different point distributions
+                                if stage <= 21:  # Regular stages
+                                    # Most riders score points on regular stages, but not huge amounts
+                                    # Estimate 3-8% of total expected points per stage
+                                    stage_factor = 0.05  # 5% of total expected points per stage
+                                else:  # Final stage (stage 22)
+                                    # Final stage often has more points available
+                                    stage_factor = 0.08  # 8% of total expected points
+                                
+                                stage_expected_points = total_expected_points * stage_factor
+                            else:
+                                stage_expected_points = 0
+                        
+                        bench_points += stage_expected_points
+                        
+                        # Track bench points per rider
+                        if rider not in optimal_bench_totals:
+                            optimal_bench_totals[rider] = 0
+                        optimal_bench_totals[rider] += stage_expected_points
+                
+                optimal_total_selected += selected_points
+                optimal_total_bench += bench_points
+                
+                optimal_stage_breakdown.append({
+                    'stage': stage,
+                    'selected_points': selected_points,
+                    'bench_points': bench_points,
+                    'total_stage_points': selected_points + bench_points,
+                    'selection_efficiency': selected_points / (selected_points + bench_points) if (selected_points + bench_points) > 0 else 0
+                })
+            
+            # Create top bench performers list for optimal team
+            optimal_top_bench = []
+            for rider, total_bench_points in optimal_bench_totals.items():
+                if total_bench_points > 0:
+                    rider_obj = next((r for r in optimal_team.riders if r.name == rider), None)
+                    optimal_top_bench.append({
+                        'rider': rider,
+                        'team': rider_obj.team if rider_obj else 'Unknown',
+                        'total_bench_points': total_bench_points,
+                        'average_bench_points': total_bench_points / len(optimal_team.stage_selections)
+                    })
+            
+            optimal_top_bench.sort(key=lambda x: x['total_bench_points'], reverse=True)
+            
+            analysis['optimal_team'].update({
+                'total_selected_points': optimal_total_selected,
+                'total_bench_points': optimal_total_bench,
+                'selection_efficiency': optimal_total_selected / (optimal_total_selected + optimal_total_bench) if (optimal_total_selected + optimal_total_bench) > 0 else 0,
+                'stage_breakdown': optimal_stage_breakdown,
+                'top_bench_performers': optimal_top_bench
+            })
+        
+        return analysis
 
 def interactive_team_selection() -> List[str]:
     """

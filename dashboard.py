@@ -3453,350 +3453,533 @@ def show_versus_mode():
     **Versus Mode** allows you to select your own team of 20 riders (budget 48, max 4/team), run simulations, and compare your team against the optimal team.
     ''')
 
-    # Add custom CSS for compact versus mode
-    st.markdown("""
-    <style>
-    .versus-rider-card {
-        border: 2px solid #6c757d;
-        border-radius: 8px;
-        padding: 8px;
-        margin: 4px 0;
-        background-color: #f8f9fa;
-        font-size: 12px;
-        transition: all 0.2s ease;
-        min-height: 80px;
-    }
-    .versus-rider-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    .versus-rider-card.selected {
-        border-color: #28a745;
-        background-color: #d4edda;
-    }
-    .versus-rider-name {
-        font-weight: bold;
-        font-size: 13px;
-        margin-bottom: 4px;
-        color: #333;
-    }
-    .versus-rider-info {
-        color: #666;
-        font-size: 11px;
-        margin-bottom: 4px;
-    }
-    .versus-rider-abilities {
-        font-size: 11px;
-        color: #333;
-        line-height: 1.2;
-    }
-    .versus-team-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin: 15px 0 8px 0;
-        font-weight: bold;
-        font-size: 15px;
-    }
-    .versus-stats-row {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        border-radius: 10px;
-        padding: 12px;
-        margin: 12px 0;
-        color: white;
-    }
-    .sidebar-rider-card {
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 6px;
-        margin: 3px 0;
-        background-color: #f9f9f9;
-        font-size: 11px;
-    }
-    .sidebar-rider-card.selected {
-        border-color: #28a745;
-        background-color: #d4edda;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Debug output
+    st.write("Debug: Versus mode function is running")
     
-    versus = VersusMode()
-    
-    # Inject the session state rider database into the versus mode
-    versus.rider_db = st.session_state.rider_db
-    versus.team_optimizer.rider_db = st.session_state.rider_db
-    inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
-    
-    available_riders = versus.get_available_riders()
+    try:
+        # Add custom CSS for compact versus mode
+        st.markdown("""
+        <style>
+        .versus-rider-card {
+            border: 2px solid #6c757d;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 4px 0;
+            background-color: #f8f9fa;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            min-height: 80px;
+        }
+        .versus-rider-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .versus-rider-card.selected {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        .versus-rider-name {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        .versus-rider-info {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .versus-rider-abilities {
+            font-size: 11px;
+            color: #333;
+            line-height: 1.2;
+        }
+        .versus-team-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 15px 0 8px 0;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .versus-stats-row {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+            padding: 12px;
+            margin: 12px 0;
+            color: white;
+        }
+        .sidebar-rider-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 6px;
+            margin: 3px 0;
+            background-color: #f9f9f9;
+            font-size: 11px;
+        }
+        .sidebar-rider-card.selected {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.write("Debug: CSS added successfully")
+        
+        versus = VersusMode()
+        st.write("Debug: VersusMode instance created")
+        
+        # Inject the session state rider database into the versus mode
+        versus.rider_db = st.session_state.rider_db
+        versus.team_optimizer.rider_db = st.session_state.rider_db
+        inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
+        
+        st.write("Debug: Rider database injected")
+        
+        available_riders = versus.get_available_riders()
+        st.write(f"Debug: Got {len(available_riders)} available riders")
 
-    # Initialize session state for selected riders
-    if 'versus_selected_riders' not in st.session_state:
-        st.session_state['versus_selected_riders'] = []
-
-    # Create two columns: main content and sidebar
-    main_col, sidebar_col = st.columns([4, 1])
-    
-    with main_col:
-        # Team selection section
-        st.subheader('1. Select Your Team')
-        st.caption('Pick up to 20 riders. Budget: 48. Max 4 per team.')
-
-        # Show current selection stats
-        selected_df = available_riders[available_riders['name'].isin(st.session_state['versus_selected_riders'])]
-        total_cost = selected_df['price'].sum()
-        team_counts = selected_df['team'].value_counts().to_dict()
-        
-        # Compact stats display
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Selected", f"{len(st.session_state['versus_selected_riders'])}/20")
-        with col2:
-            st.metric("Budget", f"{total_cost:.1f}/48")
-        with col3:
-            st.metric("Remaining", f"{48 - total_cost:.1f}")
-        with col4:
-            st.metric("Teams", len(team_counts))
-
-        # Compact rider selection interface
-        st.subheader("2. Available Riders")
-        
-        # Filters in a compact row
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1:
-            search = st.text_input('🔍 Search:', placeholder='Name or team...', key='versus_search')
-        with col2:
-            specialty_filter = st.selectbox("Specialty:", ["All", "Sprint", "Punch", "ITT", "Mountain", "Break Away"], key='versus_specialty')
-        with col3:
-            sort_by = st.selectbox("Sort by:", ["Best Ability", "Price", "Age", "Name"], key='versus_sort')
-        
-        # Apply filters
-        filtered_riders = available_riders.copy()
-        
-        if search:
-            filtered_riders = filtered_riders[
-                filtered_riders['name'].str.contains(search, case=False, na=False) |
-                filtered_riders['team'].str.contains(search, case=False, na=False)
-            ]
-        
-        if specialty_filter != "All":
-            specialty_col = specialty_filter.lower() + '_ability'
-            filtered_riders = filtered_riders[filtered_riders[specialty_col] == filtered_riders[specialty_col].max()]
-        
-        # Sort riders
-        if sort_by == "Best Ability":
-            filtered_riders['max_ability'] = filtered_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].max(axis=1)
-            filtered_riders = filtered_riders.sort_values('max_ability', ascending=False)
-        elif sort_by == "Price":
-            filtered_riders = filtered_riders.sort_values('price', ascending=False)
-        elif sort_by == "Age":
-            filtered_riders = filtered_riders.sort_values('age', ascending=True)
-        elif sort_by == "Name":
-            filtered_riders = filtered_riders.sort_values('name')
-        
-        # Group by team for compact display
-        teams = filtered_riders.groupby('team')
-        
-        # Create a compact team selector
-        team_names = sorted(teams.groups.keys())
-        if len(team_names) > 6:
-            # Use a multi-select for teams when there are many
-            selected_teams = st.multiselect(
-                "Select Teams to Show:",
-                team_names,
-                default=team_names[:6],  # Show first 6 by default
-                key='versus_teams'
-            )
-        else:
-            selected_teams = team_names
-        
-        # Display riders in a compact grid
-        st.markdown("### Rider Selection Grid")
-        
-        # Create a compact table-like display
-        for team_name in selected_teams:
-            team_riders = teams.get_group(team_name)
-            team_selected = [r for r in st.session_state['versus_selected_riders'] if r in team_riders['name'].values]
-            team_selected_count = len(team_selected)
-            
-            # Team header with custom CSS
-            st.markdown(f"""
-            <div class="versus-team-header">
-                🏢 {team_name} ({team_selected_count}/4 selected)
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Create a compact grid for this team's riders
-            cols = st.columns(4)  # 4 riders per row for better visibility
-            
-            for idx, (_, rider) in enumerate(team_riders.iterrows()):
-                rider_name = rider['name']
-                is_selected = rider_name in st.session_state['versus_selected_riders']
-                col_idx = idx % 4
-                
-                with cols[col_idx]:
-                    # Determine if rider can be added
-                    can_add = (len(st.session_state['versus_selected_riders']) < 20 and 
-                              total_cost + rider['price'] <= 48 and 
-                              team_selected_count < 4)
-                    
-                    # Compact rider card with custom CSS classes
-                    status_icon = "✅" if is_selected else "⭕"
-                    card_class = "versus-rider-card selected" if is_selected else "versus-rider-card"
-                    
-                    st.markdown(f"""
-                    <div class="{card_class}">
-                        <div class="versus-rider-name">{status_icon} {rider_name}</div>
-                        <div class="versus-rider-info">{rider['team']} • {rider['age']}y • 💰 {rider['price']:.1f}</div>
-                        <div class="versus-rider-abilities">
-                            S:{ability_to_tier(rider['sprint_ability'])} P:{ability_to_tier(rider['punch_ability'])}<br>
-                            I:{ability_to_tier(rider['itt_ability'])} M:{ability_to_tier(rider['mountain_ability'])}<br>
-                            B:{ability_to_tier(rider['break_away_ability'])}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Action button
-                    if is_selected:
-                        if st.button(f"❌ Remove", key=f"grid_remove_{team_name}_{rider_name}", help=f"Remove {rider_name}"):
-                            st.session_state['versus_selected_riders'].remove(rider_name)
-                            st.rerun()
-                    else:
-                        if can_add:
-                            if st.button(f"➕ Add", key=f"grid_add_{team_name}_{rider_name}", help=f"Add {rider_name}"):
-                                st.session_state['versus_selected_riders'].append(rider_name)
-                                st.rerun()
-                        else:
-                            reason = "Team full" if len(st.session_state['versus_selected_riders']) >= 20 else "Budget exceeded" if total_cost + rider['price'] > 48 else "Team limit"
-                            st.button(f"➕ Add", key=f"grid_add_{team_name}_{rider_name}", disabled=True, help=f"Cannot add: {reason}")
-            
-            st.markdown("---")  # Separator between teams
-
-        # Validation
-        is_valid, error_message = versus.validate_team_selection(st.session_state['versus_selected_riders'])
-        if is_valid:
-            st.success('✅ Team selection is valid!')
-        else:
-            st.warning(f'⚠️ {error_message}')
-
-        # Step 2: Run simulation and show results
-        if is_valid:
-            if 'versus_results' not in st.session_state:
-                st.session_state['versus_results'] = None
-            
-            # Add metric selector for versus mode
-            st.subheader("3. Simulation Settings")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                metric_options = {
-                    'mean': 'Average (Mean)',
-                    'median': 'Median',
-                    'mode': 'Mode (Most Frequent)'
-                }
-                selected_metric = st.selectbox(
-                    "Expected Points Metric",
-                    options=list(metric_options.keys()),
-                    format_func=lambda x: metric_options[x],
-                    index=0,
-                    key="versus_metric"
-                )
-            
-            with col2:
-                # Add optimization parameter controls for versus mode
-                st.write("**Optimal Team Parameters:**")
-                versus_risk_aversion = st.slider("Risk aversion", 0.0, 1.0, 0.0, 0.1, key="versus_risk_aversion")
-                versus_abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="versus_abandon_penalty")
-            
-            # Show explanation of the selected metric
-            metric_explanations = {
-                'mean': "Average of all simulation results. Good for normally distributed data.",
-                'median': "Middle value when results are sorted. Less sensitive to outliers than mean.",
-                'mode': "Most frequently occurring result. Good for discrete or skewed distributions."
-            }
-            st.info(f"**{metric_options[selected_metric]}**: {metric_explanations[selected_metric]}")
-            
-            # Parameter explanations for versus mode
-            st.info("**🎯 Optimal Team Parameters:**\n\n"
-                    f"• **Risk Aversion:** {versus_risk_aversion:.1f} - {'No penalty for high variance' if versus_risk_aversion == 0.0 else 'Penalizes inconsistent performers'}\n"
-                    f"• **Abandon Penalty:** {versus_abandon_penalty:.1f} - {'No penalty for abandon risk' if versus_abandon_penalty == 0.0 else 'Penalizes riders likely to abandon'}")
-            
-            run_sim = st.button('Run Versus Simulation', type='primary')
-            if run_sim:
-                with st.spinner('Running simulations and optimizing... (this may take a minute)'):
-                    # Run the full versus mode pipeline
-                    user_team = versus.create_user_team(st.session_state['versus_selected_riders'])
-                    
-                    # Ensure the versus optimizer has the correct rider database
-                    versus.team_optimizer.rider_db = st.session_state.rider_db
-                    inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
-                    
-                    # Use custom simulation method to ensure modified rider database is used
-                    rider_data = versus.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=30, metric=selected_metric)
-                    
-                    user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=30)
-                    simulation_results = versus.run_user_team_simulations(user_team, num_simulations=50)
-                    
-                    # Get optimal team using custom simulation method with user-controlled parameters
-                    optimal_team = optimize_with_stage_selection_with_injection(
-                        versus.team_optimizer,
-                        rider_data,
-                        num_simulations=30,
-                        rider_db=st.session_state.rider_db,
-                        risk_aversion=versus_risk_aversion,
-                        abandon_penalty=versus_abandon_penalty
-                    )
-                    
-                    comparison = versus.compare_teams(user_team, optimal_team)
-                    st.session_state['versus_results'] = {
-                        'user_team': user_team,
-                        'optimal_team': optimal_team,
-                        'comparison': comparison,
-                        'rider_data': rider_data
-                    }
-                    st.rerun()
-
-    with sidebar_col:
-        # Selected riders sidebar
-        st.subheader("📋 Selected Riders")
-        
-        if st.button("🔄 Clear All", help="Remove all selected riders"):
+        # Initialize session state for selected riders
+        if 'versus_selected_riders' not in st.session_state:
             st.session_state['versus_selected_riders'] = []
-            st.rerun()
+
+        # Create two columns: main content and sidebar
+        main_col, sidebar_col = st.columns([4, 1])
         
-        if st.session_state['versus_selected_riders']:
-            for rider_name in st.session_state['versus_selected_riders']:
-                rider = selected_df[selected_df['name'] == rider_name].iloc[0]
+        with main_col:
+            # Team selection section
+            st.subheader('1. Select Your Team')
+            st.caption('Pick up to 20 riders. Budget: 48. Max 4 per team.')
+
+            # Show current selection stats
+            selected_df = available_riders[available_riders['name'].isin(st.session_state['versus_selected_riders'])]
+            total_cost = selected_df['price'].sum()
+            team_counts = selected_df['team'].value_counts().to_dict()
+            
+            # Compact stats display
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Selected", f"{len(st.session_state['versus_selected_riders'])}/20")
+            with col2:
+                st.metric("Budget", f"{total_cost:.1f}/48")
+            with col3:
+                st.metric("Remaining", f"{48 - total_cost:.1f}")
+            with col4:
+                st.metric("Teams", len(team_counts))
+
+            # Compact rider selection interface
+            st.subheader("2. Available Riders")
+            
+            # Filters in a compact row
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                search = st.text_input('🔍 Search:', placeholder='Name or team...', key='versus_search')
+            with col2:
+                specialty_filter = st.selectbox("Specialty:", ["All", "Sprint", "Punch", "ITT", "Mountain", "Break Away"], key='versus_specialty')
+            with col3:
+                sort_by = st.selectbox("Sort by:", ["Best Ability", "Price", "Age", "Name"], key='versus_sort')
+            
+            # Apply filters
+            filtered_riders = available_riders.copy()
+            
+            if search:
+                filtered_riders = filtered_riders[
+                    filtered_riders['name'].str.contains(search, case=False, na=False) |
+                    filtered_riders['team'].str.contains(search, case=False, na=False)
+                ]
+            
+            if specialty_filter != "All":
+                specialty_col = specialty_filter.lower() + '_ability'
+                filtered_riders = filtered_riders[filtered_riders[specialty_col] == filtered_riders[specialty_col].max()]
+            
+            # Sort riders
+            if sort_by == "Best Ability":
+                filtered_riders['max_ability'] = filtered_riders[['sprint_ability', 'punch_ability', 'itt_ability', 'mountain_ability', 'break_away_ability']].max(axis=1)
+                filtered_riders = filtered_riders.sort_values('max_ability', ascending=False)
+            elif sort_by == "Price":
+                filtered_riders = filtered_riders.sort_values('price', ascending=False)
+            elif sort_by == "Age":
+                filtered_riders = filtered_riders.sort_values('age', ascending=True)
+            elif sort_by == "Name":
+                filtered_riders = filtered_riders.sort_values('name')
+            
+            # Group by team for compact display
+            teams = filtered_riders.groupby('team')
+            
+            # Create a compact team selector
+            team_names = sorted(teams.groups.keys())
+            if len(team_names) > 6:
+                # Use a multi-select for teams when there are many
+                selected_teams = st.multiselect(
+                    "Select Teams to Show:",
+                    team_names,
+                    default=team_names[:6],  # Show first 6 by default
+                    key='versus_teams'
+                )
+            else:
+                selected_teams = team_names
+            
+            # Display riders in a compact grid
+            st.markdown("### Rider Selection Grid")
+            
+            # Create a compact table-like display
+            for team_name in selected_teams:
+                team_riders = teams.get_group(team_name)
+                team_selected = [r for r in st.session_state['versus_selected_riders'] if r in team_riders['name'].values]
+                team_selected_count = len(team_selected)
                 
+                # Team header with custom CSS
                 st.markdown(f"""
-                <div class="sidebar-rider-card selected">
-                    <div style="font-weight: bold; font-size: 12px;">{rider_name}</div>
-                    <div style="font-size: 10px; color: #666;">{rider['team']} • {rider['age']}y</div>
-                    <div style="font-size: 10px; color: #666;">💰 {rider['price']:.1f}</div>
+                <div class="versus-team-header">
+                    🏢 {team_name} ({team_selected_count}/4 selected)
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button(f"❌", key=f"sidebar_remove_{rider_name}", help=f"Remove {rider_name}"):
-                    st.session_state['versus_selected_riders'].remove(rider_name)
-                    st.rerun()
-        else:
-            st.info("No riders selected yet. Use the main area to select riders.")
-        
-        # Show results if available
-        if 'versus_results' in st.session_state and st.session_state['versus_results'] is not None:
-            st.subheader("📊 Results")
-            results = st.session_state['versus_results']
+                # Create a compact grid for this team's riders
+                cols = st.columns(4)  # 4 riders per row for better visibility
+                
+                for idx, (_, rider) in enumerate(team_riders.iterrows()):
+                    rider_name = rider['name']
+                    is_selected = rider_name in st.session_state['versus_selected_riders']
+                    col_idx = idx % 4
+                    
+                    with cols[col_idx]:
+                        # Determine if rider can be added
+                        can_add = (len(st.session_state['versus_selected_riders']) < 20 and 
+                                  total_cost + rider['price'] <= 48 and 
+                                  team_selected_count < 4)
+                        
+                        # Compact rider card with custom CSS classes
+                        status_icon = "✅" if is_selected else "⭕"
+                        card_class = "versus-rider-card selected" if is_selected else "versus-rider-card"
+                        
+                        st.markdown(f"""
+                        <div class="{card_class}">
+                            <div class="versus-rider-name">{status_icon} {rider_name}</div>
+                            <div class="versus-rider-info">{rider['team']} • {rider['age']}y • 💰 {rider['price']:.1f}</div>
+                            <div class="versus-rider-abilities">
+                                S:{ability_to_tier(rider['sprint_ability'])} P:{ability_to_tier(rider['punch_ability'])}<br>
+                                I:{ability_to_tier(rider['itt_ability'])} M:{ability_to_tier(rider['mountain_ability'])}<br>
+                                B:{ability_to_tier(rider['break_away_ability'])}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Action button
+                        if is_selected:
+                            if st.button(f"❌ Remove", key=f"grid_remove_{team_name}_{rider_name}", help=f"Remove {rider_name}"):
+                                st.session_state['versus_selected_riders'].remove(rider_name)
+                                st.rerun()
+                        else:
+                            if can_add:
+                                if st.button(f"➕ Add", key=f"grid_add_{team_name}_{rider_name}", help=f"Add {rider_name}"):
+                                    st.session_state['versus_selected_riders'].append(rider_name)
+                                    st.rerun()
+                            else:
+                                reason = "Team full" if len(st.session_state['versus_selected_riders']) >= 20 else "Budget exceeded" if total_cost + rider['price'] > 48 else "Team limit"
+                                st.button(f"➕ Add", key=f"grid_add_{team_name}_{rider_name}", disabled=True, help=f"Cannot add: {reason}")
+                
+                st.markdown("---")  # Separator between teams
+
+            # Validation
+            is_valid, error_message = versus.validate_team_selection(st.session_state['versus_selected_riders'])
+            if is_valid:
+                st.success('✅ Team selection is valid!')
+            else:
+                st.warning(f'⚠️ {error_message}')
+
+            # Step 2: Run simulation and show results
+            if is_valid:
+                if 'versus_results' not in st.session_state:
+                    st.session_state['versus_results'] = None
+                
+                # Add metric selector for versus mode
+                st.subheader("3. Simulation Settings")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    metric_options = {
+                        'mean': 'Average (Mean)',
+                        'median': 'Median',
+                        'mode': 'Mode (Most Frequent)'
+                    }
+                    selected_metric = st.selectbox(
+                        "Expected Points Metric",
+                        options=list(metric_options.keys()),
+                        format_func=lambda x: metric_options[x],
+                        index=0,
+                        key="versus_metric"
+                    )
+                
+                with col2:
+                    # Add optimization parameter controls for versus mode
+                    st.write("**Optimal Team Parameters:**")
+                    versus_risk_aversion = st.slider("Risk aversion", 0.0, 1.0, 0.0, 0.1, key="versus_risk_aversion")
+                    versus_abandon_penalty = st.slider("Abandon penalty", 0.0, 1.0, 1.0, 0.1, key="versus_abandon_penalty")
+                
+                # Show explanation of the selected metric
+                metric_explanations = {
+                    'mean': "Average of all simulation results. Good for normally distributed data.",
+                    'median': "Middle value when results are sorted. Less sensitive to outliers than mean.",
+                    'mode': "Most frequently occurring result. Good for discrete or skewed distributions."
+                }
+                st.info(f"**{metric_options[selected_metric]}**: {metric_explanations[selected_metric]}")
+                
+                # Parameter explanations for versus mode
+                st.info("**🎯 Optimal Team Parameters:**\n\n"
+                        f"• **Risk Aversion:** {versus_risk_aversion:.1f} - {'No penalty for high variance' if versus_risk_aversion == 0.0 else 'Penalizes inconsistent performers'}\n"
+                        f"• **Abandon Penalty:** {versus_abandon_penalty:.1f} - {'No penalty for abandon risk' if versus_abandon_penalty == 0.0 else 'Penalizes riders likely to abandon'}")
+                
+                run_sim = st.button('Run Versus Simulation', type='primary')
+                if run_sim:
+                    with st.spinner('Running simulations and optimizing... (this may take a minute)'):
+                        # Run the full versus mode pipeline
+                        user_team = versus.create_user_team(st.session_state['versus_selected_riders'])
+                        
+                        # Ensure the versus optimizer has the correct rider database
+                        versus.team_optimizer.rider_db = st.session_state.rider_db
+                        inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
+                        
+                        # Use custom simulation method to ensure modified rider database is used
+                        rider_data = versus.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=30, metric=selected_metric)
+                        
+                        user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=30)
+                        simulation_results = versus.run_user_team_simulations(user_team, num_simulations=50)
+                        
+                        # Get optimal team using custom simulation method with user-controlled parameters
+                        optimal_team = optimize_with_stage_selection_with_injection(
+                            versus.team_optimizer,
+                            rider_data,
+                            num_simulations=30,
+                            rider_db=st.session_state.rider_db,
+                            risk_aversion=versus_risk_aversion,
+                            abandon_penalty=versus_abandon_penalty
+                        )
+                        
+                        comparison = versus.compare_teams(user_team, optimal_team)
+                        st.session_state['versus_results'] = {
+                            'user_team': user_team,
+                            'optimal_team': optimal_team,
+                            'comparison': comparison,
+                            'rider_data': rider_data
+                        }
+                        st.rerun()
+
+        with sidebar_col:
+            # Selected riders sidebar
+            st.subheader("📋 Selected Riders")
             
-            st.write("**Your Team:**")
-            st.write(f"Points: {results['comparison']['user_team']['avg_simulation_points']:.1f} ± {results['comparison']['user_team']['simulation_std']:.1f}")
-            
-            st.write("**Optimal Team:**")
-            st.write(f"Points: {results['comparison']['optimal_team']['expected_points']:.1f} ± {results['comparison']['optimal_team'].get('simulation_std', 0):.1f}")
-            
-            if st.button("View Full Results"):
-                st.session_state['show_versus_results'] = True
+            if st.button("🔄 Clear All", help="Remove all selected riders"):
+                st.session_state['versus_selected_riders'] = []
                 st.rerun()
+            
+            if st.session_state['versus_selected_riders']:
+                for rider_name in st.session_state['versus_selected_riders']:
+                    rider = selected_df[selected_df['name'] == rider_name].iloc[0]
+                    
+                    st.markdown(f"""
+                    <div class="sidebar-rider-card selected">
+                        <div style="font-weight: bold; font-size: 12px;">{rider_name}</div>
+                        <div style="font-size: 10px; color: #666;">{rider['team']} • {rider['age']}y</div>
+                        <div style="font-size: 10px; color: #666;">💰 {rider['price']:.1f}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button(f"❌", key=f"sidebar_remove_{rider_name}", help=f"Remove {rider_name}"):
+                        st.session_state['versus_selected_riders'].remove(rider_name)
+                        st.rerun()
+            else:
+                st.info("No riders selected yet. Use the main area to select riders.")
+            
+            # Show results if available
+            if 'versus_results' in st.session_state and st.session_state['versus_results'] is not None:
+                st.subheader("📊 Results")
+                results = st.session_state['versus_results']
+                
+                st.write("**Your Team:**")
+                st.write(f"Points: {results['comparison']['user_team']['avg_simulation_points']:.1f} ± {results['comparison']['user_team']['simulation_std']:.1f}")
+                
+                st.write("**Optimal Team:**")
+                st.write(f"Points: {results['comparison']['optimal_team']['expected_points']:.1f} ± {results['comparison']['optimal_team'].get('simulation_std', 0):.1f}")
+                
+                if st.button("View Full Results"):
+                    st.session_state['show_versus_results'] = True
+                    st.rerun()
+    
+    except Exception as e:
+        st.error(f"Error in versus mode: {str(e)}")
+        st.write("Debug: Exception occurred")
+        import traceback
+        st.code(traceback.format_exc())
+
+    # Display versus mode results if available
+    if 'versus_results' in st.session_state and st.session_state['versus_results'] is not None:
+        st.subheader("📊 Versus Mode Results")
+        
+        results = st.session_state['versus_results']
+        comparison = results['comparison']
+        
+        # Display comparison summary
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Your Team:**")
+            st.write(f"**Riders:** {', '.join(comparison['user_team']['riders'])}")
+            st.write(f"**Cost:** {comparison['user_team']['total_cost']:.2f}")
+            st.write(f"**Average Points:** {comparison['user_team']['avg_simulation_points']:.2f} ± {comparison['user_team']['simulation_std']:.2f}")
+        
+        with col2:
+            st.write("**Optimal Team:**")
+            st.write(f"**Riders:** {', '.join(comparison['optimal_team']['riders'])}")
+            st.write(f"**Cost:** {comparison['optimal_team']['total_cost']:.2f}")
+            st.write(f"**Expected Points:** {comparison['optimal_team']['expected_points']:.2f} ± {comparison['optimal_team'].get('simulation_std', 0):.2f}")
+        
+        # Performance comparison
+        st.subheader("Performance Comparison")
+        
+        user_points = comparison['user_team']['avg_simulation_points']
+        optimal_points = comparison['optimal_team']['expected_points']
+        
+        if user_points > optimal_points:
+            st.success(f"🎉 Your team outperforms the optimal team by {user_points - optimal_points:.2f} points!")
+        elif user_points < optimal_points:
+            st.warning(f"📉 The optimal team outperforms your team by {optimal_points - user_points:.2f} points")
+        else:
+            st.info("🤝 Your team performs equally to the optimal team")
+        
+        # Show detailed stage-by-stage analysis if available
+        if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections:
+            st.subheader("Stage-by-Stage Analysis")
+            
+            # Create tabs for different views
+            tab1, tab2, tab3 = st.tabs(["Your Team Stages", "Optimal Team Stages", "Bench Points"])
+            
+            with tab1:
+                st.write("**Your Team Stage Selections:**")
+                for stage in sorted(results['user_team'].stage_selections.keys()):
+                    selected_riders = results['user_team'].stage_selections[stage]
+                    stage_points = results['user_team'].stage_points.get(stage, {})
+                    total_points = sum(stage_points.values())
+                    st.write(f"**Stage {stage}:** {', '.join(selected_riders)} (Points: {total_points:.2f})")
+            
+            with tab2:
+                st.write("**Optimal Team Stage Selections:**")
+                for stage in sorted(results['optimal_team'].stage_selections.keys()):
+                    selected_riders = results['optimal_team'].stage_selections[stage]
+                    stage_points = results['optimal_team'].stage_points.get(stage, {})
+                    total_points = sum(stage_points.values())
+                    st.write(f"**Stage {stage}:** {', '.join(selected_riders)} (Points: {total_points:.2f})")
+            
+            with tab3:
+                st.write("**Bench Points Analysis:**")
+                st.write("Points scored by unselected team members:")
+                
+                # Calculate bench points for user team
+                user_bench_points = 0
+                for stage in sorted(results['user_team'].stage_selections.keys()):
+                    selected_riders = results['user_team'].stage_selections[stage]
+                    stage_points = results['user_team'].stage_points.get(stage, {})
+                    
+                    # Calculate bench points using stage performance data
+                    bench_points = 0
+                    for rider in results['user_team'].rider_names:
+                        if rider not in selected_riders:
+                            # Use actual stage performance data if available
+                            if hasattr(results['user_team'], 'stage_performance_data') and (rider, stage) in results['user_team'].stage_performance_data:
+                                stage_expected_points = results['user_team'].stage_performance_data[(rider, stage)]
+                            else:
+                                # Fallback to estimated approach
+                                rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                                if not rider_row.empty:
+                                    total_expected_points = rider_row.iloc[0]['expected_points']
+                                    if stage <= 21:  # Regular stages
+                                        stage_expected_points = total_expected_points * 0.05  # 5% per stage
+                                    else:  # Final stage
+                                        stage_expected_points = total_expected_points * 0.08  # 8% for final
+                                else:
+                                    stage_expected_points = 0
+                            bench_points += stage_expected_points
+                    
+                    user_bench_points += bench_points
+                    st.write(f"**Stage {stage}:** {bench_points:.2f} bench points")
+                
+                st.write(f"**Total User Team Bench Points:** {user_bench_points:.2f}")
+                
+                # Calculate bench points for optimal team
+                optimal_bench_points = 0
+                for stage in sorted(results['optimal_team'].stage_selections.keys()):
+                    selected_riders = results['optimal_team'].stage_selections[stage]
+                    stage_points = results['optimal_team'].stage_points.get(stage, {})
+                    
+                    # Calculate bench points using stage performance data
+                    bench_points = 0
+                    for rider in results['optimal_team'].rider_names:
+                        if rider not in selected_riders:
+                            # Use actual stage performance data if available
+                            if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, stage) in results['optimal_team'].stage_performance_data:
+                                stage_expected_points = results['optimal_team'].stage_performance_data[(rider, stage)]
+                            else:
+                                # Fallback to estimated approach
+                                rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                                if not rider_row.empty:
+                                    total_expected_points = rider_row.iloc[0]['expected_points']
+                                    if stage <= 21:  # Regular stages
+                                        stage_expected_points = total_expected_points * 0.05  # 5% per stage
+                                    else:  # Final stage
+                                        stage_expected_points = total_expected_points * 0.08  # 8% for final
+                                else:
+                                    stage_expected_points = 0
+                            bench_points += stage_expected_points
+                    
+                    optimal_bench_points += bench_points
+                
+                st.write(f"**Total Optimal Team Bench Points:** {optimal_bench_points:.2f}")
+        
+        # Show rider performance comparison
+        st.subheader("Rider Performance Comparison")
+        
+        # Get rider data for comparison
+        rider_data = results['rider_data']
+        
+        # Compare selected riders
+        user_riders = comparison['user_team']['riders']
+        optimal_riders = comparison['optimal_team']['riders']
+        
+        # Find common riders
+        common_riders = set(user_riders) & set(optimal_riders)
+        user_only = set(user_riders) - set(optimal_riders)
+        optimal_only = set(optimal_riders) - set(user_riders)
+        
+        if common_riders:
+            st.write("**Riders in both teams:**")
+            for rider in sorted(common_riders):
+                rider_row = rider_data[rider_data['rider_name'] == rider]
+                if not rider_row.empty:
+                    expected_points = rider_row.iloc[0]['expected_points']
+                    st.write(f"• {rider}: {expected_points:.2f} expected points")
+        
+        if user_only:
+            st.write("**Riders only in your team:**")
+            for rider in sorted(user_only):
+                rider_row = rider_data[rider_data['rider_name'] == rider]
+                if not rider_row.empty:
+                    expected_points = rider_row.iloc[0]['expected_points']
+                    st.write(f"• {rider}: {expected_points:.2f} expected points")
+        
+        if optimal_only:
+            st.write("**Riders only in optimal team:**")
+            for rider in sorted(optimal_only):
+                rider_row = rider_data[rider_data['rider_name'] == rider]
+                if not rider_row.empty:
+                    expected_points = rider_row.iloc[0]['expected_points']
+                    st.write(f"• {rider}: {expected_points:.2f} expected points")
+        
+        # Clear results button
+        if st.button("Clear Results"):
+            st.session_state['versus_results'] = None
+            st.rerun()
 
 if __name__ == "__main__":
     main() 

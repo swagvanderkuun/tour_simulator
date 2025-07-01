@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Tuple
 from riders import RiderDatabase, Rider
-from stage_profiles import get_stage_type, StageType, get_stage_profile
+from stage_profiles import get_stage_profile, StageType
 from dataclasses import dataclass
 from collections import defaultdict
 from datetime import datetime
@@ -16,16 +16,13 @@ TNO_POINTS_SPECIAL = {
     1: 30, 2: 20, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1
 }
 
-# Special stages for TNO-Ergame
+# Special stages (5, 13, 14, 17, 18)
 TNO_SPECIAL_STAGES = {5, 13, 14, 17, 18}
 
-# Bonus points for top 5 riders in selection
+# Bonus points for top 5 riders in the list when they finish top 10
 TNO_BONUS_POINTS = {1: 5, 2: 4, 3: 3, 4: 2, 5: 1}
 
-# Youth age limit
-YOUTH_AGE_LIMIT = 25
-
-# Time gaps per place for each stage type (in seconds)
+# Time gaps per place for each stage type (in seconds) - same as main simulator
 STAGE_TIME_GAPS = {
     "sprint": 0.1,
     "punch": 0.2,
@@ -39,7 +36,7 @@ class TNOStageResult:
     def __init__(self, rider: Rider, position: float):
         self.rider = rider
         self.position = position
-        self.points = 0  # Will be calculated later
+        self.tno_points = 0  # Will be calculated later
 
 class TNOStage:
     def __init__(self, stage_number: int):
@@ -48,10 +45,12 @@ class TNOStage:
         self.is_special = stage_number in TNO_SPECIAL_STAGES
 
     def simulate(self, rider_db: RiderDatabase, abandoned_riders: set):
+        """Simulate stage using the same realistic engine as main simulator"""
         for rider in rider_db.get_all_riders():
             # Skip riders who have already abandoned
             if rider.name in abandoned_riders:
                 continue
+            # Use the same realistic position generation as main simulator
             position = rider_db.generate_stage_result(rider, self.stage_number)
             self.results.append(TNOStageResult(rider, position))
         self.results.sort(key=lambda x: x.position)
@@ -74,8 +73,8 @@ class TNOTeamSelection:
         self.abandoned_riders = set()
         self.replacement_history = []  # Track when riders are replaced
 
-    def get_scoring_riders_for_stage(self, stage_number: int) -> List[Rider]:
-        """Get the current scoring riders for a specific stage, considering abandonments"""
+    def get_scoring_riders_for_stage(self, stage_number: int) -> Tuple[List[Rider], List[Rider]]:
+        """Get the current scoring riders and bonus riders for a specific stage, considering abandonments"""
         current_scoring = []
         current_bonus = []
         
@@ -154,11 +153,11 @@ class TNOSimulator:
             })
 
     def _initialize_stages(self):
-        for i in range(21):
+        for i in range(21):  # Only 21 stages for TNO-Ergame
             self.stages.append(TNOStage(i + 1))
 
     def calculate_tno_points(self, stage: TNOStage, scoring_riders: List[Rider], bonus_riders: List[Rider]) -> Dict[str, int]:
-        """Calculate TNO points for the stage"""
+        """Calculate TNO points for the stage based on realistic positions"""
         stage_points = defaultdict(int)
         
         # Get point system for this stage
@@ -185,22 +184,19 @@ class TNOSimulator:
 
     def simulate_tour(self):
         for stage_idx, stage in enumerate(self.stages):
-            print(f"\nSimulating Stage {stage_idx+1}")
-            print("-------------------")
-            
+            # Simulate stage using realistic engine
             stage.simulate(self.rider_db, self.abandoned_riders)
-            stage_profile = get_stage_profile(stage_idx+1)
+            stage_profile = get_stage_profile(stage_idx + 1)
             
-            # Calculate weighted time gap based on stage profile
+            # Calculate weighted time gap based on stage profile (same as main simulator)
             weighted_time_gap = 0.0
             for stage_type, weight in stage_profile.items():
                 weighted_time_gap += STAGE_TIME_GAPS[stage_type.value] * weight
 
             # --- Handle Crashes/Abandonments ---
-            # Only for stages 1-21
             for rider in self.rider_db.get_all_riders():
                 if rider.name not in self.abandoned_riders:
-                    # Calculate crash probability for this stage
+                    # Calculate crash probability for this stage (same as main simulator)
                     if rider.chance_of_abandon == 0.0:
                         crash_probability = 0.0
                     else:
@@ -209,12 +205,6 @@ class TNOSimulator:
                     if np.random.random() < crash_probability:
                         self.abandoned_riders.add(rider.name)
                         self.team_selection.handle_abandonment(rider.name, stage_idx + 1)
-                        print(f"💥 {rider.name} has crashed out of the race!")
-            
-            # Print current abandoned riders count
-            if self.abandoned_riders:
-                print(f"Total riders abandoned: {len(self.abandoned_riders)}")
-                print(f"Riders remaining: {len(self.rider_db.get_all_riders()) - len(self.abandoned_riders)}")
 
             # --- General Classification (GC) ---
             base_time = 0
@@ -248,28 +238,46 @@ class TNOSimulator:
                     'position': place,
                     'gc_time': self.gc_times[rider_name],
                     'tno_points': stage_tno_points.get(rider_name, 0),
-                    'is_special_stage': stage.is_special,
                     'is_scoring_rider': any(r.name == rider_name for r in scoring_riders),
                     'is_bonus_rider': any(r.name == rider_name for r in bonus_riders),
-                    'bonus_position': next((i for i, r in enumerate(bonus_riders, 1) if r.name == rider_name), None)
+                    'abandoned': False
                 })
-
-            # Record GC standings
-            gc_standings = sorted(self.gc_times.items(), key=lambda x: x[1])
-            for place, (rider_name, time) in enumerate(gc_standings, 1):
+            
+            # Add abandoned riders to stage results with DNF
+            for rider_name in self.abandoned_riders:
+                # Find the rider object
+                rider_obj = None
+                for rider in self.rider_db.get_all_riders():
+                    if rider.name == rider_name:
+                        rider_obj = rider
+                        break
+                if rider_obj:
+                    self.stage_results_records.append({
+                        'stage': stage_idx + 1,
+                        'rider': rider_name,
+                        'team': rider_obj.team,
+                        'position': None,  # DNF
+                        'gc_time': self.gc_times.get(rider_name, 0),
+                        'tno_points': 0,
+                        'is_scoring_rider': False,
+                        'is_bonus_rider': False,
+                        'abandoned': True
+                    })
+            
+            # GC standings
+            for name, t in self.gc_times.items():
                 self.gc_records.append({
                     'stage': stage_idx + 1,
-                    'rider': rider_name,
-                    'gc_position': place,
-                    'gc_time': time
+                    'rider': name,
+                    'gc_time': t
                 })
-
-            # Record TNO points
-            for rider_name, points in self.tno_points.items():
+            
+            # TNO points standings
+            for name, pts in self.tno_points.items():
                 self.tno_points_records.append({
                     'stage': stage_idx + 1,
-                    'rider': rider_name,
-                    'total_tno_points': points
+                    'rider': name,
+                    'tno_points': pts
                 })
 
     def get_final_gc(self):
@@ -281,42 +289,39 @@ class TNOSimulator:
         return sorted(self.tno_points.items(), key=lambda x: x[1], reverse=True)
 
     def get_team_performance(self) -> Dict:
-        """Get performance summary for the selected team"""
-        team_rider_names = set(self.team_selection.rider_names)
+        """Get team performance summary"""
+        # Calculate total TNO points for team riders
+        team_tno_points = 0
+        team_abandonments = 0
         
-        # Calculate team statistics
-        team_points = sum(self.tno_points.get(name, 0) for name in team_rider_names)
-        team_abandonments = len([name for name in team_rider_names if name in self.abandoned_riders])
-        
-        # Get top performers
-        team_performances = [(name, self.tno_points.get(name, 0)) for name in team_rider_names]
-        team_performances.sort(key=lambda x: x[1], reverse=True)
+        for rider in self.team_selection.riders:
+            if rider.name in self.abandoned_riders:
+                team_abandonments += 1
+            else:
+                team_tno_points += self.tno_points.get(rider.name, 0)
         
         return {
-            'total_points': team_points,
+            'total_points': team_tno_points,
             'abandonments': team_abandonments,
-            'riders_remaining': len(team_rider_names) - team_abandonments,
-            'top_performers': team_performances[:5],
-            'team_cost': self.team_selection.total_cost
+            'team_cost': self.team_selection.total_cost,
+            'scoring_riders': len([r for r in self.team_selection.scoring_riders if r.name not in self.abandoned_riders]),
+            'bonus_riders': len([r for r in self.team_selection.bonus_riders if r.name not in self.abandoned_riders])
         }
 
     def write_results_to_excel(self, filename="tno_ergame_simulation_results.xlsx"):
-        """Write simulation results to Excel file"""
+        """Write simulation results to Excel"""
         with pd.ExcelWriter(filename, engine='openpyxl') as writer:
             # Stage results
-            stage_df = pd.DataFrame(self.stage_results_records)
-            if not stage_df.empty:
-                stage_df.to_excel(writer, sheet_name='Stage_Results', index=False)
+            stage_results_df = pd.DataFrame(self.stage_results_records)
+            stage_results_df.to_excel(writer, sheet_name='Stage_Results', index=False)
             
             # GC standings
             gc_df = pd.DataFrame(self.gc_records)
-            if not gc_df.empty:
-                gc_df.to_excel(writer, sheet_name='GC_Standings', index=False)
+            gc_df.to_excel(writer, sheet_name='GC_Standings', index=False)
             
-            # TNO points
-            tno_df = pd.DataFrame(self.tno_points_records)
-            if not tno_df.empty:
-                tno_df.to_excel(writer, sheet_name='TNO_Points', index=False)
+            # TNO points standings
+            tno_points_df = pd.DataFrame(self.tno_points_records)
+            tno_points_df.to_excel(writer, sheet_name='TNO_Points', index=False)
             
             # Team performance
             team_perf = self.get_team_performance()
@@ -324,23 +329,17 @@ class TNOSimulator:
             team_df.to_excel(writer, sheet_name='Team_Performance', index=False)
             
             # Rider database
-            rider_df = pd.DataFrame(self.rider_db_records)
-            if not rider_df.empty:
-                rider_df.to_excel(writer, sheet_name='Rider_Database', index=False)
+            rider_db_df = pd.DataFrame(self.rider_db_records)
+            rider_db_df.to_excel(writer, sheet_name='Rider_Database', index=False)
 
 def main():
     """Example usage of TNO-Ergame simulator"""
-    from riders import RiderDatabase
-    
-    # Create a sample team selection (first 20 riders from database)
+    # Create a sample team selection
     rider_db = RiderDatabase()
     all_riders = rider_db.get_all_riders()
     
     # Create a sample team (first 20 riders)
     sample_team = TNOTeamSelection(all_riders[:20])
-    
-    print(f"Sample team cost: {sample_team.total_cost}")
-    print(f"Sample team riders: {sample_team.rider_names}")
     
     # Create and run simulation
     simulator = TNOSimulator(sample_team)
@@ -350,15 +349,6 @@ def main():
     final_gc = simulator.get_final_gc()
     final_tno_points = simulator.get_final_tno_points()
     team_performance = simulator.get_team_performance()
-    
-    print("\n=== TNO-Ergame Simulation Results ===")
-    print(f"Team Total Points: {team_performance['total_points']}")
-    print(f"Team Abandonments: {team_performance['abandonments']}")
-    print(f"Team Cost: {team_performance['team_cost']}")
-    
-    print("\nTop 10 TNO Points:")
-    for i, (rider, points) in enumerate(final_tno_points[:10], 1):
-        print(f"{i}. {rider}: {points} points")
     
     # Save results
     simulator.write_results_to_excel()

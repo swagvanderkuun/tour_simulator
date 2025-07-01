@@ -52,6 +52,11 @@ def test_optimizer():
     # Get rider performance data (with fewer simulations for testing)
     rider_data = optimizer.run_simulation_for_riders(num_simulations=20)
     
+    # Print top 20 riders by expected points
+    print(f"\n=== Top 20 Riders by Expected Points ===")
+    for i, (_, row) in enumerate(rider_data.head(20).iterrows(), 1):
+        print(f"{i}. {row['rider_name']}: {row['expected_points']:.1f} points")
+    
     # Optimize team
     optimization = optimizer.optimize_team_with_order(rider_data, num_simulations=20)
     

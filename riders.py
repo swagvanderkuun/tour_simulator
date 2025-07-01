@@ -269,8 +269,8 @@ class RiderDatabase:
 
     def generate_stage_result(self, rider: Rider, stage: int) -> float:
         """Generate a result for a rider in a specific stage using triangular distribution."""
-        # Stage numbers in STAGE_PROFILES are 1-based
-        min_val, mode, max_val = rider.get_stage_probability(stage + 1)
+        # Stage numbers in STAGE_PROFILES are 1-based, but stage parameter is already 1-based
+        min_val, mode, max_val = rider.get_stage_probability(stage)
         return np.random.triangular(min_val, mode, max_val)
 
     def get_youth_riders(self, age_limit: int = 25) -> List[Rider]:

@@ -49,9 +49,36 @@ with col3:
         with st.spinner(f"Running {num_simulations} TNO game simulations..."):
             try:
                 # Run comprehensive TNO game analysis using TourSimulator for rider performance
-                from simulator import TourSimulator
+                from simulator import TourSimulator as BaseTourSimulator
+                from simulator import Stage
                 from collections import defaultdict
                 import numpy as np
+                
+                # Create a patched TourSimulator with 1-based stage indexing and suppressed output
+                class PatchedTourSimulator(BaseTourSimulator):
+                    def _initialize_stages(self):
+                        # Use 1-based indexing for stages 1-21
+                        self.stages = []
+                        for i in range(1, 22):
+                            self.stages.append(Stage(i))
+                    
+                    def simulate_tour(self):
+                        # Override simulate_tour to suppress print statements
+                        import sys
+                        import os
+                        from io import StringIO
+                        
+                        # Redirect stdout to suppress print statements with proper encoding
+                        original_stdout = sys.stdout
+                        sys.stdout = StringIO()
+                        
+                        try:
+                            # Call the original simulate_tour method
+                            super().simulate_tour()
+                        finally:
+                            # Restore stdout
+                            sys.stdout.close()
+                            sys.stdout = original_stdout
                 
                 # Initialize data collection
                 rider_performance = defaultdict(list)
@@ -59,11 +86,11 @@ with col3:
                 points_history = []
                 abandonment_counts = defaultdict(int)
                 
-                # Run simulations using TourSimulator
+                # Run simulations using PatchedTourSimulator
                 for sim in range(num_simulations):
                     # Create and run tour simulation
-                    tour_simulator = TourSimulator()
-                    tour_result = tour_simulator.simulate_tour()
+                    tour_simulator = PatchedTourSimulator()
+                    tour_simulator.simulate_tour()  # simulate_tour() doesn't return anything
                     
                     # Collect rider performance data
                     for rider in all_riders:
@@ -74,32 +101,27 @@ with col3:
                         rider_top_10_count = 0
                         rider_abandoned = False
                         
-                        for stage_num in range(1, 22):  # Stages 1-21
-                            if stage_num in tour_result.stage_results:
-                                stage_result = tour_result.stage_results[stage_num]
+                        # Process stage results from the simulator's records
+                        for record in tour_simulator.stage_results_records:
+                            if record['rider'] == rider_name:
+                                stage_num = record['stage']
+                                position = record['position']
                                 
-                                # Find rider's position in this stage
-                                rider_position = None
-                                for pos, stage_rider in enumerate(stage_result, 1):
-                                    if stage_rider.name == rider_name:
-                                        rider_position = pos
-                                        break
-                                
-                                if rider_position is not None:
+                                if position is not None:  # Rider finished the stage
                                     # Count top 10 finishes
-                                    if rider_position <= 10:
+                                    if position <= 10:
                                         rider_top_10_count += 1
                                     
                                     # Calculate TNO points for this stage
                                     is_special_stage = stage_num in {5, 13, 14, 17, 18}
-                                    if rider_position <= 10:
+                                    if position <= 10:
                                         if is_special_stage:
-                                            points = {1: 30, 2: 20, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}[rider_position]
+                                            points = {1: 30, 2: 20, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}[position]
                                         else:
-                                            points = {1: 20, 2: 15, 3: 12, 4: 9, 5: 7, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1}[rider_position]
+                                            points = {1: 20, 2: 15, 3: 12, 4: 9, 5: 7, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1}[position]
                                         rider_points += points
                                 else:
-                                    # Rider abandoned or didn't finish
+                                    # Rider abandoned
                                     rider_abandoned = True
                         
                         # Store rider performance
@@ -113,22 +135,22 @@ with col3:
                             abandonment_counts[rider_name] += 1
                     
                     # Collect stage performance data
-                    for stage_num in range(1, 22):
-                        if stage_num in tour_result.stage_results:
-                            stage_result = tour_result.stage_results[stage_num]
-                            
-                            # Calculate total points for this stage
-                            stage_points = 0
+                    stage_points_by_stage = defaultdict(int)
+                    for record in tour_simulator.stage_results_records:
+                        stage_num = record['stage']
+                        position = record['position']
+                        
+                        if position is not None and position <= 10:
                             is_special_stage = stage_num in {5, 13, 14, 17, 18}
-                            
-                            for pos, rider in enumerate(stage_result[:10], 1):  # Top 10 only
-                                if is_special_stage:
-                                    points = {1: 30, 2: 20, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}[pos]
-                                else:
-                                    points = {1: 20, 2: 15, 3: 12, 4: 9, 5: 7, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1}[pos]
-                                stage_points += points
-                            
-                            stage_performance[stage_num].append(stage_points)
+                            if is_special_stage:
+                                points = {1: 30, 2: 20, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1}[position]
+                            else:
+                                points = {1: 20, 2: 15, 3: 12, 4: 9, 5: 7, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1}[position]
+                            stage_points_by_stage[stage_num] += points
+                    
+                    # Add stage performance data
+                    for stage_num in range(1, 22):
+                        stage_performance[stage_num].append(stage_points_by_stage[stage_num])
                     
                     # Calculate total points for a sample team (first 20 riders)
                     sample_team_points = 0
@@ -149,7 +171,7 @@ with col3:
                             'max': max(points_history)
                         },
                         'abandonments': {
-                            'mean': np.mean([sum(1 for rider_data in rider_performance[rider] if rider_data['abandoned']) for rider in all_riders[:20]])
+                            'mean': np.mean([sum(1 for rider_data in rider_performance[rider.name] if rider_data['abandoned']) for rider in all_riders[:20]])
                         }
                     },
                     'points_history': points_history,

@@ -4,6 +4,9 @@ import plotly.express as px
 from riders import RiderDatabase
 from tno_optimizer import TNOTeamOptimizer, TNOTeamOptimization
 
+# Load rider database for reference
+rider_db = RiderDatabase()
+
 st.set_page_config(
     page_title="Team Optimization - T(n)oer Game",
     page_icon="⚡",
@@ -123,7 +126,7 @@ if 'optimization_results' in st.session_state:
         st.metric("Expected Points", f"{optimization.expected_points:.1f}")
     
     with col2:
-        st.metric("Team Size", optimization.team_size)
+        st.metric("Team Size", len(optimization.rider_order))
     
     with col3:
         team_cost = sum(rider_db.get_rider(name).price for name in optimization.rider_order)

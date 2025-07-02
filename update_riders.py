@@ -4,25 +4,25 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.edge.options import Options
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.edge.service import Service
 
 def scrape_with_selenium():
     """Scrape rider data using Selenium to handle JavaScript"""
     
-    # Setup Chrome options
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in background
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
+    # Setup Edge options
+    edge_options = Options()
+    edge_options.add_argument("--headless")  # Run in background
+    edge_options.add_argument("--no-sandbox")
+    edge_options.add_argument("--disable-dev-shm-usage")
     
     try:
-        # Use webdriver-manager to automatically download and manage Chrome driver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Use webdriver-manager to automatically download and manage Edge driver
+        service = Service(EdgeChromiumDriverManager().install())
+        driver = webdriver.Edge(service=service, options=edge_options)
     except Exception as e:
-        print(f"Error setting up Chrome driver: {e}")
+        print(f"Error setting up Edge driver: {e}")
         return []
     
     url = "https://www.procyclingstats.com/race/tour-de-france/2025/startlist"

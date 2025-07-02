@@ -1,7 +1,7 @@
 [
   {
-    "name": "ARMIRAIL Bruno",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "ASGREEN Kasper",
+    "team": "EF Education - EasyPost (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -14,8 +14,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "BISSEGGER Stefan",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "VAN DEN BERG Marijn",
+    "team": "EF Education - EasyPost (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -28,8 +28,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "BERTHET Cl\u00e9ment",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "BAUDIN Alex",
+    "team": "EF Education - EasyPost (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -42,8 +42,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "NAESEN Oliver",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "VALGREN Michael",
+    "team": "EF Education - EasyPost (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -56,8 +56,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "PARET-PEINTRE Aur\u00e9lien",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "ALBANESE Vincenzo",
+    "team": "EF Education - EasyPost (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -70,8 +70,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "SCOTSON Callum",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "RICKAERT Jonas",
+    "team": "Alpecin - Deceuninck (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -84,8 +84,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "TRONCHON Bastien",
-    "team": "Decathlon AG2R La Mondiale Team (WT)",
+    "name": "VERSTRYNGE Emiel",
+    "team": "Alpecin - Deceuninck (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -98,8 +98,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "COQUARD Bryan",
-    "team": "Cofidis (WT)",
+    "name": "MEURISSE Xandro",
+    "team": "Alpecin - Deceuninck (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -112,8 +112,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "RENARD Alexis",
-    "team": "Cofidis (WT)",
+    "name": "DILLIER Silvan",
+    "team": "Alpecin - Deceuninck (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -126,8 +126,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "TOUZ\u00c9 Damien",
-    "team": "Cofidis (WT)",
+    "name": "VERMEERSCH Gianni",
+    "team": "Alpecin - Deceuninck (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -140,8 +140,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "TEUNS Dylan",
-    "team": "Cofidis (WT)",
+    "name": "LAURANCE Axel",
+    "team": "INEOS Grenadiers (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -154,8 +154,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "GARC\u00cdA PIERNA Ra\u00fal",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
+    "name": "SWIFT Connor",
+    "team": "INEOS Grenadiers (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -168,8 +168,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "D\u00c9MARE Arnaud",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
+    "name": "SWIFT Ben",
+    "team": "INEOS Grenadiers (WT)",
     "age": 25,
     "tiers": {
       "sprint": "E",
@@ -182,540 +182,8 @@
     "chance_of_abandon": 0.0
   },
   {
-    "name": "CAPIOT Amaury",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "RODR\u00cdGUEZ Cristi\u00e1n",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "COSTIOU Ewen",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "LE BERRE Mathis",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "VENTURINI Cl\u00e9ment",
-    "team": "Ark\u00e9a - B&B Hotels (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "SKUJI\u0145\u0160 Toms",
-    "team": "Lidl - Trek (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "SIMMONS Quinn",
-    "team": "Lidl - Trek (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "ASKEY Lewis",
-    "team": "Groupama - FDJ (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "BARTHE Cyril",
-    "team": "Groupama - FDJ (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "PENHO\u00cbT Paul",
-    "team": "Groupama - FDJ (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "RUSSO Cl\u00e9ment",
-    "team": "Groupama - FDJ (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "M\u00dcHLBERGER Gregor",
-    "team": "Movistar Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "BARTA Will",
-    "team": "Movistar Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "GARC\u00cdA CORTINA Iv\u00e1n",
-    "team": "Movistar Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "NABERMAN Tim",
-    "team": "Team Picnic PostNL (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "BARGUIL Warren",
-    "team": "Team Picnic PostNL (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "FLYNN Sean",
-    "team": "Team Picnic PostNL (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "BITTNER Pavel",
-    "team": "Team Picnic PostNL (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "M\u00c4RKL Niklas",
-    "team": "Team Picnic PostNL (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "PLAPP Luke",
-    "team": "Team Jayco AlUla (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "DURBRIDGE Luke",
-    "team": "Team Jayco AlUla (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "TEUNISSEN Mike",
-    "team": "XDS Astana Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "FEDOROV Yevgeniy",
-    "team": "XDS Astana Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "BALLERINI Davide",
-    "team": "XDS Astana Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "BOL Cees",
-    "team": "XDS Astana Team (WT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "JEANNI\u00c8RE Emilien",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "TURGIS Anthony",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "JEGAT Jordan",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "DELETTRE Alexandre",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "CRAS Steff",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "VERCHER Matt\u00e9o",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "GACHIGNARD Thomas",
-    "team": "Team TotalEnergies (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "DAINESE Alberto",
-    "team": "Tudor Pro Cycling Team (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "HALLER Marco",
-    "team": "Tudor Pro Cycling Team (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "HIRSCHI Marc",
-    "team": "Tudor Pro Cycling Team (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "LIENHARD Fabian",
-    "team": "Tudor Pro Cycling Team (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "MAYRHOFER Marius",
-    "team": "Tudor Pro Cycling Team (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "STORER Michael",
-    "team": "Tudor Pro Cycling Team (PRT)",
-    "age": 25,
-    "tiers": {
-      "sprint": "E",
-      "itt": "E",
-      "mountain": "E",
-      "break_away": "E",
-      "punch": "E"
-    },
-    "price": 0.5,
-    "chance_of_abandon": 0.0
-  },
-  {
-    "name": "TRENTIN Matteo",
-    "team": "Tudor Pro Cycling Team (PRT)",
+    "name": "GRIGNARD S\u00e9bastien",
+    "team": "Lotto (PRT)",
     "age": 25,
     "tiers": {
       "sprint": "E",

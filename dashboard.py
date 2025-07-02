@@ -3454,7 +3454,7 @@ def show_versus_mode():
     ''')
 
     # Debug output
-    st.write("Debug: Versus mode function is running")
+
     
     try:
         # Add custom CSS for compact versus mode
@@ -3525,20 +3525,20 @@ def show_versus_mode():
         </style>
         """, unsafe_allow_html=True)
         
-        st.write("Debug: CSS added successfully")
+    
         
         versus = VersusMode()
-        st.write("Debug: VersusMode instance created")
+    
         
         # Inject the session state rider database into the versus mode
         versus.rider_db = st.session_state.rider_db
         versus.team_optimizer.rider_db = st.session_state.rider_db
         inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
         
-        st.write("Debug: Rider database injected")
+    
         
         available_riders = versus.get_available_riders()
-        st.write(f"Debug: Got {len(available_riders)} available riders")
+    
 
         # Initialize session state for selected riders
         if 'versus_selected_riders' not in st.session_state:
@@ -3849,93 +3849,527 @@ def show_versus_mode():
         else:
             st.info("🤝 Your team performs equally to the optimal team")
         
-        # Show detailed stage-by-stage analysis if available
-        if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections:
-            st.subheader("Stage-by-Stage Analysis")
+        # PART 1: Rider-by-Rider Points Comparison
+        st.subheader("1. Rider-by-Rider Points Comparison")
+        
+        # Calculate actual points for each rider based on stage selections
+        user_rider_points = {}
+        optimal_rider_points = {}
+        
+        # User team rider points
+        user_riders = results['user_team'].rider_names
+        for rider in user_riders:
+            user_rider_points[rider] = 0
+            if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections:
+                for stage, selected_riders in results['user_team'].stage_selections.items():
+                    if rider in selected_riders:
+                        stage_points = results['user_team'].stage_points.get(stage, {}).get(rider, 0)
+                        user_rider_points[rider] += stage_points
+        
+        # Optimal team rider points
+        optimal_riders = results['optimal_team'].rider_names
+        for rider in optimal_riders:
+            optimal_rider_points[rider] = 0
+            if hasattr(results['optimal_team'], 'stage_selections') and results['optimal_team'].stage_selections:
+                for stage, selected_riders in results['optimal_team'].stage_selections.items():
+                    if rider in selected_riders:
+                        stage_points = results['optimal_team'].stage_points.get(stage, {}).get(rider, 0)
+                        optimal_rider_points[rider] += stage_points
+        
+        # Create comparison dataframe
+        import pandas as pd
+        comparison_data = []
+        
+        # Add user team riders
+        for rider in user_riders:
+            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+            team_name = rider_row.iloc[0]['team'] if not rider_row.empty else "Unknown"
+            comparison_data.append({
+                'Rider': rider,
+                'Team': team_name,
+                'User_Team_Points': user_rider_points.get(rider, 0),
+                'Optimal_Team_Points': optimal_rider_points.get(rider, 0),
+                'Difference': user_rider_points.get(rider, 0) - optimal_rider_points.get(rider, 0),
+                'Team_Type': 'User Team'
+            })
+        
+        # Add optimal team riders not in user team
+        for rider in optimal_riders:
+            if rider not in user_riders:
+                rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                team_name = rider_row.iloc[0]['team'] if not rider_row.empty else "Unknown"
+                comparison_data.append({
+                    'Rider': rider,
+                    'Team': team_name,
+                    'User_Team_Points': 0,
+                    'Optimal_Team_Points': optimal_rider_points.get(rider, 0),
+                    'Difference': -optimal_rider_points.get(rider, 0),
+                    'Team_Type': 'Optimal Team Only'
+                })
+        
+        comparison_df = pd.DataFrame(comparison_data)
+        comparison_df = comparison_df.sort_values('User_Team_Points', ascending=False)
+        
+        # Display rider comparison
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**User Team Riders:**")
+            user_df = comparison_df[comparison_df['Team_Type'] == 'User Team'].copy()
+            user_df = user_df[['Rider', 'Team', 'User_Team_Points']]
+            user_df.columns = ['Rider', 'Team', 'Points']
+            st.dataframe(user_df, use_container_width=True)
             
-            # Create tabs for different views
-            tab1, tab2, tab3 = st.tabs(["Your Team Stages", "Optimal Team Stages", "Bench Points"])
+            total_user_points = user_df['Points'].sum()
+            st.write(f"**Total User Team Points:** {total_user_points:.2f}")
+        
+        with col2:
+            st.write("**Optimal Team Riders:**")
+            optimal_df = comparison_df[comparison_df['Team_Type'].isin(['User Team', 'Optimal Team Only'])].copy()
+            optimal_df = optimal_df[['Rider', 'Team', 'Optimal_Team_Points']]
+            optimal_df.columns = ['Rider', 'Team', 'Points']
+            optimal_df = optimal_df.sort_values('Points', ascending=False)
+            st.dataframe(optimal_df, use_container_width=True)
             
-            with tab1:
-                st.write("**Your Team Stage Selections:**")
-                for stage in sorted(results['user_team'].stage_selections.keys()):
-                    selected_riders = results['user_team'].stage_selections[stage]
-                    stage_points = results['user_team'].stage_points.get(stage, {})
-                    total_points = sum(stage_points.values())
-                    st.write(f"**Stage {stage}:** {', '.join(selected_riders)} (Points: {total_points:.2f})")
+            total_optimal_points = optimal_df['Points'].sum()
+            st.write(f"**Total Optimal Team Points:** {total_optimal_points:.2f}")
+        
+        # PART 2: Stage-by-Stage Analysis
+        st.subheader("2. Stage-by-Stage Analysis")
+        
+        # Create tabs for different stage analysis views
+        tab1, tab2, tab3 = st.tabs(["Overall Stage Comparison", "Stage Selection Comparison", "Bench Points Analysis"])
+        
+        with tab1:
+            st.write("**Overall Stage-by-Stage Performance Comparison:**")
             
-            with tab2:
-                st.write("**Optimal Team Stage Selections:**")
-                for stage in sorted(results['optimal_team'].stage_selections.keys()):
-                    selected_riders = results['optimal_team'].stage_selections[stage]
-                    stage_points = results['optimal_team'].stage_points.get(stage, {})
-                    total_points = sum(stage_points.values())
-                    st.write(f"**Stage {stage}:** {', '.join(selected_riders)} (Points: {total_points:.2f})")
-            
-            with tab3:
-                st.write("**Bench Points Analysis:**")
-                st.write("Points scored by unselected team members:")
+            # Calculate stage points for both teams
+            stage_comparison_data = []
+            for stage in range(1, 23):
+                # User team stage points
+                user_stage_points = 0
+                if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections and stage in results['user_team'].stage_selections:
+                    user_stage_points = sum(results['user_team'].stage_points.get(stage, {}).values())
+                else:
+                    # Estimate based on selected riders
+                    if stage == 22:
+                        selected_riders = user_riders
+                    else:
+                        rider_expected_points = []
+                        for rider in user_riders:
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                expected_points = rider_row.iloc[0]['expected_points']
+                                rider_expected_points.append((rider, expected_points))
+                        
+                        rider_expected_points.sort(key=lambda x: x[1], reverse=True)
+                        selected_riders = [rider for rider, _ in rider_expected_points[:9]]
+                    
+                    for rider in selected_riders:
+                        rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                        if not rider_row.empty:
+                            total_expected_points = rider_row.iloc[0]['expected_points']
+                            if stage <= 21:
+                                stage_points = total_expected_points * 0.05
+                            else:
+                                stage_points = total_expected_points * 0.08
+                            user_stage_points += stage_points
                 
-                # Calculate bench points for user team
+                # Optimal team stage points
+                optimal_stage_points = 0
+                if hasattr(results['optimal_team'], 'stage_selections') and results['optimal_team'].stage_selections and stage in results['optimal_team'].stage_selections:
+                    optimal_stage_points = sum(results['optimal_team'].stage_points.get(stage, {}).values())
+                else:
+                    # Estimate based on selected riders
+                    if stage == 22:
+                        selected_riders = optimal_riders
+                    else:
+                        rider_expected_points = []
+                        for rider in optimal_riders:
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                expected_points = rider_row.iloc[0]['expected_points']
+                                rider_expected_points.append((rider, expected_points))
+                        
+                        rider_expected_points.sort(key=lambda x: x[1], reverse=True)
+                        selected_riders = [rider for rider, _ in rider_expected_points[:9]]
+                    
+                    for rider in selected_riders:
+                        rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                        if not rider_row.empty:
+                            total_expected_points = rider_row.iloc[0]['expected_points']
+                            if stage <= 21:
+                                stage_points = total_expected_points * 0.05
+                            else:
+                                stage_points = total_expected_points * 0.08
+                            optimal_stage_points += stage_points
+                
+                difference = user_stage_points - optimal_stage_points
+                stage_comparison_data.append({
+                    'Stage': stage,
+                    'User_Team_Points': user_stage_points,
+                    'Optimal_Team_Points': optimal_stage_points,
+                    'Difference': difference
+                })
+            
+            # Create graphical analysis
+            import plotly.graph_objects as go
+            from plotly.subplots import make_subplots
+            
+            fig = make_subplots(
+                rows=2, cols=1,
+                subplot_titles=('Stage-by-Stage Points Comparison', 'Cumulative Points Comparison'),
+                vertical_spacing=0.1
+            )
+            
+            stages = [row['Stage'] for row in stage_comparison_data]
+            user_points = [row['User_Team_Points'] for row in stage_comparison_data]
+            optimal_points = [row['Optimal_Team_Points'] for row in stage_comparison_data]
+            
+            # Stage-by-stage comparison
+            fig.add_trace(
+                go.Bar(x=stages, y=user_points, name='User Team', marker_color='blue'),
+                row=1, col=1
+            )
+            fig.add_trace(
+                go.Bar(x=stages, y=optimal_points, name='Optimal Team', marker_color='red'),
+                row=1, col=1
+            )
+            
+            # Cumulative comparison
+            cumulative_user = []
+            cumulative_optimal = []
+            running_user = 0
+            running_optimal = 0
+            
+            for user_pt, optimal_pt in zip(user_points, optimal_points):
+                running_user += user_pt
+                running_optimal += optimal_pt
+                cumulative_user.append(running_user)
+                cumulative_optimal.append(running_optimal)
+            
+            fig.add_trace(
+                go.Scatter(x=stages, y=cumulative_user, name='User Team (Cumulative)', 
+                          line=dict(color='blue', width=3), mode='lines+markers'),
+                row=2, col=1
+            )
+            fig.add_trace(
+                go.Scatter(x=stages, y=cumulative_optimal, name='Optimal Team (Cumulative)', 
+                          line=dict(color='red', width=3), mode='lines+markers'),
+                row=2, col=1
+            )
+            
+            fig.update_layout(height=600, showlegend=True, title_text="Stage-by-Stage Performance Analysis")
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Summary statistics
+            total_user_stage_points = sum(user_points)
+            total_optimal_stage_points = sum(optimal_points)
+            total_difference = total_user_stage_points - total_optimal_stage_points
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total User Team Points", f"{total_user_stage_points:.2f}")
+            with col2:
+                st.metric("Total Optimal Team Points", f"{total_optimal_stage_points:.2f}")
+            with col3:
+                st.metric("Difference", f"{total_difference:.2f}", delta=f"{total_difference:.2f}")
+        
+        with tab2:
+            st.write("**Stage Selection Comparison:**")
+            
+            # Stage selector
+            selected_stage = st.selectbox("Select Stage to Compare:", range(1, 23), format_func=lambda x: f"Stage {x}")
+            
+            # Get stage selections for both teams
+            user_stage_riders = []
+            optimal_stage_riders = []
+            
+            if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections and selected_stage in results['user_team'].stage_selections:
+                user_stage_riders = results['user_team'].stage_selections[selected_stage]
+            else:
+                # Estimate user team selection
+                if selected_stage == 22:
+                    user_stage_riders = user_riders
+                else:
+                    rider_expected_points = []
+                    for rider in user_riders:
+                        rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                        if not rider_row.empty:
+                            expected_points = rider_row.iloc[0]['expected_points']
+                            rider_expected_points.append((rider, expected_points))
+                    
+                    rider_expected_points.sort(key=lambda x: x[1], reverse=True)
+                    user_stage_riders = [rider for rider, _ in rider_expected_points[:9]]
+            
+            if hasattr(results['optimal_team'], 'stage_selections') and results['optimal_team'].stage_selections and selected_stage in results['optimal_team'].stage_selections:
+                optimal_stage_riders = results['optimal_team'].stage_selections[selected_stage]
+            else:
+                # Estimate optimal team selection
+                if selected_stage == 22:
+                    optimal_stage_riders = optimal_riders
+                else:
+                    rider_expected_points = []
+                    for rider in optimal_riders:
+                        rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                        if not rider_row.empty:
+                            expected_points = rider_row.iloc[0]['expected_points']
+                            rider_expected_points.append((rider, expected_points))
+                    
+                    rider_expected_points.sort(key=lambda x: x[1], reverse=True)
+                    optimal_stage_riders = [rider for rider, _ in rider_expected_points[:9]]
+            
+            # Display stage selections
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write(f"**User Team - Stage {selected_stage}:**")
+                user_stage_data = []
+                for rider in user_stage_riders:
+                    rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                    team_name = rider_row.iloc[0]['team'] if not rider_row.empty else "Unknown"
+                    total_expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+                    
+                    # Calculate stage-specific expected points using proper stage performance data
+                    rider_obj = next((r for r in results['user_team'].riders if r.name == rider), None)
+                    
+                    # Use optimal team's stage performance data for consistency across all stages
+                    if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, selected_stage) in results['optimal_team'].stage_performance_data:
+                        stage_expected_points = results['optimal_team'].stage_performance_data[(rider, selected_stage)]
+                    else:
+                        # Fallback to estimated approach if stage data not available
+                        total_expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+                        # Estimate stage-specific points based on total expected points
+                        if selected_stage <= 21:  # Regular stages
+                            stage_factor = 0.05  # 5% of total expected points per stage
+                        else:  # Final stage (stage 22)
+                            stage_factor = 0.08  # 8% of total expected points
+                        stage_expected_points = total_expected_points * stage_factor
+                    
+                    # Get rider abilities for context
+                    if rider_obj:
+                        sprint_ability = rider_obj.parameters.sprint_ability
+                        mountain_ability = rider_obj.parameters.mountain_ability
+                        itt_ability = rider_obj.parameters.itt_ability
+                    else:
+                        sprint_ability = mountain_ability = itt_ability = 0
+                    
+                    user_stage_data.append({
+                        'Rider': rider,
+                        'Team': team_name,
+                        'Stage_Points': stage_expected_points,
+                        'Sprint': sprint_ability,
+                        'Mountain': mountain_ability,
+                        'ITT': itt_ability
+                    })
+                
+                user_stage_df = pd.DataFrame(user_stage_data)
+                user_stage_df = user_stage_df.sort_values('Stage_Points', ascending=False)
+                st.dataframe(user_stage_df, use_container_width=True)
+                
+                total_user_stage_points = user_stage_df['Stage_Points'].sum()
+                st.write(f"**Total Stage Expected Points:** {total_user_stage_points:.2f}")
+            
+            with col2:
+                st.write(f"**Optimal Team - Stage {selected_stage}:**")
+                optimal_stage_data = []
+                for rider in optimal_stage_riders:
+                    rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                    team_name = rider_row.iloc[0]['team'] if not rider_row.empty else "Unknown"
+                    total_expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+                    
+                    # Calculate stage-specific expected points using proper stage performance data
+                    rider_obj = next((r for r in results['optimal_team'].riders if r.name == rider), None)
+                    
+                    # Use actual stage performance data if available
+                    if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, selected_stage) in results['optimal_team'].stage_performance_data:
+                        stage_expected_points = results['optimal_team'].stage_performance_data[(rider, selected_stage)]
+                    else:
+                        # Fallback to estimated approach if stage data not available
+                        total_expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+                        # Estimate stage-specific points based on total expected points
+                        if selected_stage <= 21:  # Regular stages
+                            stage_factor = 0.05  # 5% of total expected points per stage
+                        else:  # Final stage (stage 22)
+                            stage_factor = 0.08  # 8% of total expected points
+                        stage_expected_points = total_expected_points * stage_factor
+                    
+                    # Get rider abilities for context
+                    if rider_obj:
+                        sprint_ability = rider_obj.parameters.sprint_ability
+                        mountain_ability = rider_obj.parameters.mountain_ability
+                        itt_ability = rider_obj.parameters.itt_ability
+                    else:
+                        sprint_ability = mountain_ability = itt_ability = 0
+                    
+                    optimal_stage_data.append({
+                        'Rider': rider,
+                        'Team': team_name,
+                        'Stage_Points': stage_expected_points,
+                        'Sprint': sprint_ability,
+                        'Mountain': mountain_ability,
+                        'ITT': itt_ability
+                    })
+                
+                optimal_stage_df = pd.DataFrame(optimal_stage_data)
+                optimal_stage_df = optimal_stage_df.sort_values('Stage_Points', ascending=False)
+                st.dataframe(optimal_stage_df, use_container_width=True)
+                
+                total_optimal_stage_points = optimal_stage_df['Stage_Points'].sum()
+                st.write(f"**Total Stage Expected Points:** {total_optimal_stage_points:.2f}")
+            
+            # Show differences
+            st.write("**Selection Differences:**")
+            user_only = set(user_stage_riders) - set(optimal_stage_riders)
+            optimal_only = set(optimal_stage_riders) - set(user_stage_riders)
+            common = set(user_stage_riders) & set(optimal_stage_riders)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.write(f"**Common Riders ({len(common)}):**")
+                for rider in sorted(common):
+                    st.write(f"• {rider}")
+            
+            with col2:
+                st.write(f"**User Team Only ({len(user_only)}):**")
+                for rider in sorted(user_only):
+                    st.write(f"• {rider}")
+            
+            with col3:
+                st.write(f"**Optimal Team Only ({len(optimal_only)}):**")
+                for rider in sorted(optimal_only):
+                    st.write(f"• {rider}")
+        
+        with tab3:
+            st.write("**Bench Points Analysis - Stage by Stage:**")
+            
+            # Calculate bench points for both teams stage by stage
+            bench_data = []
+            
+            for stage in range(1, 23):
+                # User team bench points
+                if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections and stage in results['user_team'].stage_selections:
+                    selected_riders = results['user_team'].stage_selections[stage]
+                else:
+                    # Estimate selected riders
+                    if stage == 22:
+                        selected_riders = user_riders
+                    else:
+                        rider_expected_points = []
+                        for rider in user_riders:
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                expected_points = rider_row.iloc[0]['expected_points']
+                                rider_expected_points.append((rider, expected_points))
+                        
+                        rider_expected_points.sort(key=lambda x: x[1], reverse=True)
+                        selected_riders = [rider for rider, _ in rider_expected_points[:9]]
+                
                 user_bench_points = 0
-                for stage in sorted(results['user_team'].stage_selections.keys()):
-                    selected_riders = results['user_team'].stage_selections[stage]
-                    stage_points = results['user_team'].stage_points.get(stage, {})
-                    
-                    # Calculate bench points using stage performance data
-                    bench_points = 0
-                    for rider in results['user_team'].rider_names:
-                        if rider not in selected_riders:
-                            # Use actual stage performance data if available
-                            if hasattr(results['user_team'], 'stage_performance_data') and (rider, stage) in results['user_team'].stage_performance_data:
-                                stage_expected_points = results['user_team'].stage_performance_data[(rider, stage)]
-                            else:
-                                # Fallback to estimated approach
-                                rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
-                                if not rider_row.empty:
-                                    total_expected_points = rider_row.iloc[0]['expected_points']
-                                    if stage <= 21:  # Regular stages
-                                        stage_expected_points = total_expected_points * 0.05  # 5% per stage
-                                    else:  # Final stage
-                                        stage_expected_points = total_expected_points * 0.08  # 8% for final
+                for rider in user_riders:
+                    if rider not in selected_riders:
+                        # Use optimal team's stage performance data for consistency
+                        if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, stage) in results['optimal_team'].stage_performance_data:
+                            stage_expected_points = results['optimal_team'].stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to estimated approach if stage data not available
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                total_expected_points = rider_row.iloc[0]['expected_points']
+                                if stage <= 21:
+                                    stage_expected_points = total_expected_points * 0.05
                                 else:
-                                    stage_expected_points = 0
-                            bench_points += stage_expected_points
-                    
-                    user_bench_points += bench_points
-                    st.write(f"**Stage {stage}:** {bench_points:.2f} bench points")
+                                    stage_expected_points = total_expected_points * 0.08
+                            else:
+                                stage_expected_points = 0
+                        user_bench_points += stage_expected_points
                 
-                st.write(f"**Total User Team Bench Points:** {user_bench_points:.2f}")
-                
-                # Calculate bench points for optimal team
-                optimal_bench_points = 0
-                for stage in sorted(results['optimal_team'].stage_selections.keys()):
+                # Optimal team bench points
+                if hasattr(results['optimal_team'], 'stage_selections') and results['optimal_team'].stage_selections and stage in results['optimal_team'].stage_selections:
                     selected_riders = results['optimal_team'].stage_selections[stage]
-                    stage_points = results['optimal_team'].stage_points.get(stage, {})
-                    
-                    # Calculate bench points using stage performance data
-                    bench_points = 0
-                    for rider in results['optimal_team'].rider_names:
-                        if rider not in selected_riders:
-                            # Use actual stage performance data if available
-                            if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, stage) in results['optimal_team'].stage_performance_data:
-                                stage_expected_points = results['optimal_team'].stage_performance_data[(rider, stage)]
-                            else:
-                                # Fallback to estimated approach
-                                rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
-                                if not rider_row.empty:
-                                    total_expected_points = rider_row.iloc[0]['expected_points']
-                                    if stage <= 21:  # Regular stages
-                                        stage_expected_points = total_expected_points * 0.05  # 5% per stage
-                                    else:  # Final stage
-                                        stage_expected_points = total_expected_points * 0.08  # 8% for final
-                                else:
-                                    stage_expected_points = 0
-                            bench_points += stage_expected_points
-                    
-                    optimal_bench_points += bench_points
+                else:
+                    # Estimate selected riders
+                    if stage == 22:
+                        selected_riders = optimal_riders
+                    else:
+                        rider_expected_points = []
+                        for rider in optimal_riders:
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                expected_points = rider_row.iloc[0]['expected_points']
+                                rider_expected_points.append((rider, expected_points))
+                        
+                        rider_expected_points.sort(key=lambda x: x[1], reverse=True)
+                        selected_riders = [rider for rider, _ in rider_expected_points[:9]]
                 
-                st.write(f"**Total Optimal Team Bench Points:** {optimal_bench_points:.2f}")
+                optimal_bench_points = 0
+                for rider in optimal_riders:
+                    if rider not in selected_riders:
+                        # Use actual stage performance data if available
+                        if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, stage) in results['optimal_team'].stage_performance_data:
+                            stage_expected_points = results['optimal_team'].stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to estimated approach if stage data not available
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                total_expected_points = rider_row.iloc[0]['expected_points']
+                                if stage <= 21:
+                                    stage_expected_points = total_expected_points * 0.05
+                                else:
+                                    stage_expected_points = total_expected_points * 0.08
+                            else:
+                                stage_expected_points = 0
+                        optimal_bench_points += stage_expected_points
+                
+                bench_data.append({
+                    'Stage': stage,
+                    'User_Team_Bench_Points': user_bench_points,
+                    'Optimal_Team_Bench_Points': optimal_bench_points,
+                    'Bench_Points_Difference': user_bench_points - optimal_bench_points
+                })
+            
+            # Create bench points visualization
+            bench_df = pd.DataFrame(bench_data)
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=bench_df['Stage'],
+                y=bench_df['User_Team_Bench_Points'],
+                name='User Team Bench Points',
+                marker_color='lightblue'
+            ))
+            fig.add_trace(go.Bar(
+                x=bench_df['Stage'],
+                y=bench_df['Optimal_Team_Bench_Points'],
+                name='Optimal Team Bench Points',
+                marker_color='lightcoral'
+            ))
+            
+            fig.update_layout(
+                title="Bench Points by Stage",
+                xaxis_title="Stage",
+                yaxis_title="Bench Points",
+                barmode='group'
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Display bench points table
+            st.write("**Bench Points Summary:**")
+            st.dataframe(bench_df, use_container_width=True)
+            
+            # Summary statistics
+            total_user_bench = bench_df['User_Team_Bench_Points'].sum()
+            total_optimal_bench = bench_df['Optimal_Team_Bench_Points'].sum()
+            total_bench_difference = total_user_bench - total_optimal_bench
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total User Team Bench Points", f"{total_user_bench:.2f}")
+            with col2:
+                st.metric("Total Optimal Team Bench Points", f"{total_optimal_bench:.2f}")
+            with col3:
+                st.metric("Bench Points Difference", f"{total_bench_difference:.2f}", delta=f"{total_bench_difference:.2f}")
         
         # Show rider performance comparison
         st.subheader("Rider Performance Comparison")

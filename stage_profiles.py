@@ -31,10 +31,10 @@ STAGE_PROFILES = {
     12: {StageType.MOUNTAIN: 1.0},
     13: {StageType.ITT: 0.2, StageType.MOUNTAIN: 0.8},
     14: {StageType.MOUNTAIN: 1.0},
-    15: {StageType.BREAK_AWAY: 0.7, StageType.SPRINT: 0.3},
+    15: {StageType.BREAK_AWAY: 0.8, StageType.SPRINT: 0.2},
     16: {StageType.MOUNTAIN: 1.0},
     17: {StageType.BREAK_AWAY: 0.5, StageType.SPRINT: 0.5},
-    18: {StageType.MOUNTAIN: 0.8, StageType.BREAK_AWAY: 0.2},
+    18: {StageType.MOUNTAIN: 1.0},
     19: {StageType.MOUNTAIN: 1.0},
     20: {StageType.BREAK_AWAY: 0.8, StageType.SPRINT: 0.2},
     21: {StageType.SPRINT: 0.7, StageType.PUNCH: 0.3}

@@ -140,6 +140,51 @@
     "chance_of_abandon": 0.0
   },
   {
+<<<<<<< HEAD
+=======
+    "name": "LAURANCE Axel",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "break_away": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.0
+  },
+  {
+    "name": "SWIFT Connor",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "break_away": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.0
+  },
+  {
+    "name": "SWIFT Ben",
+    "team": "INEOS Grenadiers (WT)",
+    "age": 25,
+    "tiers": {
+      "sprint": "E",
+      "itt": "E",
+      "mountain": "E",
+      "break_away": "E",
+      "punch": "E"
+    },
+    "price": 0.5,
+    "chance_of_abandon": 0.0
+  },
+  {
+>>>>>>> main
     "name": "GRIGNARD S\u00e9bastien",
     "team": "Lotto (PRT)",
     "age": 25,

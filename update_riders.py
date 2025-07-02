@@ -11,16 +11,16 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 def scrape_with_selenium():
     """Scrape rider data using Selenium to handle JavaScript (now using Edge)"""
     
-    # Setup Edge options
-    edge_options = EdgeOptions()
-    edge_options.add_argument("--headless")  # Run in background
-    edge_options.add_argument("--no-sandbox")
-    edge_options.add_argument("--disable-dev-shm-usage")
+    # Setup Chrome options
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run in background
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     
     try:
-        # Use webdriver-manager to automatically download and manage Edge driver
-        service = EdgeService(EdgeChromiumDriverManager().install())
-        driver = webdriver.Edge(service=service, options=edge_options)
+        # Use webdriver-manager to automatically download and manage Chrome driver
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
     except Exception as e:
         print(f"Error setting up Edge driver: {e}")
         return []

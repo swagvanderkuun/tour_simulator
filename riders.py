@@ -208,7 +208,7 @@ class RiderDatabase:
             {"name": "RUSSO Clément", "team": "Groupama - FDJ (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "MÜHLBERGER Gregor", "team": "Movistar Team (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "BARTA Will", "team": "Movistar Team (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
-            {"name": "GARCÍA CORTINA Iván", "team": "Movistar Team (WT)", "age": 25, "tiers": {'sprint': 'D', 'itt': 'E', 'mountain': 'E', 'break_away': 'D', 'punch': 'D'}, "price": 0.75, "chance_of_abandon": 0.05},
+            {"name": "GARCÍA CORTINA Iván", "team": "Movistar Team (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'D', 'punch': 'E'}, "price": 0.75, "chance_of_abandon": 0.05},
             {"name": "NABERMAN Tim", "team": "Team Picnic PostNL (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "BARGUIL Warren", "team": "Team Picnic PostNL (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'D', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "FLYNN Sean", "team": "Team Picnic PostNL (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
@@ -234,6 +234,160 @@ class RiderDatabase:
             {"name": "MAYRHOFER Marius", "team": "Tudor Pro Cycling Team (PRT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "STORER Michael", "team": "Tudor Pro Cycling Team (PRT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'C', 'break_away': 'D', 'punch': 'E'}, "price": 0.75, "chance_of_abandon": 0.05},
             {"name": "TRENTIN Matteo", "team": "Tudor Pro Cycling Team (PRT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
+            {
+                "name": "ASGREEN Kasper",
+                "team": "EF Education - EasyPost (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "C",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "VAN DEN BERG Marijn",
+                "team": "EF Education - EasyPost (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "D",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "D"
+                },
+                "price": 0.75,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "BAUDIN Alex",
+                "team": "EF Education - EasyPost (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "VALGREN Michael",
+                "team": "EF Education - EasyPost (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "ALBANESE Vincenzo",
+                "team": "EF Education - EasyPost (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "D",
+                "punch": "D"
+                },
+                "price": 0.75,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "RICKAERT Jonas",
+                "team": "Alpecin - Deceuninck (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "VERSTRYNGE Emiel",
+                "team": "Alpecin - Deceuninck (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "D",
+                "break_away": "D",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "MEURISSE Xandro",
+                "team": "Alpecin - Deceuninck (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "DILLIER Silvan",
+                "team": "Alpecin - Deceuninck (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "VERMEERSCH Gianni",
+                "team": "Alpecin - Deceuninck (WT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "D",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            },
+            {
+                "name": "GRIGNARD S\u00e9bastien",
+                "team": "Lotto (PRT)",
+                "age": 25,
+                "tiers": {
+                "sprint": "E",
+                "itt": "E",
+                "mountain": "E",
+                "break_away": "E",
+                "punch": "E"
+                },
+                "price": 0.5,
+                "chance_of_abandon": 0.05
+            }
         ]
 
         # Create Rider objects with their parameters

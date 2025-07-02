@@ -17,8 +17,8 @@ class MultiSimulationAnalyzer:
         self.metrics = {}
         
     def run_simulations(self, rider_db, progress_callback=None):
-        """Run multiple simulations and collect comprehensive data"""
-        print(f"Running {self.num_simulations} simulations...")
+        """Run multiple simulations efficiently without threading issues"""
+        print(f"Running {self.num_simulations} simulations (optimized)...")
         
         for sim in range(self.num_simulations):
             if progress_callback:

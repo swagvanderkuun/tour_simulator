@@ -1,3 +1,18 @@
+import warnings
+import logging
+import os
+
+# Suppress Streamlit ScriptRunContext warnings
+warnings.filterwarnings("ignore", message=".*ScriptRunContext.*")
+warnings.filterwarnings("ignore", category=UserWarning)
+
+# Configure logging to suppress warnings
+logging.getLogger('streamlit').setLevel(logging.ERROR)
+logging.getLogger('streamlit.runtime.scriptrunner_utils').setLevel(logging.ERROR)
+
+# Set environment variables to suppress warnings
+os.environ['PYTHONWARNINGS'] = 'ignore'
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -37,19 +52,28 @@ with col2:
     rider_simulations = st.number_input(
         "Rider Analysis Simulations",
         min_value=10,
-        max_value=5000,
-        value=30,
-        help="Number of simulations to analyze individual rider performance"
+        max_value=1000,
+        value=50,
+        help="Number of simulations to analyze individual rider performance (higher = more accurate)"
     )
 
 with col3:
     optimization_simulations = st.number_input(
         "Optimization Simulations",
         min_value=10,
-        max_value=5000,
-        value=30,
-        help="Number of simulations to validate optimized team"
+        max_value=1000,
+        value=100,
+        help="Number of simulations to validate optimized team (higher = more accurate)"
     )
+
+# Strategy selection
+st.subheader("2. Optimization Strategy")
+
+optimization_strategy = st.selectbox(
+    "Choose optimization strategy",
+    options=["Original Optimizer", "Heuristic Optimizer"],
+    help="Original Optimizer uses mathematical optimization, Heuristic Optimizer uses rule-based approach"
+)
 
 # Advanced settings
 with st.expander("🔧 Advanced Settings"):
@@ -69,27 +93,47 @@ with st.expander("🔧 Advanced Settings"):
         )
 
 # Run optimization
-st.header("2. Run Optimization")
+st.header("3. Run Optimization")
 
 if st.button("🚀 Start Optimization", type="primary"):
     with st.spinner("Running optimization... This may take a few minutes."):
         try:
-            # Initialize optimizer
-            optimizer = TNOTeamOptimizer(team_size=team_size)
-            
-            # Step 1: Analyze individual riders
-            st.info("Step 1/3: Analyzing individual rider performance...")
-            rider_data = optimizer.run_simulation_for_riders(num_simulations=rider_simulations)
-            
-            # Step 2: Optimize team selection and order
-            st.info("Step 2/3: Optimizing team selection and rider order...")
-            optimization = optimizer.optimize_team_with_order(
-                rider_data, 
-                num_simulations=optimization_simulations
-            )
-            
-            # Step 3: Validate results
-            st.info("Step 3/3: Validating optimized team...")
+            if optimization_strategy == "Original Optimizer":
+                # Initialize optimizer
+                optimizer = TNOTeamOptimizer(team_size=team_size)
+                
+                # Step 1: Analyze individual riders
+                st.info("Step 1/3: Analyzing individual rider performance...")
+                rider_data = optimizer.run_simulation_for_riders(num_simulations=rider_simulations)
+                
+                # Step 2: Optimize team selection and order
+                st.info("Step 2/3: Optimizing team selection and rider order...")
+                optimization = optimizer.optimize_team_with_order(
+                    rider_data, 
+                    num_simulations=optimization_simulations
+                )
+                
+                # Step 3: Validate results
+                st.info("Step 3/3: Validating optimized team...")
+                
+            elif optimization_strategy == "Heuristic Optimizer":
+                # Initialize heuristic optimizer
+                from tno_heuristic_optimizer import TNOHeuristicOptimizer
+                heuristic_optimizer = TNOHeuristicOptimizer()
+                
+                # Run heuristic optimization
+                st.info("Running heuristic optimization...")
+                optimization = heuristic_optimizer.run_heuristic_optimization(
+                    num_simulations=rider_simulations
+                )
+                
+                # Create dummy rider_data for compatibility
+                rider_data = {}
+                for rider in optimization.riders:
+                    rider_data[rider.name] = {
+                        'expected_points': optimization.rider_stats.get(rider.name, {}).get('expected_points', 0),
+                        'bonus_potential': optimization.rider_stats.get(rider.name, {}).get('bonus_potential', 0)
+                    }
             
             # Store results
             st.session_state.optimization_results = {
@@ -98,7 +142,8 @@ if st.button("🚀 Start Optimization", type="primary"):
                 'settings': {
                     'team_size': team_size,
                     'rider_sims': rider_simulations,
-                    'opt_sims': optimization_simulations
+                    'opt_sims': optimization_simulations,
+                    'strategy': optimization_strategy
                 }
             }
             
@@ -109,8 +154,12 @@ if st.button("🚀 Start Optimization", type="primary"):
             st.exception(e)
 
 # Display results
-if 'optimization_results' in st.session_state:
-    st.header("3. Optimization Results")
+if (
+    'optimization_results' in st.session_state
+    and st.session_state.optimization_results
+    and isinstance(st.session_state.optimization_results, dict)
+):
+    st.header("4. Optimization Results")
     
     results = st.session_state.optimization_results
     optimization = results['optimization']
@@ -129,11 +178,10 @@ if 'optimization_results' in st.session_state:
         st.metric("Team Size", len(optimization.rider_order))
     
     with col3:
-        team_cost = sum(rider_db.get_rider(name).price for name in optimization.rider_order)
-        st.metric("Team Cost", f"${team_cost:.2f}")
+        st.metric("Strategy Used", settings.get('strategy', 'N/A'))
     
     with col4:
-        st.metric("Optimization Time", f"{settings.get('optimization_time', 'N/A')}")
+        st.metric("Simulations Used", f"{settings.get('rider_sims', 0)} + {settings.get('opt_sims', 0)}")
     
     # Optimized team
     st.subheader("🏆 Optimized Team")
@@ -142,14 +190,21 @@ if 'optimization_results' in st.session_state:
     team_summary = []
     for i, rider_name in enumerate(optimization.rider_order):
         rider_obj = rider_db.get_rider(rider_name)
+        
+        # Get expected points from rider_data DataFrame if available
+        if isinstance(rider_data, pd.DataFrame):
+            rider_row = rider_data[rider_data['rider_name'] == rider_name]
+            expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+        else:
+            # Fallback to dictionary format
+            expected_points = rider_data.get(rider_name, {}).get('expected_points', 0)
+        
         team_summary.append({
             "Position": i + 1,
             "Rider": rider_name,
             "Team": rider_obj.team,
-            "Price": rider_obj.price,
-            "Age": rider_obj.age,
             "Role": "BONUS" if i < 5 else "SCORING" if i < 15 else "RESERVE",
-            "Expected Points": rider_data.get(rider_name, {}).get('expected_points', 0)
+            "Expected Points": expected_points
         })
     
     team_df = pd.DataFrame(team_summary)
@@ -186,11 +241,16 @@ if 'optimization_results' in st.session_state:
     st.subheader("🏃‍♂️ Rider Performance Analysis")
     
     # Top performers in optimized team
-    top_performers = sorted(
-        [(rider, data.get('expected_points', 0)) for rider, data in rider_data.items()],
-        key=lambda x: x[1],
-        reverse=True
-    )[:15]
+    if isinstance(rider_data, pd.DataFrame):
+        # Use DataFrame format
+        top_performers = rider_data.nlargest(15, 'expected_points')[['rider_name', 'expected_points']].values.tolist()
+    else:
+        # Use dictionary format
+        top_performers = sorted(
+            [(rider, data.get('expected_points', 0)) for rider, data in rider_data.items()],
+            key=lambda x: x[1],
+            reverse=True
+        )[:15]
     
     top_df = pd.DataFrame([
         {
@@ -212,13 +272,30 @@ if 'optimization_results' in st.session_state:
     
     for i, rider in enumerate(bonus_riders):
         rider_obj = rider_db.get_rider(rider)
-        bonus_potential = rider_data.get(rider, {}).get('bonus_potential', 0)
+        
+        # Get expected points and bonus potential from rider_data
+        if isinstance(rider_data, pd.DataFrame):
+            rider_row = rider_data[rider_data['rider_name'] == rider]
+            expected_points = rider_row.iloc[0]['expected_points'] if not rider_row.empty else 0
+            # Calculate bonus potential based on rider abilities
+            bonus_potential = (
+                rider_obj.parameters.sprint_ability * 0.3 +
+                rider_obj.parameters.punch_ability * 0.2 +
+                rider_obj.parameters.itt_ability * 0.2 +
+                rider_obj.parameters.mountain_ability * 0.2 +
+                rider_obj.parameters.break_away_ability * 0.1
+            ) * 21 * 0.3  # Expected top 10 finishes per tour
+        else:
+            # Fallback to dictionary format
+            expected_points = rider_data.get(rider, {}).get('expected_points', 0)
+            bonus_potential = rider_data.get(rider, {}).get('bonus_potential', 0)
+        
         bonus_data.append({
             "Position": i + 1,
             "Rider": rider,
             "Team": rider_obj.team,
             "Bonus Potential": bonus_potential,
-            "Expected Points": rider_data.get(rider, {}).get('expected_points', 0)
+            "Expected Points": expected_points
         })
     
     bonus_df = pd.DataFrame(bonus_data)
@@ -235,29 +312,28 @@ if 'optimization_results' in st.session_state:
     fig.update_xaxes(tickangle=45)
     st.plotly_chart(fig, use_container_width=True)
     
-    # Cost analysis
-    st.subheader("💰 Cost Analysis")
+    # Performance analysis
+    st.subheader("📊 Performance Analysis")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # Price distribution
+        # Expected points distribution
         fig = px.histogram(
             team_df,
-            x='Price',
+            x='Expected Points',
             nbins=10,
-            title="Price Distribution of Selected Riders"
+            title="Expected Points Distribution of Selected Riders"
         )
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Price vs Expected Points
-        fig = px.scatter(
+        # Role vs Expected Points
+        fig = px.box(
             team_df,
-            x='Price',
+            x='Role',
             y='Expected Points',
-            hover_data=['Rider', 'Team'],
-            title="Price vs Expected Points"
+            title="Expected Points by Role"
         )
         st.plotly_chart(fig, use_container_width=True)
     
@@ -313,6 +389,8 @@ if 'optimization_results' in st.session_state:
                 file_name=f"tnoer_game_full_analysis_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 mime="text/csv"
             )
+else:
+    st.info("No optimization results available. Please run the optimization first.")
 
 # Load rider database for reference
 rider_db = RiderDatabase() 

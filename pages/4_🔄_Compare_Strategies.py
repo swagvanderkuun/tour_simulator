@@ -1,3 +1,19 @@
+import warnings
+import logging
+import os
+from collections import defaultdict
+
+# Suppress Streamlit ScriptRunContext warnings
+warnings.filterwarnings("ignore", message=".*ScriptRunContext.*")
+warnings.filterwarnings("ignore", category=UserWarning)
+
+# Configure logging to suppress warnings
+logging.getLogger('streamlit').setLevel(logging.ERROR)
+logging.getLogger('streamlit.runtime.scriptrunner_utils').setLevel(logging.ERROR)
+
+# Set environment variables to suppress warnings
+os.environ['PYTHONWARNINGS'] = 'ignore'
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -5,6 +21,10 @@ import plotly.graph_objects as go
 from riders import RiderDatabase
 from tno_optimizer import TNOTeamOptimizer, TNOTeamOptimization
 from tno_heuristic_optimizer import TNOHeuristicOptimizer, TNOHeuristicOptimization
+from tno_ergame_simulator import TNOSimulator
+
+# Initialize rider database
+rider_db = RiderDatabase()
 
 st.set_page_config(
     page_title="Compare Strategies - T(n)oer Game",
@@ -68,18 +88,18 @@ with col2:
     rider_simulations = st.number_input(
         "Rider Analysis Simulations",
         min_value=10,
-        max_value=100,
-        value=30,
-        help="Number of simulations for rider analysis"
+        max_value=1000,
+        value=50,
+        help="Number of simulations for rider analysis (higher = more accurate but slower)"
     )
 
 with col3:
     validation_simulations = st.number_input(
         "Validation Simulations",
         min_value=10,
-        max_value=200,
-        value=50,
-        help="Number of simulations to validate each strategy"
+        max_value=1000,
+        value=100,
+        help="Number of simulations to validate each strategy (higher = more accurate but slower)"
     )
 
 # Run comparison
@@ -108,9 +128,8 @@ if len(selected_strategies) >= 2:
                     
                     elif strategy == "Heuristic Optimizer":
                         heuristic_optimizer = TNOHeuristicOptimizer()
-                        optimization = heuristic_optimizer.optimize_team(
-                            num_simulations=rider_simulations,
-                            validation_simulations=validation_simulations
+                        optimization = heuristic_optimizer.run_heuristic_optimization(
+                            num_simulations=rider_simulations
                         )
                         
                         comparison_results[strategy] = {
@@ -153,8 +172,7 @@ if 'comparison_results' in st.session_state:
         performance_data.append({
             'Strategy': strategy,
             'Expected Points': optimization.expected_points,
-            'Team Size': optimization.team_size,
-            'Team Cost': sum(rider_db.get_rider(name).price for name in optimization.rider_order)
+            'Team Size': optimization.team_size
         })
     
     perf_df = pd.DataFrame(performance_data)
@@ -244,8 +262,40 @@ if 'comparison_results' in st.session_state:
     # Detailed strategy analysis
     st.subheader("📈 Detailed Strategy Analysis")
     
+    # Create side-by-side comparison table
+    strategies_list = list(comparison_results.keys())
+    
+    # Create comparison table with expected points
+    comparison_data = []
+    max_riders = max(len(data['optimization'].rider_order) for data in comparison_results.values())
+    
+    for i in range(max_riders):
+        row = {'Position': i + 1}
+        for strategy in strategies_list:
+            optimization = comparison_results[strategy]['optimization']
+            riders = optimization.rider_order
+            
+            if i < len(riders):
+                rider_name = riders[i]
+                rider_obj = rider_db.get_rider(rider_name)
+                
+                # Get expected points for this rider if available
+                expected_points = "N/A"
+                if hasattr(optimization, 'rider_stats') and rider_name in optimization.rider_stats:
+                    expected_points = f"{optimization.rider_stats[rider_name].get('expected_points', 'N/A'):.1f}"
+                
+                role = "BONUS" if i < 5 else "SCORING" if i < 15 else "RESERVE"
+                row[f"{strategy}"] = f"{rider_name} ({rider_obj.team}) - {expected_points} pts [{role}]"
+            else:
+                row[f"{strategy}"] = ""
+        comparison_data.append(row)
+    
+    comparison_df = pd.DataFrame(comparison_data)
+    st.dataframe(comparison_df, hide_index=True)
+    
+    # Individual strategy details
     for strategy, data in comparison_results.items():
-        with st.expander(f"{strategies[strategy]['icon']} {strategy} - Detailed Analysis"):
+        with st.expander(f"{strategies[strategy]['icon']} {strategy} - Individual Analysis"):
             optimization = data['optimization']
             
             col1, col2 = st.columns(2)
@@ -253,9 +303,6 @@ if 'comparison_results' in st.session_state:
             with col1:
                 st.metric("Expected Points", f"{optimization.expected_points:.1f}")
                 st.metric("Team Size", optimization.team_size)
-                
-                team_cost = sum(rider_db.get_rider(name).price for name in optimization.rider_order)
-                st.metric("Team Cost", f"${team_cost:.2f}")
             
             with col2:
                 # Team composition
@@ -269,17 +316,23 @@ if 'comparison_results' in st.session_state:
                 for team, count in top_teams:
                     st.write(f"- {team}: {count} riders")
             
-            # Rider list
-            st.write("**Selected Riders:**")
+            # Rider list with expected points
+            st.write("**Selected Riders with Expected Points:**")
             rider_list = []
             for i, rider_name in enumerate(optimization.rider_order):
                 rider_obj = rider_db.get_rider(rider_name)
                 role = "BONUS" if i < 5 else "SCORING" if i < 15 else "RESERVE"
+                
+                # Get expected points for this rider if available
+                expected_points = "N/A"
+                if hasattr(optimization, 'rider_stats') and rider_name in optimization.rider_stats:
+                    expected_points = f"{optimization.rider_stats[rider_name].get('expected_points', 'N/A'):.1f}"
+                
                 rider_list.append({
                     "Position": i + 1,
                     "Rider": rider_name,
                     "Team": rider_obj.team,
-                    "Price": rider_obj.price,
+                    "Expected Points": expected_points,
                     "Role": role
                 })
             
@@ -299,8 +352,7 @@ if 'comparison_results' in st.session_state:
                 'Type': 'Performance',
                 'Strategy': row['Strategy'],
                 'Expected Points': row['Expected Points'],
-                'Team Size': row['Team Size'],
-                'Team Cost': row['Team Cost']
+                'Team Size': row['Team Size']
             })
         
         # Add team comparison data
@@ -332,6 +384,31 @@ if 'comparison_results' in st.session_state:
             file_name=f"tnoer_game_comparison_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv"
         )
+
+def get_per_rider_expected_points(team_selection, num_simulations=30):
+    rider_points = defaultdict(list)
+    for _ in range(num_simulations):
+        sim = TNOSimulator(team_selection)
+        sim.simulate_tour()
+        for rider, pts in sim.tno_points.items():
+            rider_points[rider].append(pts)
+    # Average per rider
+    return {rider: sum(pts_list)/len(pts_list) for rider, pts_list in rider_points.items()}
+
+# After each optimization, patch in per-rider and team expected points
+for strategy, data in comparison_results.items():
+    optimization = data['optimization']
+    # Compute per-rider expected points using simulation
+    per_rider_points = get_per_rider_expected_points(optimization.team_selection, num_simulations=30)
+    # Patch into rider_stats
+    if hasattr(optimization, 'rider_stats'):
+        for rider_name in optimization.rider_order:
+            if rider_name in per_rider_points:
+                optimization.rider_stats[rider_name]['expected_points'] = per_rider_points[rider_name]
+    else:
+        optimization.rider_stats = {r: {'expected_points': p} for r, p in per_rider_points.items()}
+    # Patch team expected points
+    optimization.expected_points = sum(per_rider_points.values())
 
 # Load rider database for reference
 rider_db = RiderDatabase() 

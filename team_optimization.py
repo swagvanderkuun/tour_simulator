@@ -7,7 +7,7 @@ from simulator import TourSimulator
 from riders import RiderDatabase, Rider
 import warnings
 import logging
-from joblib import Parallel, delayed
+# Removed joblib import to avoid parallelization issues
 import time
 warnings.filterwarnings('ignore')
 
@@ -176,21 +176,12 @@ class TeamOptimizer:
         logger.info(f"Running {num_simulations} simulations with teammate bonus analysis using {metric}...")
         start_time = time.time()
         
-        # Use parallel processing for simulations with teammate analysis
-        try:
-            # Run simulations in parallel
-            simulation_results = Parallel(n_jobs=-1, verbose=1)(
-                delayed(self._run_single_simulation_with_teammate_analysis)()
-                for _ in range(num_simulations)
-            )
-        except Exception as e:
-            logger.warning(f"Parallel processing failed, falling back to sequential: {e}")
-            # Fallback to sequential processing
-            simulation_results = []
-            for i in range(num_simulations):
-                if i % 10 == 0:
-                    logger.info(f"Simulation {i+1}/{num_simulations}")
-                simulation_results.append(self._run_single_simulation_with_teammate_analysis())
+        # Use sequential processing to avoid multiprocessing issues
+        simulation_results = []
+        for i in range(num_simulations):
+            if i % 10 == 0:
+                logger.info(f"Simulation {i+1}/{num_simulations}")
+            simulation_results.append(self._run_single_simulation_with_teammate_analysis())
         
         # Process results
         all_points = []

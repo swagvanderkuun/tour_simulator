@@ -143,8 +143,7 @@ class TourSimulator:
 
     def simulate_tour(self):
         for stage_idx, stage in enumerate(self.stages):
-            print(f"\nSimulating Stage {stage_idx+1}")
-            print("-------------------")
+            # Simulating stage silently (for dashboard use)
             stage.simulate(self.rider_db, self.abandoned_riders)  # Pass rider_db and abandoned_riders to stage simulation
             stage_profile = get_stage_profile(stage_idx+1)
             
@@ -166,12 +165,9 @@ class TourSimulator:
                             crash_probability = 1 - ((1 - rider.chance_of_abandon) ** (1/21))
                         if np.random.random() < crash_probability:
                             self.abandoned_riders.add(rider.name)
-                            print(f"💥 {rider.name} has crashed out of the race!")
+                            # Rider crashed silently (for dashboard use)
             
-            # Print current abandoned riders count
-            if self.abandoned_riders:
-                print(f"Total riders abandoned: {len(self.abandoned_riders)}")
-                print(f"Riders remaining: {len(self.rider_db.get_all_riders()) - len(self.abandoned_riders)}")
+            # Track abandoned riders silently (for dashboard use)
 
             # --- General Classification (GC) ---
             base_time = 0
@@ -341,23 +337,8 @@ class TourSimulator:
                         "scorito_points": self.scorito_points[rider.name]
                     })
 
-            # --- Print Standings after Stage ---
-            print("\nGC Standings (Top 5):")
-            gc_standings = [(name, t) for name, t in sorted(self.gc_times.items(), key=lambda x: x[1]) if name not in self.abandoned_riders]
-            for name, t in gc_standings[:5]:
-                print(f"{name}: {t/3600:.2f}h")
-            print("\nSprint Standings (Top 5):")
-            sprint_standings = [(name, pts) for name, pts in sorted(self.sprint_points.items(), key=lambda x: x[1], reverse=True) if name not in self.abandoned_riders]
-            for name, pts in sprint_standings[:5]:
-                print(f"{name}: {pts} pts")
-            print("\nMountain Standings (Top 5):")
-            mountain_standings = [(name, pts) for name, pts in sorted(self.mountain_points.items(), key=lambda x: x[1], reverse=True) if name not in self.abandoned_riders]
-            for name, pts in mountain_standings[:5]:
-                print(f"{name}: {pts} pts")
-            print("\nYouth GC Standings (Top 5):")
-            youth_standings = [(name, t) for name, t in sorted(self.youth_times.items(), key=lambda x: x[1]) if name not in self.abandoned_riders]
-            for name, t in youth_standings[:5]:
-                print(f"{name}: {t/3600:.2f}h")
+            # --- Track Standings after Stage (silent mode for dashboard) ---
+            # All standings calculations remain the same, just not printed
 
         # After all stages, award final GC points (only for non-abandoned riders)
         final_gc = [(name, time) for name, time in self.get_final_gc() if name not in self.abandoned_riders]
@@ -547,7 +528,7 @@ class TourSimulator:
                 worksheet.cell(row=len(stage_results) + len(gc_standings) + len(sprint_standings) + len(mountain_standings) + 12, column=1, value="Youth Classification")
                 worksheet.cell(row=len(stage_results) + len(gc_standings) + len(sprint_standings) + len(mountain_standings) + len(youth_standings) + 15, column=1, value="Scorito Points")
         
-        print(f"\nExcel file '{filename}' written with all results.")
+        # Excel file written silently (for dashboard use)
 
     def get_final_gc(self):
         return sorted(self.gc_times.items(), key=lambda x: x[1])

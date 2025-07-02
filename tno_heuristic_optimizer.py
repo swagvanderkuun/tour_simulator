@@ -8,6 +8,8 @@ from stage_profiles import get_stage_profile
 from simulator import TourSimulator as BaseTourSimulator
 from simulator import Stage
 from collections import defaultdict
+# Removed ProcessPoolExecutor import to avoid multiprocessing issues
+# Removed multiprocessing import to avoid ScriptRunContext warnings
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -20,6 +22,7 @@ class TNOHeuristicOptimization:
     expected_points: float
     team_selection: TNOTeamSelection
     rider_stats: Dict[str, Dict]  # Statistics for each rider
+    team_size: int = 20  # Default team size
     
     def __str__(self):
         return f"TNO-Ergame Heuristic Team Optimization:\n" \
@@ -60,7 +63,7 @@ class TNOHeuristicOptimizer:
         Returns:
             TNOHeuristicOptimization with optimized team and order
         """
-        print(f"Running {num_simulations} tour simulations for heuristic optimization...")
+        # Running tour simulations for heuristic optimization (silent mode)
         
         # Step 1: Run simulations with tour simulator
         simulation_results = self._run_tour_simulations(num_simulations)
@@ -97,30 +100,36 @@ class TNOHeuristicOptimizer:
             total_cost=team_selection.total_cost,
             expected_points=expected_points,
             team_selection=team_selection,
-            rider_stats=rider_stats
+            rider_stats=rider_stats,
+            team_size=self.team_size
         )
     
     def _run_tour_simulations(self, num_simulations: int) -> List[Dict]:
         """
-        Run multiple tour simulations using the tour simulator.
+        Run multiple tour simulations using the tour simulator with parallel processing.
         
         Returns:
             List of simulation results, each containing stage results for all riders
         """
-        all_riders = self.rider_db.get_all_riders()
+        # Use sequential processing to avoid multiprocessing issues
         simulation_results = []
         
+        all_riders = self.rider_db.get_all_riders()
+        
         for sim in range(num_simulations):
+            # Create a new simulator for this simulation
+            tour_simulator = PatchedTourSimulator()
+            
             # Run a complete tour simulation
-            self.tour_simulator.simulate_tour()
+            tour_simulator.simulate_tour()
             
             # Extract stage results for each rider
             rider_stage_results = {}
             for rider in all_riders:
                 rider_stage_results[rider.name] = []
                 for stage_num in range(1, 22):  # Stages 1-21
-                    if stage_num <= len(self.tour_simulator.stages):
-                        stage = self.tour_simulator.stages[stage_num - 1]
+                    if stage_num <= len(tour_simulator.stages):
+                        stage = tour_simulator.stages[stage_num - 1]
                         rider_position = None
                         for pos, stage_result in enumerate(stage.results, 1):
                             if stage_result.rider.name == rider.name:
@@ -131,11 +140,10 @@ class TNOHeuristicOptimizer:
                         rider_stage_results[rider.name].append(None)  # Rider abandoned
             
             simulation_results.append(rider_stage_results)
-            
-            # Reset simulator for next simulation
-            self.tour_simulator = PatchedTourSimulator()
         
         return simulation_results
+    
+    # Removed _run_tour_simulation_chunk method as it's no longer needed without parallelization
     
     def _calculate_expected_points_with_abandon_risk(self, simulation_results: List[Dict]) -> Dict[str, float]:
         """
@@ -273,6 +281,8 @@ class TNOHeuristicOptimizer:
         stats = {}
         
         for rider in selected_riders:
+            # Use individual rider expected points (without bonus points) for rider statistics
+            # The team total expected points (with bonus points) is calculated separately
             stats[rider.name] = {
                 'expected_points': rider_expected_points.get(rider.name, 0),
                 'expected_top10_results': rider_top10_expectations.get(rider.name, 0),

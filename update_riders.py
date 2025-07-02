@@ -4,25 +4,25 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.edge.service import Service as EdgeService
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 def scrape_with_selenium():
-    """Scrape rider data using Selenium to handle JavaScript"""
+    """Scrape rider data using Selenium to handle JavaScript (now using Edge)"""
     
-    # Setup Chrome options
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in background
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
+    # Setup Edge options
+    edge_options = EdgeOptions()
+    edge_options.add_argument("--headless")  # Run in background
+    edge_options.add_argument("--no-sandbox")
+    edge_options.add_argument("--disable-dev-shm-usage")
     
     try:
-        # Use webdriver-manager to automatically download and manage Chrome driver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Use webdriver-manager to automatically download and manage Edge driver
+        service = EdgeService(EdgeChromiumDriverManager().install())
+        driver = webdriver.Edge(service=service, options=edge_options)
     except Exception as e:
-        print(f"Error setting up Chrome driver: {e}")
+        print(f"Error setting up Edge driver: {e}")
         return []
     
     url = "https://www.procyclingstats.com/race/tour-de-france/2025/startlist"
@@ -134,16 +134,16 @@ def main():
         print("No riders scraped. Creating fallback list...")
         # Fallback to known riders
         scraped_riders = [
-            {"name": "Tadej Pogačar", "team": "UAE Team Emirates", "age": 26},
-            {"name": "Remco Evenepoel", "team": "Soudal Quick-Step", "age": 24},
-            {"name": "Jonas Vingegaard", "team": "Team Visma | Lease a Bike", "age": 27},
-            {"name": "João Almeida", "team": "UAE Team Emirates", "age": 25},
-            {"name": "Primož Roglič", "team": "Red Bull - BORA - hansgrohe", "age": 34},
-            {"name": "Carlos Rodríguez", "team": "INEOS Grenadiers", "age": 23},
-            {"name": "Matteo Jorgenson", "team": "Team Visma | Lease a Bike", "age": 24},
-            {"name": "Wout van Aert", "team": "Team Visma | Lease a Bike", "age": 29},
-            {"name": "Mathieu van der Poel", "team": "Alpecin - Deceuninck", "age": 29},
-            {"name": "Jasper Philipsen", "team": "Alpecin - Deceuninck", "age": 26},
+            {"name": "Tadej Pogačar", "team": "UAE Team Emirates", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Remco Evenepoel", "team": "Soudal Quick-Step", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Jonas Vingegaard", "team": "Team Visma | Lease a Bike", "age": 27, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "João Almeida", "team": "UAE Team Emirates", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Primož Roglič", "team": "Red Bull - BORA - hansgrohe", "age": 34, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Carlos Rodríguez", "team": "INEOS Grenadiers", "age": 23, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Matteo Jorgenson", "team": "Team Visma | Lease a Bike", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Wout van Aert", "team": "Team Visma | Lease a Bike", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Mathieu van der Poel", "team": "Alpecin - Deceuninck", "age": 29, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
+            {"name": "Jasper Philipsen", "team": "Alpecin - Deceuninck", "age": 26, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.0},
         ]
     
     print(f"Scraped {len(scraped_riders)} riders")

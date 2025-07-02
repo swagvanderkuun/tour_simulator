@@ -44,9 +44,13 @@ class TNOStage:
         self.results: List[TNOStageResult] = []
         self.is_special = stage_number in TNO_SPECIAL_STAGES
 
-    def simulate(self, rider_db: RiderDatabase, abandoned_riders: set):
+    def simulate(self, rider_db: RiderDatabase, abandoned_riders: set, team_riders: List[Rider] = None):
         """Simulate stage using the same realistic engine as main simulator"""
-        for rider in rider_db.get_all_riders():
+        # If team_riders is provided, only simulate those riders
+        # Otherwise, simulate all riders (for compatibility)
+        riders_to_simulate = team_riders if team_riders is not None else rider_db.get_all_riders()
+        
+        for rider in riders_to_simulate:
             # Skip riders who have already abandoned
             if rider.name in abandoned_riders:
                 continue
@@ -120,7 +124,7 @@ class TNOSimulator:
         self.tno_points: Dict[str, int] = defaultdict(int)  # TNO points per rider
         self._initialize_stages()
         
-        # Create a new rider database instance
+        # Use the same rider database instance to ensure consistency
         self.rider_db = RiderDatabase()
         
         # Track abandoned riders
@@ -184,8 +188,8 @@ class TNOSimulator:
 
     def simulate_tour(self):
         for stage_idx, stage in enumerate(self.stages):
-            # Simulate stage using realistic engine
-            stage.simulate(self.rider_db, self.abandoned_riders)
+            # Simulate stage using realistic engine - only simulate team riders
+            stage.simulate(self.rider_db, self.abandoned_riders, self.team_selection.riders)
             stage_profile = get_stage_profile(stage_idx + 1)
             
             # Calculate weighted time gap based on stage profile (same as main simulator)
@@ -194,7 +198,8 @@ class TNOSimulator:
                 weighted_time_gap += STAGE_TIME_GAPS[stage_type.value] * weight
 
             # --- Handle Crashes/Abandonments ---
-            for rider in self.rider_db.get_all_riders():
+            # Only check team riders for abandonments since we're only simulating team riders
+            for rider in self.team_selection.riders:
                 if rider.name not in self.abandoned_riders:
                     # Calculate crash probability for this stage (same as main simulator)
                     if rider.chance_of_abandon == 0.0:

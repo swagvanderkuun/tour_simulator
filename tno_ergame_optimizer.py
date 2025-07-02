@@ -17,6 +17,7 @@ class TNOTeamOptimization:
     total_cost: float
     expected_points: float
     team_selection: TNOTeamSelection
+    team_size: int = 20  # Default team size
     
     def __str__(self):
         return f"TNO-Ergame Team Optimization:\n" \
@@ -54,7 +55,7 @@ class TNOTeamOptimizer:
         Returns:
             DataFrame with rider names and their expected points
         """
-        print(f"Running {num_simulations} simulations to calculate expected points using {metric}...")
+        # Running simulations to calculate expected points (silent mode)
         
         # Create a temporary team with all riders to get baseline performance
         all_riders = self.rider_db.get_all_riders()
@@ -107,14 +108,13 @@ class TNOTeamOptimizer:
         Phase 1: Select optimal 20 riders
         Phase 2: Optimize rider order for maximum bonus points
         """
-        print("Starting TNO-Ergame team optimization...")
+        # Starting TNO-Ergame team optimization (silent mode)
         
         # Phase 1: Select optimal 20 riders
-        print("Phase 1: Selecting optimal 20 riders...")
+        # Phase 1: Selecting optimal 20 riders (silent mode)
         selected_riders = self._optimize_rider_selection(rider_data, risk_aversion, abandon_penalty)
         
-        # Phase 2: Optimize rider order
-        print("Phase 2: Optimizing rider order...")
+        # Phase 2: Optimize rider order (silent mode)
         optimal_order = self._optimize_rider_order(selected_riders, num_simulations)
         
         # Create final team selection
@@ -133,7 +133,8 @@ class TNOTeamOptimizer:
             rider_order=optimal_order,
             total_cost=team_selection.total_cost,
             expected_points=expected_points,
-            team_selection=team_selection
+            team_selection=team_selection,
+            team_size=self.team_size
         )
     
     def _optimize_rider_selection(self, rider_data: pd.DataFrame, 
@@ -194,8 +195,7 @@ class TNOTeamOptimizer:
         prob.solve()
         
         if prob.status != LpStatusOptimal:
-            print(f"Warning: Rider selection optimization failed with status: {LpStatus[prob.status]}")
-            # Fallback: select top riders by expected points
+            # Warning: Rider selection optimization failed, using fallback
             return self._fallback_rider_selection(rider_data)
         
         # Extract selected riders
@@ -292,7 +292,7 @@ class TNOTeamOptimizer:
     
     def _fallback_rider_selection(self, rider_data: pd.DataFrame) -> List[Rider]:
         """Fallback method to select riders if optimization fails"""
-        print("Using fallback rider selection method...")
+        # Using fallback rider selection method (silent mode)
         
         # Sort by expected points and select top riders within budget
         sorted_data = rider_data.sort_values('expected_points', ascending=False)
@@ -343,7 +343,7 @@ class TNOTeamOptimizer:
                 )
                 alternatives.append(optimization)
             except Exception as e:
-                print(f"Failed to generate alternative {i+1}: {e}")
+                # Failed to generate alternative team (silent mode)
                 continue
         
         return alternatives

@@ -6,6 +6,7 @@ Launcher script for the Tour de France Simulator Dashboard
 import subprocess
 import sys
 import os
+import warnings
 
 def main():
     """Launch the Streamlit dashboard"""
@@ -17,13 +18,25 @@ def main():
         print("🔄 To stop the dashboard, press Ctrl+C in this terminal")
         print("-" * 50)
         
-        # Run the dashboard
+        # Suppress specific Streamlit warnings
+        warnings.filterwarnings("ignore", message=".*ScriptRunContext.*")
+        warnings.filterwarnings("ignore", category=UserWarning)
+        
+        # Set environment variables to suppress warnings
+        env = os.environ.copy()
+        env['STREAMLIT_SERVER_HEADLESS'] = 'true'
+        env['STREAMLIT_BROWSER_GATHER_USAGE_STATS'] = 'false'
+        env['PYTHONWARNINGS'] = 'ignore'
+        
+        # Run the dashboard with comprehensive warning suppression
         subprocess.run([
             sys.executable, "-m", "streamlit", "run", "dashboard.py",
             "--server.port", "8501",
             "--server.address", "localhost",
-            "--browser.gatherUsageStats", "false"
-        ])
+            "--browser.gatherUsageStats", "false",
+            "--logger.level", "error",  # Only show errors, not warnings
+            "--global.developmentMode", "false"
+        ], env=env)
         
     except ImportError:
         print("❌ Streamlit is not installed!")

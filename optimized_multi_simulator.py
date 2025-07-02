@@ -9,9 +9,8 @@ from plotly.subplots import make_subplots
 from typing import Dict, List, Tuple
 import json
 from datetime import datetime
-# Removed parallelization imports to avoid ScriptRunContext warnings
 
-class TNOMultiSimulationAnalyzer:
+class OptimizedMultiSimulationAnalyzer:
     def __init__(self, num_simulations=100):
         self.num_simulations = num_simulations
         self.num_stages = 21
@@ -39,11 +38,9 @@ class TNOMultiSimulationAnalyzer:
         self._calculate_comprehensive_metrics()
         return self.metrics
     
-    # Removed _run_simulation_chunk method as it's no longer needed without parallelization
-    
     def _calculate_comprehensive_metrics(self):
         """Calculate all comprehensive metrics from simulation results"""
-        # Calculating comprehensive TNO-Ergame metrics
+        print("Calculating comprehensive TNO-Ergame metrics...")
         
         # Initialize data structures
         self.metrics = {
@@ -174,41 +171,51 @@ class TNOMultiSimulationAnalyzer:
                 'std': np.std(bonus_riders_list),
                 'min': np.min(bonus_riders_list),
                 'max': np.max(bonus_riders_list)
-            },
-            'team_cost': team_performances[0]['team_cost'] if team_performances else 0
+            }
         }
     
     def _analyze_rider_performance(self) -> Dict:
-        """Analyze individual rider performance within the team"""
-        team_rider_names = set(self.results[0].team_selection.rider_names) if self.results else set()
+        """Analyze individual rider performance within the team context"""
+        rider_performances = defaultdict(list)
         
-        rider_performances = {}
-        for rider_name in team_rider_names:
-            rider_points = []
-            rider_abandonments = 0
-            
-            for sim in self.results:
-                points = sim.tno_points.get(rider_name, 0)
-                rider_points.append(points)
+        for sim in self.results:
+            # Get rider performance for this simulation
+            for record in sim.stage_results_records:
+                rider = record['rider']
+                stage = record['stage']
+                position = record['position']
+                tno_points = record['tno_points']
                 
-                if rider_name in sim.abandoned_riders:
-                    rider_abandonments += 1
+                rider_performances[rider].append({
+                    'stage': stage,
+                    'position': position,
+                    'tno_points': tno_points,
+                    'simulation': len(rider_performances[rider]) // 21  # Approximate simulation number
+                })
+        
+        # Calculate rider statistics
+        rider_stats = {}
+        for rider, performances in rider_performances.items():
+            positions = [p['position'] for p in performances if p['position'] is not None]
+            points = [p['tno_points'] for p in performances]
             
-            rider_performances[rider_name] = {
-                'mean_points': np.mean(rider_points),
-                'median_points': np.median(rider_points),
-                'std_points': np.std(rider_points),
-                'min_points': np.min(rider_points),
-                'max_points': np.max(rider_points),
-                'abandonment_rate': rider_abandonments / self.num_simulations,
-                'total_abandonments': rider_abandonments
+            rider_stats[rider] = {
+                'avg_position': np.mean(positions) if positions else None,
+                'best_position': np.min(positions) if positions else None,
+                'worst_position': np.max(positions) if positions else None,
+                'total_points': np.sum(points),
+                'avg_points_per_stage': np.mean(points),
+                'stages_ridden': len(performances),
+                'top_10_finishes': sum(1 for p in positions if p <= 10),
+                'top_5_finishes': sum(1 for p in positions if p <= 5),
+                'stage_wins': sum(1 for p in positions if p == 1)
             }
         
-        return rider_performances
+        return rider_stats
     
     def _create_simulation_summary(self) -> Dict:
         """Create overall simulation summary statistics"""
-        total_riders = len(self.results[0].rider_db.get_all_riders()) if self.results else 0
+        total_riders = len(self.results[0].team_selection.riders) if self.results else 0
         
         # Calculate average abandonments
         avg_abandonments = np.mean([len(sim.abandoned_riders) for sim in self.results])
@@ -228,38 +235,44 @@ class TNOMultiSimulationAnalyzer:
         }
     
     def get_rider_expected_points(self) -> pd.DataFrame:
-        """Get expected points for each rider based on simulations"""
-        rider_stats = self.metrics['tno_analysis']['rider_stats']
+        """Get expected points for each rider (for optimization)"""
+        if not self.results:
+            return pd.DataFrame()
         
-        # Create DataFrame with rider information
-        rider_data = []
-        for rider_name, stats in rider_stats.items():
-            rider_data.append({
-                'rider_name': rider_name,
-                'expected_points': stats['mean'],
-                'points_std': stats['std'],
-                'points_median': stats['median'],
-                'points_min': stats['min'],
-                'points_max': stats['max'],
-                'simulation_count': stats['count']
+        # Calculate expected points for each rider
+        rider_points = defaultdict(list)
+        
+        for sim in self.results:
+            for rider, points in sim.tno_points.items():
+                rider_points[rider].append(points)
+        
+        # Create DataFrame with expected points
+        expected_points_data = []
+        for rider, points_list in rider_points.items():
+            expected_points_data.append({
+                'rider': rider,
+                'expected_points': np.mean(points_list),
+                'std_points': np.std(points_list),
+                'min_points': np.min(points_list),
+                'max_points': np.max(points_list)
             })
         
-        return pd.DataFrame(rider_data)
+        return pd.DataFrame(expected_points_data)
     
-    def save_metrics_to_json(self, filename='tno_ergame_multi_simulation_metrics.json'):
-        """Save metrics to JSON file for inspection"""
+    def save_metrics_to_json(self, filename='optimized_multi_simulation_metrics.json'):
+        """Save metrics to JSON file"""
         with open(filename, 'w') as f:
             json.dump(self.metrics, f, indent=2, default=str)
 
-# Legacy function for backward compatibility
-def run_tno_multi_simulation(team_selection: TNOTeamSelection, num_simulations: int, progress_callback=None):
-    """Run multiple TNO-Ergame simulations and return comprehensive metrics"""
-    analyzer = TNOMultiSimulationAnalyzer(num_simulations)
+# Legacy functions for backward compatibility
+def run_optimized_multi_simulation(team_selection: TNOTeamSelection, num_simulations: int, progress_callback=None):
+    """Run multiple TNO simulations efficiently"""
+    analyzer = OptimizedMultiSimulationAnalyzer(num_simulations)
     return analyzer.run_simulations(team_selection, progress_callback)
 
-def analyze_rider_performance_for_optimization(team_selection: TNOTeamSelection, num_simulations: int = 100) -> pd.DataFrame:
-    """Analyze rider performance to get expected points for optimization"""
-    analyzer = TNOMultiSimulationAnalyzer(num_simulations)
+def analyze_rider_performance_for_optimization_optimized(team_selection: TNOTeamSelection, num_simulations: int = 100) -> pd.DataFrame:
+    """Analyze rider performance for optimization (optimized version)"""
+    analyzer = OptimizedMultiSimulationAnalyzer(num_simulations)
     analyzer.run_simulations(team_selection)
     return analyzer.get_rider_expected_points()
 
@@ -267,19 +280,14 @@ if __name__ == "__main__":
     # Example usage
     from riders import RiderDatabase
     
-    # Create a sample team selection
     rider_db = RiderDatabase()
     all_riders = rider_db.get_all_riders()
-    sample_team = TNOTeamSelection(all_riders[:20])
+    team_selection = TNOTeamSelection(all_riders[:20])
     
-            # Sample team cost and riders for reference
+    analyzer = OptimizedMultiSimulationAnalyzer(100)
+    metrics = analyzer.run_simulations(team_selection)
     
-    # Run multi-simulation analysis
-    analyzer = TNOMultiSimulationAnalyzer(50)  # 50 simulations for testing
-    metrics = analyzer.run_simulations(sample_team)
-    
-    # Save metrics to JSON
+    # Save metrics to JSON for inspection
     analyzer.save_metrics_to_json()
     
-    # Get expected points for optimization
-    expected_points_df = analyzer.get_rider_expected_points() 
+    print("Optimized TNO multi-simulation completed!") 

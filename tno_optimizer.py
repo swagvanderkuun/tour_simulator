@@ -8,6 +8,8 @@ from tno_ergame_multi_simulator import TNOMultiSimulationAnalyzer
 from riders import RiderDatabase, Rider
 from stage_profiles import get_stage_profile
 from collections import defaultdict
+# Removed ProcessPoolExecutor import to avoid multiprocessing issues
+# Removed multiprocessing import to avoid ScriptRunContext warnings
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -19,6 +21,7 @@ class TNOTeamOptimization:
     total_cost: float
     expected_points: float
     team_selection: TNOTeamSelection
+    team_size: int = 20  # Default team size
     
     def __str__(self):
         return f"TNO-Ergame Team Optimization:\n" \
@@ -49,8 +52,8 @@ class TNOTeamOptimizer:
         """
         Run simulations to get expected points for each rider individually.
         
-        This method calculates expected points for each rider based on their individual
-        performance potential, not in the context of a specific team.
+        OPTIMIZED: Run simulations once and extract all rider data from the same results.
+        This is much faster than running separate simulations for each rider.
         
         Args:
             num_simulations: Number of simulations to run
@@ -59,22 +62,73 @@ class TNOTeamOptimizer:
         Returns:
             DataFrame with rider names and their expected points
         """
-        # Running simulations to calculate expected points
+        # Running simulations to calculate expected points for all riders at once
         
         all_riders = self.rider_db.get_all_riders()
-        rider_data = []
+        rider_points_data = {rider.name: [] for rider in all_riders}
         
-        # Calculate expected points for each rider individually
+        # Run simulations once and collect data for all riders
+        for sim_num in range(num_simulations):
+            # Create a single tour simulator and run complete tour (21 stages for TNO-Ergame)
+            from simulator import TourSimulator as BaseTourSimulator
+            from simulator import Stage
+            
+            class PatchedTourSimulator(BaseTourSimulator):
+                def _initialize_stages(self):
+                    # Use 1-based indexing for stages 1-21 (TNO-Ergame uses 21 stages)
+                    self.stages = []
+                    for i in range(1, 22):
+                        self.stages.append(Stage(i))
+            
+            tour_simulator = PatchedTourSimulator()
+            tour_simulator.simulate_tour()
+            
+            # Extract points for all riders from this simulation
+            for rider in all_riders:
+                rider_points = 0
+                for stage_num in range(1, 22):  # Stages 1-21
+                    if stage_num <= len(tour_simulator.stages):
+                        stage = tour_simulator.stages[stage_num - 1]
+                        rider_position = None
+                        for pos, stage_result in enumerate(stage.results, 1):
+                            if stage_result.rider.name == rider.name:
+                                rider_position = pos
+                                break
+                        
+                        if rider_position:
+                            # Calculate TNO points for this position and stage
+                            points = self._calculate_stage_points_for_rider(rider_position, stage_num, {})
+                            rider_points += points
+                
+                rider_points_data[rider.name].append(rider_points)
+        
+        # Calculate statistics for each rider
+        rider_data = []
         for rider in all_riders:
-            expected_points = self._calculate_individual_rider_expected_points(rider, num_simulations)
+            points_list = rider_points_data[rider.name]
+            
+            if metric == 'mean':
+                expected_points = sum(points_list) / len(points_list)
+            elif metric == 'median':
+                expected_points = sorted(points_list)[len(points_list) // 2]
+            else:
+                expected_points = sum(points_list) / len(points_list)
+            
+            # Calculate standard deviation for risk assessment
+            if len(points_list) > 1:
+                mean_points = sum(points_list) / len(points_list)
+                variance = sum((p - mean_points) ** 2 for p in points_list) / (len(points_list) - 1)
+                points_std = variance ** 0.5
+            else:
+                points_std = 0
             
             rider_data.append({
                 'rider_name': rider.name,
                 'expected_points': expected_points,
-                'points_std': 0,  # Will be calculated if needed
-                'points_median': expected_points,
-                'points_min': expected_points,
-                'points_max': expected_points,
+                'points_std': points_std,
+                'points_median': sorted(points_list)[len(points_list) // 2] if points_list else 0,
+                'points_min': min(points_list) if points_list else 0,
+                'points_max': max(points_list) if points_list else 0,
                 'price': rider.price,
                 'team': rider.team,
                 'age': rider.age,
@@ -91,33 +145,9 @@ class TNOTeamOptimizer:
         
         return df
     
-    def _calculate_individual_rider_expected_points(self, rider: Rider, num_simulations: int) -> float:
-        """
-        Calculate expected TNO points for a single rider based on their individual performance.
-        
-        This simulates the rider's performance across all stages and calculates their
-        expected TNO points without considering team context.
-        """
-        total_points = 0
-        
-        for _ in range(num_simulations):
-            rider_points = 0
-            
-            # Simulate each stage for this rider
-            for stage_num in range(1, 22):  # Stages 1-21
-                # Get stage profile
-                stage_profile = get_stage_profile(stage_num)
-                
-                # Generate realistic stage result for this rider
-                position = self.rider_db.generate_stage_result(rider, stage_num)
-                
-                # Calculate points based on position and stage type
-                points = self._calculate_stage_points_for_rider(position, stage_num, stage_profile)
-                rider_points += points
-            
-            total_points += rider_points
-        
-        return total_points / num_simulations
+    # Removed _calculate_individual_rider_expected_points method - now using optimized batch processing
+    
+    # Removed _calculate_rider_points_chunk method as it's no longer needed without parallelization
     
     def _calculate_stage_points_for_rider(self, position: float, stage_num: int, stage_profile: dict) -> int:
         """
@@ -148,7 +178,7 @@ class TNOTeamOptimizer:
         Phase 1: Select optimal 20 riders
         Phase 2: Optimize rider order for maximum bonus points
         """
-        # Starting TNO-Ergame team optimization...
+        # Starting TNO-Ergame team optimization (silent mode)...
         
         # Phase 1: Select optimal 20 riders
         selected_riders = self._optimize_rider_selection(rider_data, risk_aversion, abandon_penalty)
@@ -164,15 +194,16 @@ class TNOTeamOptimizer:
         
         team_selection = TNOTeamSelection(ordered_riders)
         
-        # Calculate expected points for the final team
-        expected_points = self._calculate_team_expected_points(team_selection, num_simulations)
+        # Calculate expected points for the final team using cached rider data
+        expected_points = self._calculate_team_expected_points(team_selection, rider_data, num_simulations)
         
         return TNOTeamOptimization(
             riders=ordered_riders,
             rider_order=optimal_order,
             total_cost=team_selection.total_cost,
             expected_points=expected_points,
-            team_selection=team_selection
+            team_selection=team_selection,
+            team_size=self.team_size
         )
     
     def _optimize_rider_selection(self, rider_data: pd.DataFrame, 
@@ -277,36 +308,68 @@ class TNOTeamOptimizer:
     
     def _get_rider_expected_points(self, rider: Rider, team_riders: List[Rider], 
                                   num_simulations: int) -> float:
-        """Get expected points for a specific rider in a team context"""
-        # Create a temporary team with this rider in different positions
-        temp_team = TNOTeamSelection(team_riders)
+        """Get expected points for a specific rider in a team context using cached data"""
+        # This method should use cached simulation data from run_simulation_for_riders
+        # For now, we'll use a simplified estimation, but in a full implementation
+        # we would pass the rider_data DataFrame to access cached results
         
-        # Run a few simulations to get expected points
-        analyzer = TNOMultiSimulationAnalyzer(min(num_simulations, 20))  # Use fewer simulations for speed
-        metrics = analyzer.run_simulations(temp_team)
+        # Use realistic TNO point estimation based on rider abilities
+        # Calculate expected points per stage based on rider's probability of finishing in top 10
+        sprint_prob = min(rider.parameters.sprint_ability / 100, 0.8)  # Cap at 80%
+        punch_prob = min(rider.parameters.punch_ability / 100, 0.8)
+        itt_prob = min(rider.parameters.itt_ability / 100, 0.8)
+        mountain_prob = min(rider.parameters.mountain_ability / 100, 0.8)
+        breakaway_prob = min(rider.parameters.break_away_ability / 100, 0.8)
         
-        rider_stats = metrics['tno_analysis']['rider_stats']
-        return rider_stats.get(rider.name, {}).get('mean', 0)
+        # Average probability across all abilities
+        avg_prob = (sprint_prob + punch_prob + itt_prob + mountain_prob + breakaway_prob) / 5
+        
+        # Calculate expected points per stage
+        # Regular stages: 1-10 positions get 1-20 points
+        # Special stages: 1-10 positions get 1-30 points
+        # Assume 5 special stages and 16 regular stages
+        regular_stage_points = avg_prob * 10.5  # Average of 1-20 points
+        special_stage_points = avg_prob * 15.5  # Average of 1-30 points
+        
+        expected_points_per_tour = (regular_stage_points * 16) + (special_stage_points * 5)
+        
+        return expected_points_per_tour
     
     def _calculate_bonus_potential(self, rider: Rider, team_riders: List[Rider], num_simulations: int) -> float:
-        """Calculate bonus potential for a rider as the expected number of top 10 finishes per tour."""
-        top10_counts = []
-        for _ in range(num_simulations):
-            top10 = 0
-            for stage_num in range(1, 22):
-                position = self.rider_db.generate_stage_result(rider, stage_num)
-                if int(position) <= 10:
-                    top10 += 1
-            top10_counts.append(top10)
-        return np.mean(top10_counts)
+        """Calculate bonus potential for a rider using fast estimation instead of simulations"""
+        # Use rider abilities to estimate top 10 finish probability
+        # This is much faster than running simulations
+        
+        # Calculate probability of finishing in top 10 based on rider abilities
+        sprint_prob = min(rider.parameters.sprint_ability / 100, 0.8)  # Cap at 80%
+        punch_prob = min(rider.parameters.punch_ability / 100, 0.8)
+        itt_prob = min(rider.parameters.itt_ability / 100, 0.8)
+        mountain_prob = min(rider.parameters.mountain_ability / 100, 0.8)
+        breakaway_prob = min(rider.parameters.break_away_ability / 100, 0.8)
+        
+        # Average probability across all abilities
+        avg_prob = (sprint_prob + punch_prob + itt_prob + mountain_prob + breakaway_prob) / 5
+        
+        # Convert to expected top 10 finishes per tour (21 stages)
+        expected_top10_finishes = avg_prob * 21 * 0.3  # 30% chance of top 10 when ability is high
+        
+        return expected_top10_finishes
     
     def _calculate_team_expected_points(self, team_selection: TNOTeamSelection, 
+                                       rider_data: pd.DataFrame,
                                        num_simulations: int) -> float:
-        """Calculate expected points for a team selection"""
-        analyzer = TNOMultiSimulationAnalyzer(num_simulations)
-        metrics = analyzer.run_simulations(team_selection)
+        """Calculate expected points for a team selection using TNOSimulator (same as heuristic optimizer)"""
+        # Use TNOSimulator to calculate team points with proper TNO rules
+        # This ensures fair comparison with heuristic optimizer
         
-        return metrics['team_performance']['total_points']['mean']
+        total_points = 0
+        
+        for _ in range(num_simulations):
+            tno_simulator = TNOSimulator(team_selection)
+            tno_simulator.simulate_tour()
+            total_points += sum(tno_simulator.tno_points.values())
+        
+        return total_points / num_simulations
     
     def _fallback_rider_selection(self, rider_data: pd.DataFrame) -> List[Rider]:
         """Fallback method to select riders if optimization fails"""

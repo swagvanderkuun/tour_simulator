@@ -1,3 +1,18 @@
+import warnings
+import logging
+import os
+
+# Suppress Streamlit ScriptRunContext warnings
+warnings.filterwarnings("ignore", message=".*ScriptRunContext.*")
+warnings.filterwarnings("ignore", category=UserWarning)
+
+# Configure logging to suppress warnings
+logging.getLogger('streamlit').setLevel(logging.ERROR)
+logging.getLogger('streamlit.runtime.scriptrunner_utils').setLevel(logging.ERROR)
+
+# Set environment variables to suppress warnings
+os.environ['PYTHONWARNINGS'] = 'ignore'
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -156,9 +171,8 @@ if len(user_riders) == 20:
                     st.info("Generating heuristic team...")
                     from tno_heuristic_optimizer import TNOHeuristicOptimizer
                     heuristic_optimizer = TNOHeuristicOptimizer()
-                    heuristic_optimization = heuristic_optimizer.optimize_team(
-                        num_simulations=30,
-                        validation_simulations=30
+                    heuristic_optimization = heuristic_optimizer.run_heuristic_optimization(
+                        num_simulations=30
                     )
                     
                     heuristic_team_objs = [rider_db.get_rider(name) for name in heuristic_optimization.rider_order]

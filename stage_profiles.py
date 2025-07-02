@@ -22,22 +22,22 @@ STAGE_PROFILES = {
     3: {StageType.SPRINT: 1.0},
     4: {StageType.PUNCH: 0.7, StageType.SPRINT: 0.3},
     5: {StageType.ITT: 1.0},
-    6: {StageType.PUNCH: 0.7, StageType.SPRINT: 0.1, StageType.MOUNTAIN: 0.2},
+    6: {StageType.PUNCH: 0.6, StageType.BREAK_AWAY: 0.3, StageType.MOUNTAIN: 0.1},
     7: {StageType.PUNCH: 0.7, StageType.MOUNTAIN: 0.3},
-    8: {StageType.SPRINT: 0.9, StageType.PUNCH: 0.1},
+    8: {StageType.SPRINT: 0.8, StageType.PUNCH: 0.2},
     9: {StageType.SPRINT: 1.0},
     10: {StageType.MOUNTAIN: 0.5, StageType.BREAK_AWAY: 0.5},
-    11: {StageType.BREAK_AWAY: 0.2, StageType.SPRINT: 0.2, StageType.PUNCH: 0.6},
+    11: {StageType.BREAK_AWAY: 0.2, StageType.SPRINT: 0.3, StageType.PUNCH: 0.5},
     12: {StageType.MOUNTAIN: 1.0},
     13: {StageType.ITT: 0.2, StageType.MOUNTAIN: 0.8},
     14: {StageType.MOUNTAIN: 1.0},
-    15: {StageType.BREAK_AWAY: 0.8, StageType.SPRINT: 0.2},
+    15: {StageType.BREAK_AWAY: 0.7, StageType.SPRINT: 0.3},
     16: {StageType.MOUNTAIN: 1.0},
     17: {StageType.BREAK_AWAY: 0.5, StageType.SPRINT: 0.5},
-    18: {StageType.MOUNTAIN: 1.0},
+    18: {StageType.MOUNTAIN: 0.8, StageType.BREAK_AWAY: 0.2},
     19: {StageType.MOUNTAIN: 1.0},
     20: {StageType.BREAK_AWAY: 0.8, StageType.SPRINT: 0.2},
-    21: {StageType.SPRINT: 0.6, StageType.PUNCH: 0.4}
+    21: {StageType.SPRINT: 0.7, StageType.PUNCH: 0.3}
 }
 
 def get_stage_profile(stage_number: int) -> Dict[StageType, float]:

@@ -319,8 +319,8 @@ class VersusMode:
                 # Points earned = current cumulative - previous cumulative
                 return cumulative_points - prev_stage_record['scorito_points']
             else:
-                # Fallback: distribute evenly
-                return cumulative_points / 22
+                # Fallback: distribute evenly across 21 stages (not 22)
+                return cumulative_points / 21
     
     def _calculate_optimal_stage_points_for_simulation(self, simulator, rider_names: List[str]) -> float:
         """
@@ -337,8 +337,8 @@ class VersusMode:
         total_points = 0
         
         # For each stage, select the best 9 riders (or all 20 for final stage)
-        for stage in range(1, 23):
-            if stage == 22:
+        for stage in range(1, 22):  # Tour has 21 stages, not 22
+            if stage == 21:
                 # Final stage: all 20 riders
                 selected_riders = rider_names
             else:
@@ -386,94 +386,190 @@ class VersusMode:
         
         return optimal_team
     
-    def compare_teams(self, user_team: UserTeam, optimal_team: TeamSelection) -> Dict:
+    def compare_teams(self, user_team: UserTeam, optimal_team: TeamSelection, 
+                     user_simulation_results: List[Dict] = None, 
+                     optimal_simulation_results: List[Dict] = None) -> Dict:
         """
-        Compare user team against optimal team.
+        Compare user team with optimal team using the same analysis methods as Team Optimization.
         
         Args:
             user_team: User's team
-            optimal_team: Optimal team from optimization
+            optimal_team: Optimal team
+            user_simulation_results: User team simulation results (optional)
+            optimal_simulation_results: Optimal team simulation results (optional)
             
         Returns:
             Dictionary with comparison results
         """
+        print("Comparing teams using Team Optimization analysis methods...")
+        
+        # Use the same rider data and analysis methods as Team Optimization
+        rider_data = self.team_optimizer.run_simulation_with_teammate_analysis(100, metric='mean')
+        
+        # Get stage performance data using the same method as Team Optimization
+        stage_performance = self.team_optimizer._get_stage_performance_data(50)
+        
+        # Calculate user team metrics using Team Optimization methods
+        user_team_metrics = self._calculate_team_metrics_using_optimizer_methods(
+            user_team, rider_data, stage_performance
+        )
+        
+        # Calculate optimal team metrics using Team Optimization methods
+        optimal_team_metrics = self._calculate_team_metrics_using_optimizer_methods(
+            optimal_team, rider_data, stage_performance
+        )
+        
+        # Calculate comparison metrics
+        cost_difference = user_team_metrics['total_cost'] - optimal_team_metrics['total_cost']
+        performance_difference = user_team_metrics['expected_points'] - optimal_team_metrics['expected_points']
+        
+        # Calculate efficiency metrics
+        user_efficiency = user_team_metrics['expected_points'] / user_team_metrics['total_cost'] if user_team_metrics['total_cost'] > 0 else 0
+        optimal_efficiency = optimal_team_metrics['expected_points'] / optimal_team_metrics['total_cost'] if optimal_team_metrics['total_cost'] > 0 else 0
+        efficiency_difference = user_efficiency - optimal_efficiency
+        
         comparison = {
-            'user_team': {
-                'total_cost': user_team.total_cost,
-                'rider_count': len(user_team.rider_names),
-                'riders': user_team.rider_names,
-                'avg_simulation_points': 0,
-                'simulation_std': 0
-            },
-            'optimal_team': {
-                'total_cost': optimal_team.total_cost,
-                'rider_count': len(optimal_team.rider_names),
-                'riders': optimal_team.rider_names,
-                'expected_points': optimal_team.expected_points,
-                'avg_simulation_points': 0,
-                'simulation_std': 0
-            },
+            'user_team': user_team_metrics,
+            'optimal_team': optimal_team_metrics,
             'comparison': {
-                'cost_difference': user_team.total_cost - optimal_team.total_cost,
-                'performance_difference': 0,
-                'common_riders': [],
-                'user_only_riders': [],
-                'optimal_only_riders': []
+                'cost_difference': cost_difference,
+                'performance_difference': performance_difference,
+                'efficiency_difference': efficiency_difference,
+                'user_efficiency': user_efficiency,
+                'optimal_efficiency': optimal_efficiency
             }
         }
         
-        # Calculate simulation statistics for user team
-        if user_team.simulation_results:
-            points_list = [result['team_points'] for result in user_team.simulation_results]
-            comparison['user_team']['avg_simulation_points'] = np.mean(points_list)
-            comparison['user_team']['simulation_std'] = np.std(points_list)
-        
-        # Run simulations for optimal team to get fair comparison
-        print("Running simulations for optimal team to ensure fair comparison...")
-        optimal_simulation_results = self.run_user_team_simulations(
-            UserTeam(
-                riders=optimal_team.riders,
-                total_cost=optimal_team.total_cost,
-                rider_names=optimal_team.rider_names,
-                stage_selections=optimal_team.stage_selections,
-                stage_points=optimal_team.stage_points
-            ),
-            num_simulations=len(user_team.simulation_results) if user_team.simulation_results else 100
-        )
-        
-        # Calculate simulation statistics for optimal team
-        if optimal_simulation_results:
-            optimal_points_list = [result['team_points'] for result in optimal_simulation_results]
-            comparison['optimal_team']['avg_simulation_points'] = np.mean(optimal_points_list)
-            comparison['optimal_team']['simulation_std'] = np.std(optimal_points_list)
-            
-            # Calculate performance difference using simulation results for both teams
-            if user_team.simulation_results:
-                comparison['comparison']['performance_difference'] = (
-                    comparison['user_team']['avg_simulation_points'] - comparison['optimal_team']['avg_simulation_points']
-                )
-        
-        # Find common and unique riders
-        user_rider_set = set(user_team.rider_names)
-        optimal_rider_set = set(optimal_team.rider_names)
-        
-        comparison['comparison']['common_riders'] = list(user_rider_set & optimal_rider_set)
-        comparison['comparison']['user_only_riders'] = list(user_rider_set - optimal_rider_set)
-        comparison['comparison']['optimal_only_riders'] = list(optimal_rider_set - user_rider_set)
-        
         return comparison
+    
+    def _calculate_team_metrics_using_optimizer_methods(self, team, rider_data: pd.DataFrame, 
+                                                       stage_performance: Dict) -> Dict:
+        """
+        Calculate team metrics using the same methods as Team Optimization.
+        
+        Args:
+            team: Team to analyze (UserTeam or TeamSelection)
+            rider_data: DataFrame with rider information from Team Optimization
+            stage_performance: Stage performance data from Team Optimization
+            
+        Returns:
+            Dictionary with team metrics
+        """
+        # Get team riders and names
+        if hasattr(team, 'riders'):
+            team_riders = team.riders
+            team_names = team.rider_names
+        else:
+            team_riders = [self.rider_db.get_rider(name) for name in team.rider_names]
+            team_names = team.rider_names
+        
+        # Calculate total cost
+        total_cost = sum(rider.price for rider in team_riders)
+        
+        # Calculate expected points using Team Optimization data
+        expected_points = 0
+        rider_expected_points = {}
+        
+        for rider_name in team_names:
+            rider_row = rider_data[rider_data['rider_name'] == rider_name]
+            if not rider_row.empty:
+                rider_exp_points = rider_row.iloc[0]['expected_points']
+                expected_points += rider_exp_points
+                rider_expected_points[rider_name] = rider_exp_points
+            else:
+                rider_expected_points[rider_name] = 0
+        
+        # Calculate stage-by-stage points using Team Optimization data
+        stage_points = {}
+        if hasattr(team, 'stage_selections') and team.stage_selections:
+            for stage in range(1, 23):
+                stage_points[stage] = {}
+                selected_riders = team.stage_selections.get(stage, [])
+                for rider_name in team_names:
+                    if rider_name in selected_riders:
+                        rider_stage_points = stage_performance.get((rider_name, stage), 0)
+                        stage_points[stage][rider_name] = rider_stage_points
+                    else:
+                        stage_points[stage][rider_name] = 0
+        
+        # Calculate team diversity using Team Optimization method
+        team_diversity = self.team_optimizer.analyze_team_diversity(team)
+        
+        # Calculate team diagnostics manually to avoid AttributeError
+        # (since get_team_diagnostics expects TeamSelection object)
+        team_diagnostics = {
+            'team_size': len(team_riders),
+            'total_cost': total_cost,
+            'expected_points': expected_points,
+            'cost_efficiency': expected_points / total_cost if total_cost > 0 else 0,
+            'budget_utilization': total_cost / self.team_optimizer.budget,
+            'team_composition': {},
+            'risk_metrics': {},
+            'abandon_risk': 0.0
+        }
+        
+        # Team composition analysis
+        teams = [r.team for r in team_riders]
+        team_counts = pd.Series(teams).value_counts()
+        team_diagnostics['team_composition'] = {
+            'unique_teams': len(team_counts),
+            'team_distribution': team_counts.to_dict(),
+            'teammate_bonus_potential': len([team for team, count in team_counts.items() if count >= 2])
+        }
+        
+        # Risk metrics
+        total_std = 0
+        total_abandon_risk = 0
+        
+        for rider in team_riders:
+            rider_row = rider_data[rider_data['rider_name'] == rider.name]
+            if not rider_row.empty:
+                total_std += rider_row.iloc[0]['points_std'] ** 2
+                total_abandon_risk += rider.chance_of_abandon
+        
+        team_diagnostics['risk_metrics'] = {
+            'total_std': total_std ** 0.5,
+            'avg_std_per_rider': (total_std ** 0.5) / len(team_riders),
+            'risk_percentage': (total_std ** 0.5) / expected_points if expected_points > 0 else 0
+        }
+        
+        team_diagnostics['abandon_risk'] = total_abandon_risk / len(team_riders)
+        
+        # Create result dictionary
+        result = {
+            'total_cost': total_cost,
+            'expected_points': expected_points,
+            'rider_count': len(team_riders),
+            'rider_names': team_names,
+            'rider_expected_points': rider_expected_points,
+            'stage_points': stage_points,
+            'stage_performance_data': stage_performance,  # Include stage performance data
+            'team_diversity': team_diversity,
+            'team_diagnostics': team_diagnostics,
+            'avg_simulation_points': expected_points,  # Use expected points as simulation average
+            'simulation_std': 0  # Will be calculated if needed
+        }
+        
+        # Also attach stage_performance_data to the team object for dashboard access
+        if hasattr(team, 'stage_performance_data'):
+            team.stage_performance_data = stage_performance
+        else:
+            # For UserTeam objects, add the attribute
+            setattr(team, 'stage_performance_data', stage_performance)
+        
+        return result
     
     def save_versus_results(self, user_team: UserTeam, optimal_team: TeamSelection,
                           comparison: Dict, rider_data: pd.DataFrame,
                           filename: str = None) -> str:
         """
-        Save versus mode results to Excel file.
+        Save versus mode results to Excel file using Team Optimization analysis methods.
         
         Args:
             user_team: User's team
             optimal_team: Optimal team
             comparison: Comparison results
-            rider_data: Rider performance data
+            rider_data: Rider performance data from Team Optimization
             filename: Output filename
             
         Returns:
@@ -482,6 +578,9 @@ class VersusMode:
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"versus_mode_results_{timestamp}.xlsx"
+        
+        # Get stage performance data using the same method as Team Optimization
+        stage_performance = self.team_optimizer._get_stage_performance_data(50)
         
         with pd.ExcelWriter(filename) as writer:
             # Sheet 1: Team Comparison Summary
@@ -493,10 +592,18 @@ class VersusMode:
                 ['Number of Riders', comparison['user_team']['rider_count'], 
                  comparison['optimal_team']['rider_count'], 
                  comparison['user_team']['rider_count'] - comparison['optimal_team']['rider_count']],
-                ['Expected Points', comparison['user_team']['avg_simulation_points'], 
+                ['Expected Points', comparison['user_team']['expected_points'], 
                  comparison['optimal_team']['expected_points'], 
                  comparison['comparison']['performance_difference']],
-                ['Points Std Dev', comparison['user_team']['simulation_std'], 'N/A', 'N/A']
+                ['Efficiency (Points/Cost)', comparison['comparison']['user_efficiency'], 
+                 comparison['comparison']['optimal_efficiency'], 
+                 comparison['comparison']['efficiency_difference']],
+                ['Unique Teams', comparison['user_team']['team_diversity']['unique_teams'], 
+                 comparison['optimal_team']['team_diversity']['unique_teams'], 
+                 comparison['user_team']['team_diversity']['unique_teams'] - comparison['optimal_team']['team_diversity']['unique_teams']],
+                ['Average Age', comparison['user_team']['team_diversity']['avg_age'], 
+                 comparison['optimal_team']['team_diversity']['avg_age'], 
+                 comparison['user_team']['team_diversity']['avg_age'] - comparison['optimal_team']['team_diversity']['avg_age']]
             ]
             
             summary_df = pd.DataFrame(summary_data[1:], columns=summary_data[0])
@@ -510,7 +617,7 @@ class VersusMode:
                 in_user = rider_name in user_team.rider_names
                 in_optimal = rider_name in optimal_team.rider_names
                 
-                # Get rider info
+                # Get rider info from Team Optimization data
                 rider_info = rider_data[rider_data['rider_name'] == rider_name]
                 if not rider_info.empty:
                     rider_row = rider_info.iloc[0]
@@ -520,6 +627,10 @@ class VersusMode:
                         'Age': rider_row['age'],
                         'Price': rider_row['price'],
                         'Expected_Points': rider_row['expected_points'],
+                        'Points_Std': rider_row['points_std'],
+                        'Teammate_Bonus_Potential': rider_row['teammate_bonus_potential'],
+                        'Expected_Points_With_Bonus': rider_row['expected_points_with_teammate_bonus'],
+                        'Chance_of_Abandon': rider_row['chance_of_abandon'],
                         'In_User_Team': 'Yes' if in_user else 'No',
                         'In_Optimal_Team': 'Yes' if in_optimal else 'No',
                         'Selection': 'Both' if in_user and in_optimal else 
@@ -529,66 +640,62 @@ class VersusMode:
             rider_comp_df = pd.DataFrame(rider_comparison)
             rider_comp_df.to_excel(writer, sheet_name='Rider_Comparison', index=False)
             
-            # Sheet 3: User Team Stage Analysis
-            if user_team.stage_selections:
-                user_stage_data = []
-                for stage in sorted(user_team.stage_selections.keys()):
-                    selected_riders = user_team.stage_selections[stage]
-                    stage_points = user_team.stage_points.get(stage, {})
-                    
-                    for rider_name in user_team.rider_names:
-                        is_selected = rider_name in selected_riders
-                        points = stage_points.get(rider_name, 0)
-                        
-                        user_stage_data.append({
-                            'Stage': stage,
-                            'Rider': rider_name,
-                            'Selected': 'Yes' if is_selected else 'No',
-                            'Points_Per_Stage': points
-                        })
-                
-                user_stage_df = pd.DataFrame(user_stage_data)
-                user_stage_df.to_excel(writer, sheet_name='User_Team_Stages', index=False)
+            # Sheet 3: Team Diversity Analysis
+            diversity_data = []
+            for team_type, team_data in [('User Team', comparison['user_team']), ('Optimal Team', comparison['optimal_team'])]:
+                diversity = team_data['team_diversity']
+                diversity_data.append({
+                    'Team_Type': team_type,
+                    'Unique_Teams': diversity['unique_teams'],
+                    'Average_Age': diversity['avg_age'],
+                    'Age_Std': diversity['age_std'],
+                    'Min_Age': diversity['min_age'],
+                    'Max_Age': diversity['max_age']
+                })
             
-            # Sheet 4: Optimal Team Stage Analysis
-            if optimal_team.stage_selections:
-                optimal_stage_data = []
-                for stage in sorted(optimal_team.stage_selections.keys()):
-                    selected_riders = optimal_team.stage_selections[stage]
-                    stage_points = optimal_team.stage_points.get(stage, {})
-                    
-                    for rider_name in optimal_team.rider_names:
-                        is_selected = rider_name in selected_riders
-                        points = stage_points.get(rider_name, 0)
-                        
-                        optimal_stage_data.append({
-                            'Stage': stage,
-                            'Rider': rider_name,
-                            'Selected': 'Yes' if is_selected else 'No',
-                            'Points_Per_Stage': points
-                        })
-                
-                optimal_stage_df = pd.DataFrame(optimal_stage_data)
-                optimal_stage_df.to_excel(writer, sheet_name='Optimal_Team_Stages', index=False)
+            diversity_df = pd.DataFrame(diversity_data)
+            diversity_df.to_excel(writer, sheet_name='Team_Diversity', index=False)
             
-            # Sheet 5: Simulation Results
-            if user_team.simulation_results:
-                sim_data = []
-                for result in user_team.simulation_results:
-                    sim_data.append({
-                        'Simulation': result['simulation'],
-                        'Total_Points': result['team_points']
+            # Sheet 4: Team Composition Analysis
+            composition_data = []
+            for team_type, team_data in [('User Team', comparison['user_team']), ('Optimal Team', comparison['optimal_team'])]:
+                team_composition = {}
+                for rider_name in team_data['rider_names']:
+                    rider = self.rider_db.get_rider(rider_name)
+                    if rider.team not in team_composition:
+                        team_composition[rider.team] = []
+                    team_composition[rider.team].append(rider_name)
+                
+                for team, riders in sorted(team_composition.items()):
+                    composition_data.append({
+                        'Team_Type': team_type,
+                        'Team': team,
+                        'Number_of_Riders': len(riders),
+                        'Riders': ', '.join(riders)
                     })
-                
-                sim_df = pd.DataFrame(sim_data)
-                sim_df.to_excel(writer, sheet_name='Simulation_Results', index=False)
             
-            # Sheet 6: Stage-by-Stage Comparison
+            composition_df = pd.DataFrame(composition_data)
+            composition_df.to_excel(writer, sheet_name='Team_Composition', index=False)
+            
+            # Sheet 5: Stage-by-Stage Comparison
             if user_team.stage_selections and optimal_team.stage_selections:
                 stage_comparison = []
+                
+                # Calculate total team points per stage using Team Optimization data
                 for stage in range(1, 23):
-                    user_stage_points = sum(user_team.stage_points.get(stage, {}).values())
-                    optimal_stage_points = sum(optimal_team.stage_points.get(stage, {}).values())
+                    # User team stage points - sum selected riders' stage performance
+                    user_stage_points = 0
+                    selected_riders = user_team.stage_selections.get(stage, [])
+                    for rider_name in selected_riders:
+                        if (rider_name, stage) in stage_performance:
+                            user_stage_points += stage_performance[(rider_name, stage)]
+                    
+                    # Optimal team stage points - sum selected riders' stage performance
+                    optimal_stage_points = 0
+                    selected_riders = optimal_team.stage_selections.get(stage, [])
+                    for rider_name in selected_riders:
+                        if (rider_name, stage) in stage_performance:
+                            optimal_stage_points += stage_performance[(rider_name, stage)]
                     
                     stage_comparison.append({
                         'Stage': stage,
@@ -599,6 +706,120 @@ class VersusMode:
                 
                 stage_comp_df = pd.DataFrame(stage_comparison)
                 stage_comp_df.to_excel(writer, sheet_name='Stage_Comparison', index=False)
+                
+                # Sheet 6: Detailed Stage-by-Stage Rider Performance
+                detailed_stage_data = []
+                for stage in range(1, 23):
+                    # User team riders for this stage
+                    user_riders = user_team.stage_selections.get(stage, [])
+                    
+                    for rider in user_riders:
+                        # Use the same stage performance data as Team Optimization
+                        rider_stage_points = stage_performance.get((rider, stage), 0)
+                        detailed_stage_data.append({
+                            'Stage': stage,
+                            'Team_Type': 'User_Team',
+                            'Rider': rider,
+                            'Points_Per_Stage': rider_stage_points,
+                            'Selected': 'Yes'
+                        })
+                    
+                    # User team riders not selected for this stage
+                    for rider in user_team.rider_names:
+                        if rider not in user_riders:
+                            detailed_stage_data.append({
+                                'Stage': stage,
+                                'Team_Type': 'User_Team',
+                                'Rider': rider,
+                                'Points_Per_Stage': 0,  # Not selected, so 0 points
+                                'Selected': 'No'
+                            })
+                    
+                    # Optimal team riders for this stage
+                    optimal_riders = optimal_team.stage_selections.get(stage, [])
+                    
+                    for rider in optimal_riders:
+                        # Use the same stage performance data as Team Optimization
+                        rider_stage_points = stage_performance.get((rider, stage), 0)
+                        detailed_stage_data.append({
+                            'Stage': stage,
+                            'Team_Type': 'Optimal_Team',
+                            'Rider': rider,
+                            'Points_Per_Stage': rider_stage_points,
+                            'Selected': 'Yes'
+                        })
+                    
+                    # Optimal team riders not selected for this stage
+                    for rider in optimal_team.rider_names:
+                        if rider not in optimal_riders:
+                            detailed_stage_data.append({
+                                'Stage': stage,
+                                'Team_Type': 'Optimal_Team',
+                                'Rider': rider,
+                                'Points_Per_Stage': 0,  # Not selected, so 0 points
+                                'Selected': 'No'
+                            })
+                
+                detailed_stage_df = pd.DataFrame(detailed_stage_data)
+                detailed_stage_df.to_excel(writer, sheet_name='Detailed_Stage_Performance', index=False)
+                
+                # Sheet 7: Rider Stage Performance Summary
+                rider_stage_summary = []
+                
+                # Get all unique riders from both teams
+                all_riders = set(user_team.rider_names + optimal_team.rider_names)
+                
+                for rider in all_riders:
+                    # Calculate average points per stage for this rider using Team Optimization data
+                    total_stage_points = 0
+                    stages_counted = 0
+                    
+                    # Check user team stage selections
+                    for stage in range(1, 23):
+                        if rider in user_team.stage_selections.get(stage, []):
+                            rider_stage_points = stage_performance.get((rider, stage), 0)
+                            total_stage_points += rider_stage_points
+                            stages_counted += 1
+                    
+                    # Check optimal team stage selections
+                    for stage in range(1, 23):
+                        if rider in optimal_team.stage_selections.get(stage, []):
+                            rider_stage_points = stage_performance.get((rider, stage), 0)
+                            total_stage_points += rider_stage_points
+                            stages_counted += 1
+                    
+                    # Calculate averages
+                    avg_points_per_stage = total_stage_points / stages_counted if stages_counted > 0 else 0
+                    total_points = total_stage_points
+                    
+                    # Determine which team(s) this rider belongs to
+                    in_user_team = rider in user_team.rider_names
+                    in_optimal_team = rider in optimal_team.rider_names
+                    
+                    if in_user_team and in_optimal_team:
+                        team_type = 'Both'
+                    elif in_user_team:
+                        team_type = 'User_Only'
+                    else:
+                        team_type = 'Optimal_Only'
+                    
+                    rider_stage_summary.append({
+                        'Rider': rider,
+                        'Team_Type': team_type,
+                        'Total_Stage_Points': total_points,
+                        'Stages_Selected': stages_counted,
+                        'Avg_Points_Per_Stage': avg_points_per_stage,
+                        'In_User_Team': in_user_team,
+                        'In_Optimal_Team': in_optimal_team
+                    })
+                
+                # Sort by average points per stage
+                rider_summary_df = pd.DataFrame(rider_stage_summary)
+                rider_summary_df = rider_summary_df.sort_values('Avg_Points_Per_Stage', ascending=False)
+                rider_summary_df.to_excel(writer, sheet_name='Rider_Stage_Summary', index=False)
+            
+            # Sheet 8: All Rider Data (from Team Optimization)
+            rider_data.to_excel(writer, sheet_name='All_Riders', index=False)
         
         return filename
     
@@ -811,6 +1032,60 @@ class VersusMode:
             })
         
         return analysis
+    
+    def run_unified_simulations(self, user_team: UserTeam, num_simulations: int = 200) -> Dict:
+        """
+        Run unified simulations that will be used for all calculations to ensure consistency.
+        
+        Args:
+            user_team: User's team
+            num_simulations: Number of simulations to run
+            
+        Returns:
+            Dictionary containing all simulation results and data
+        """
+        print(f"Running {num_simulations} unified simulations for consistent results...")
+        
+        # Run simulations for rider performance data
+        rider_data = self.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=num_simulations, metric='mean')
+        
+        # Optimize stage selection for user team using the same rider data
+        user_team = self.optimize_stage_selection(user_team, rider_data, num_simulations=num_simulations)
+        
+        # Run user team simulations using the same simulation results
+        user_simulation_results = self.run_user_team_simulations(user_team, num_simulations=num_simulations)
+        
+        # Get optimal team using the same rider data
+        optimal_team = self.team_optimizer.optimize_with_stage_selection(
+            rider_data, num_simulations, risk_aversion=0.0, abandon_penalty=1.0
+        )
+        
+        # Get stage performance data using the same method as Team Optimization
+        stage_performance = self.team_optimizer._get_stage_performance_data(num_simulations)
+        
+        # Attach stage performance data to both team objects for dashboard access
+        user_team.stage_performance_data = stage_performance
+        optimal_team.stage_performance_data = stage_performance
+        
+        # Run optimal team simulations using the same approach
+        optimal_simulation_results = self.run_user_team_simulations(
+            UserTeam(
+                riders=optimal_team.riders,
+                total_cost=optimal_team.total_cost,
+                rider_names=optimal_team.rider_names,
+                stage_selections=optimal_team.stage_selections,
+                stage_points=optimal_team.stage_points
+            ),
+            num_simulations=num_simulations
+        )
+        
+        return {
+            'rider_data': rider_data,
+            'user_team': user_team,
+            'optimal_team': optimal_team,
+            'user_simulation_results': user_simulation_results,
+            'optimal_simulation_results': optimal_simulation_results
+        }
 
 def interactive_team_selection() -> List[str]:
     """
@@ -951,61 +1226,60 @@ def main():
     user_team = versus.create_user_team(selected_rider_names)
     print(f"User team created: {user_team}")
     
-    # Get rider performance data
-    print("\nStep 2: Analyzing rider performance...")
-    rider_data = versus.team_optimizer.run_simulation(num_simulations=50, metric='mean')
+    # Get rider performance data using Team Optimization methods
+    print("\nStep 2: Analyzing rider performance using Team Optimization methods...")
+    rider_data = versus.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=100, metric='mean')
     
     # Optimize stage selection for user team
     print("\nStep 3: Optimizing stage selection for your team...")
     user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=50)
     
-    # Run simulations with user team
-    print("\nStep 4: Running simulations with your team...")
-    simulation_results = versus.run_user_team_simulations(user_team, num_simulations=100)
-    
     # Get optimal team for comparison
-    print("\nStep 5: Generating optimal team for comparison...")
+    print("\nStep 4: Generating optimal team for comparison...")
     optimal_team = versus.get_optimal_team(num_simulations=50, metric='mean')
     
-    # Compare teams
-    print("\nStep 6: Comparing teams...")
+    # Compare teams using Team Optimization analysis methods
+    print("\nStep 5: Comparing teams using Team Optimization analysis...")
     comparison = versus.compare_teams(user_team, optimal_team)
     
     # Print comparison results
     print("\n=== COMPARISON RESULTS ===")
     print(f"Your Team:")
     print(f"  Cost: {comparison['user_team']['total_cost']:.2f}")
-    print(f"  Average Points: {comparison['user_team']['avg_simulation_points']:.2f} ± {comparison['user_team']['simulation_std']:.2f}")
-    print(f"  Riders: {', '.join(comparison['user_team']['riders'])}")
+    print(f"  Expected Points: {comparison['user_team']['expected_points']:.2f}")
+    print(f"  Efficiency: {comparison['comparison']['user_efficiency']:.2f} points/cost")
+    print(f"  Unique Teams: {comparison['user_team']['team_diversity']['unique_teams']}")
+    print(f"  Average Age: {comparison['user_team']['team_diversity']['avg_age']:.1f}")
+    print(f"  Riders: {', '.join(comparison['user_team']['rider_names'])}")
     
     print(f"\nOptimal Team:")
     print(f"  Cost: {comparison['optimal_team']['total_cost']:.2f}")
     print(f"  Expected Points: {comparison['optimal_team']['expected_points']:.2f}")
-    print(f"  Riders: {', '.join(comparison['optimal_team']['riders'])}")
+    print(f"  Efficiency: {comparison['comparison']['optimal_efficiency']:.2f} points/cost")
+    print(f"  Unique Teams: {comparison['optimal_team']['team_diversity']['unique_teams']}")
+    print(f"  Average Age: {comparison['optimal_team']['team_diversity']['avg_age']:.1f}")
+    print(f"  Riders: {', '.join(comparison['optimal_team']['rider_names'])}")
     
     print(f"\nComparison:")
     print(f"  Cost Difference: {comparison['comparison']['cost_difference']:.2f}")
     print(f"  Performance Difference: {comparison['comparison']['performance_difference']:.2f}")
-    print(f"  Common Riders: {len(comparison['comparison']['common_riders'])}")
-    print(f"  Your Unique Riders: {len(comparison['comparison']['user_only_riders'])}")
-    print(f"  Optimal Unique Riders: {len(comparison['comparison']['optimal_only_riders'])}")
-    
-    if comparison['comparison']['common_riders']:
-        print(f"  Common Riders: {', '.join(comparison['comparison']['common_riders'])}")
-    
-    if comparison['comparison']['user_only_riders']:
-        print(f"  Your Unique Riders: {', '.join(comparison['comparison']['user_only_riders'])}")
-    
-    if comparison['comparison']['optimal_only_riders']:
-        print(f"  Optimal Unique Riders: {', '.join(comparison['comparison']['optimal_only_riders'])}")
+    print(f"  Efficiency Difference: {comparison['comparison']['efficiency_difference']:.2f}")
     
     # Save results
-    print("\nStep 7: Saving results...")
+    print("\nStep 6: Saving results...")
     filename = versus.save_versus_results(user_team, optimal_team, comparison, rider_data)
     print(f"Results saved to '{filename}'")
     
     print("\n=== VERSUS MODE COMPLETE ===")
-    print("Check the Excel file for detailed stage-by-stage analysis!")
+    print("Check the Excel file for detailed analysis including:")
+    print("- Team comparison summary")
+    print("- Rider comparison with teammate bonuses")
+    print("- Team diversity analysis")
+    print("- Team composition analysis")
+    print("- Stage-by-stage comparison")
+    print("- Detailed stage performance")
+    print("- Rider stage performance summary")
+    print("- All rider data from Team Optimization")
 
 if __name__ == "__main__":
     main() 

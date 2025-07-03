@@ -74,7 +74,7 @@ class RiderDatabase:
             {"name": "NEILANDS Krists", "team": "Israel - Premier Tech (PRT)", 
             "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'D', 'break_away': 'D', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "SWEENY Harry", "team": "EF Education - EasyPost (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
-            {"name": "POWLESS Neilson", "team": "EF Education - EasyPost (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "break_away": "B", "punch": "D"}, "price": 0.75, "chance_of_abandon": 0.05},
+            {"name": "POWLESS Neilson", "team": "EF Education - EasyPost (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "D", "mountain": "E", "break_away": "B", "punch": "C"}, "price": 0.75, "chance_of_abandon": 0.05},
             {"name": "HEALY Ben", "team": "EF Education - EasyPost (WT)", "age": 24, "tiers": {"sprint": "E", "itt": "C", "mountain": "D", "break_away": "B", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "POGA\u010cAR Tadej", "team": "UAE Team Emirates - XRG (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "A", "mountain": "S", "break_away": "E", "punch": "A"}, "price": 7.5, "chance_of_abandon": 0.05},
             {"name": "ALMEIDA Jo\u00e3o", "team": "UAE Team Emirates - XRG (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "B", "mountain": "B", "break_away": "E", "punch": "B"}, "price": 4.5, "chance_of_abandon": 0.05},
@@ -117,7 +117,6 @@ class RiderDatabase:
             {"name": "GANNA Filippo", "team": "INEOS Grenadiers (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "A", "mountain": "E", "break_away": "D", "punch": "D"}, "price": 1, "chance_of_abandon": 0.05},
             {"name": "THOMAS Geraint", "team": "INEOS Grenadiers (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "C", "mountain": "D", "break_away": "D", "punch": "E"}, "price": 1, "chance_of_abandon": 0.05},
             {"name": "ARENSMAN Thymen", "team": "INEOS Grenadiers (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "B", "mountain": "D", "break_away": "D", "punch": "E"}, "price": 1, "chance_of_abandon": 0.05},
-            {"name": "DE PLUS Laurens", "team": "INEOS Grenadiers (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "C", "mountain": "D", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "FOSS Tobias", "team": "INEOS Grenadiers (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "C", "mountain": "E", "break_away": "D", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "GIRMAY Biniam", "team": "Intermarch\u00e9 - Wanty (WT)", "age": 25, "tiers": {"sprint": "B", "itt": "E", "mountain": "E", "break_away": "C", "punch": "C"}, "price": 2.5, "chance_of_abandon": 0.05},
             {"name": "PAGE Hugo", "team": "Intermarch\u00e9 - Wanty (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
@@ -157,7 +156,7 @@ class RiderDatabase:
             {"name": "CHAMPOUSSIN Cl\u00e9ment", "team": "XDS Astana Team (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "break_away": "C", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "HIGUITA Sergio", "team": "XDS Astana Team (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "DE LIE Arnaud", "team": "Lotto (PRT)", "age": 25, "tiers": {"sprint": "D", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 1.5, "chance_of_abandon": 0.05},
-            {"name": "VAN EETVELT Lennert", "team": "Lotto (PRT)", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "C", "break_away": "D", "punch": "D"}, "price": 1, "chance_of_abandon": 0.05},
+            {"name": "VAN EETVELT Lennert", "team": "Lotto (PRT)", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "break_away": "D", "punch": "D"}, "price": 1, "chance_of_abandon": 0.05},
             {"name": "DE BUYST Jasper", "team": "Lotto (PRT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "BERCKMOES Jenno", "team": "Lotto (PRT)", "age": 24, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "C", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "DRIZNERS Jarrad", "team": "Lotto (PRT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
@@ -185,8 +184,8 @@ class RiderDatabase:
             {"name": "PARET-PEINTRE Aurélien", "team": "Decathlon AG2R La Mondiale Team (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.0},
             {"name": "SCOTSON Callum", "team": "Decathlon AG2R La Mondiale Team (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.0},
             {"name": "TRONCHON Bastien", "team": "Decathlon AG2R La Mondiale Team (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.0},
-            {"name": "COQUARD Bryan", "team": "Cofidis (WT)", "age": 25, "tiers": {'sprint': 'C', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 1, "chance_of_abandon": 0.05},
-            {"name": "RENARD Alexis", "team": "Cofidis (WT)", "age": 25, "tiers": {'sprint': 'D', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
+            {"name": "COQUARD Bryan", "team": "Cofidis (WT)", "age": 25, "tiers": {'sprint': 'D', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 1, "chance_of_abandon": 0.05},
+            {"name": "RENARD Alexis", "team": "Cofidis (WT)", "age": 25, "tiers": {'sprint': 'C', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "TOUZÉ Damien", "team": "Cofidis (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "TEUNS Dylan", "team": "Cofidis (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'D', 'punch': 'D'}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "GARCÍA PIERNA Raúl", "team": "Arkéa - B&B Hotels (WT)", "age": 25, "tiers": {'sprint': 'E', 'itt': 'E', 'mountain': 'E', 'break_away': 'E', 'punch': 'E'}, "price": 0.5, "chance_of_abandon": 0.05},
@@ -399,7 +398,7 @@ class RiderDatabase:
                 "chance_of_abandon": 0.05
             },
             {
-                "name": "SWIFT Ben",
+                "name": "WATSON Samuel",
                 "team": "INEOS Grenadiers (WT)",
                 "age": 25,
                 "tiers": {
@@ -462,7 +461,7 @@ class RiderDatabase:
     def generate_stage_result(self, rider: Rider, stage: int) -> float:
         """Generate a result for a rider in a specific stage using triangular distribution."""
         # Stage numbers in STAGE_PROFILES are 1-based
-        min_val, mode, max_val = rider.get_stage_probability(stage + 1)
+        min_val, mode, max_val = rider.get_stage_probability(stage)
         return np.random.triangular(min_val, mode, max_val)
 
     def get_youth_riders(self, age_limit: int = 25) -> List[Rider]:

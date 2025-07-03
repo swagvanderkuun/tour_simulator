@@ -9,8 +9,8 @@ from datetime import datetime
 
 # Points arrays for classifications
 # New sprint classification categories
-SPRINT_CATEGORY_1_POINTS = [75, 55, 45, 30, 20, 18, 16, 10, 8, 7, 6, 5, 4, 3, 2]
-SPRINT_CATEGORY_2_POINTS = [30, 25, 22, 19, 17, 15, 13, 11, 9, 7, 6, 5, 3, 2]
+SPRINT_CATEGORY_1_POINTS = [65, 55, 45, 30, 20, 18, 16, 10, 8, 7, 6, 5, 4, 3, 2]
+SPRINT_CATEGORY_2_POINTS = [40, 30, 25, 22, 17, 15, 13, 11, 9, 7, 6, 5, 3, 2]
 SPRINT_CATEGORY_3_POINTS = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 SPRINT_CATEGORY_4_POINTS = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 
@@ -139,7 +139,7 @@ class TourSimulator:
 
     def _initialize_stages(self):
         for i in range(21):
-            self.stages.append(Stage(i))
+            self.stages.append(Stage(i + 1))  # Use 1-based indexing for stages
 
     def simulate_tour(self):
         for stage_idx, stage in enumerate(self.stages):

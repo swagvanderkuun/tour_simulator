@@ -450,18 +450,18 @@ class TeamOptimizer:
                 if (rider, stage) in stage_performance:
                     points = stage_performance[(rider, stage)]
                     
+                    # Get rider's data from the rider_data
+                    rider_row = rider_data[rider_data['rider_name'] == rider]
+                    
                     # Apply improved risk aversion if specified
-                    if risk_aversion > 0:
-                        # Get rider's variance from the rider_data
-                        rider_row = rider_data[rider_data['rider_name'] == rider]
-                        if not rider_row.empty and 'points_std' in rider_row.columns:
-                            points_std = rider_row.iloc[0]['points_std']
-                            # Sharpe ratio-like risk adjustment
-                            if points_std > 0:
-                                points = points / (1 + risk_aversion * points_std)
+                    if risk_aversion > 0 and not rider_row.empty and 'points_std' in rider_row.columns:
+                        points_std = rider_row.iloc[0]['points_std']
+                        # Sharpe ratio-like risk adjustment
+                        if points_std > 0:
+                            points = points / (1 + risk_aversion * points_std)
                     
                     # Apply abandon penalty if specified
-                    if abandon_penalty > 0:
+                    if abandon_penalty > 0 and not rider_row.empty:
                         # Get rider's abandon probability from the rider_data
                         abandon_prob = rider_row.iloc[0]['chance_of_abandon']
                         # Penalize points based on abandon probability
@@ -613,8 +613,9 @@ class TeamOptimizer:
                     else:
                         mean_dict[key] = (points_earned, 1)
             
-            # Reset simulator
+            # Reset simulator with the same rider database to maintain stage numbering consistency
             self.simulator = TourSimulator()
+            self.simulator.rider_db = self.rider_db
         
         # Extract final means
         expected_stage_points = {key: mean for key, (mean, count) in mean_dict.items()}

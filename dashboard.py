@@ -3734,36 +3734,33 @@ def show_versus_mode():
                 
                 run_sim = st.button('Run Versus Simulation', type='primary')
                 if run_sim:
-                    with st.spinner('Running simulations and optimizing... (this may take a minute)'):
-                        # Run the full versus mode pipeline
+                    with st.spinner('Running unified simulations for consistent results... (this may take a minute)'):
+                        # Create user team
                         user_team = versus.create_user_team(st.session_state['versus_selected_riders'])
                         
                         # Ensure the versus optimizer has the correct rider database
+                        versus.rider_db = st.session_state.rider_db
                         versus.team_optimizer.rider_db = st.session_state.rider_db
                         inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
                         
-                        # Use custom simulation method to ensure modified rider database is used
-                        rider_data = versus.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=30, metric=selected_metric)
+                        # Run unified simulations for consistent results
+                        unified_results = versus.run_unified_simulations(user_team, num_simulations=50)
                         
-                        user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=30)
-                        simulation_results = versus.run_user_team_simulations(user_team, num_simulations=50)
-                        
-                        # Get optimal team using custom simulation method with user-controlled parameters
-                        optimal_team = optimize_with_stage_selection_with_injection(
-                            versus.team_optimizer,
-                            rider_data,
-                            num_simulations=30,
-                            rider_db=st.session_state.rider_db,
-                            risk_aversion=versus_risk_aversion,
-                            abandon_penalty=versus_abandon_penalty
+                        # Compare teams using the unified results
+                        comparison = versus.compare_teams(
+                            unified_results['user_team'], 
+                            unified_results['optimal_team'],
+                            user_simulation_results=unified_results['user_simulation_results'],
+                            optimal_simulation_results=unified_results['optimal_simulation_results']
                         )
                         
-                        comparison = versus.compare_teams(user_team, optimal_team)
                         st.session_state['versus_results'] = {
-                            'user_team': user_team,
-                            'optimal_team': optimal_team,
+                            'user_team': unified_results['user_team'],
+                            'optimal_team': unified_results['optimal_team'],
                             'comparison': comparison,
-                            'rider_data': rider_data
+                            'rider_data': unified_results['rider_data'],
+                            'user_simulation_results': unified_results['user_simulation_results'],
+                            'optimal_simulation_results': unified_results['optimal_simulation_results']
                         }
                         st.rerun()
 
@@ -3799,10 +3796,10 @@ def show_versus_mode():
                 results = st.session_state['versus_results']
                 
                 st.write("**Your Team:**")
-                st.write(f"Points: {results['comparison']['user_team']['avg_simulation_points']:.1f} ± {results['comparison']['user_team']['simulation_std']:.1f}")
+                st.write(f"Points: {results['comparison']['user_team']['expected_points']:.1f}")
                 
                 st.write("**Optimal Team:**")
-                st.write(f"Points: {results['comparison']['optimal_team']['expected_points']:.1f} ± {results['comparison']['optimal_team'].get('simulation_std', 0):.1f}")
+                st.write(f"Points: {results['comparison']['optimal_team']['expected_points']:.1f}")
                 
                 if st.button("View Full Results"):
                     st.session_state['show_versus_results'] = True
@@ -3826,20 +3823,22 @@ def show_versus_mode():
         
         with col1:
             st.write("**Your Team:**")
-            st.write(f"**Riders:** {', '.join(comparison['user_team']['riders'])}")
+            st.write(f"**Riders:** {', '.join(comparison['user_team']['rider_names'])}")
             st.write(f"**Cost:** {comparison['user_team']['total_cost']:.2f}")
-            st.write(f"**Average Points:** {comparison['user_team']['avg_simulation_points']:.2f} ± {comparison['user_team']['simulation_std']:.2f}")
+            st.write(f"**Expected Points:** {comparison['user_team']['expected_points']:.2f}")
+            st.write(f"**Efficiency:** {comparison['comparison']['user_efficiency']:.2f} points/cost")
         
         with col2:
             st.write("**Optimal Team:**")
-            st.write(f"**Riders:** {', '.join(comparison['optimal_team']['riders'])}")
+            st.write(f"**Riders:** {', '.join(comparison['optimal_team']['rider_names'])}")
             st.write(f"**Cost:** {comparison['optimal_team']['total_cost']:.2f}")
-            st.write(f"**Expected Points:** {comparison['optimal_team']['expected_points']:.2f} ± {comparison['optimal_team'].get('simulation_std', 0):.2f}")
+            st.write(f"**Expected Points:** {comparison['optimal_team']['expected_points']:.2f}")
+            st.write(f"**Efficiency:** {comparison['comparison']['optimal_efficiency']:.2f} points/cost")
         
         # Performance comparison
         st.subheader("Performance Comparison")
         
-        user_points = comparison['user_team']['avg_simulation_points']
+        user_points = comparison['user_team']['expected_points']
         optimal_points = comparison['optimal_team']['expected_points']
         
         if user_points > optimal_points:
@@ -3949,7 +3948,15 @@ def show_versus_mode():
                 # User team stage points
                 user_stage_points = 0
                 if hasattr(results['user_team'], 'stage_selections') and results['user_team'].stage_selections and stage in results['user_team'].stage_selections:
-                    user_stage_points = sum(results['user_team'].stage_points.get(stage, {}).values())
+                    # Use actual stage performance data if available
+                    selected_riders = results['user_team'].stage_selections[stage]
+                    for rider in selected_riders:
+                        # Use actual stage performance data if available (same approach as team optimization)
+                        if hasattr(results['user_team'], 'stage_performance_data') and (rider, stage) in results['user_team'].stage_performance_data:
+                            user_stage_points += results['user_team'].stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to stage points if available
+                            user_stage_points += results['user_team'].stage_points.get(stage, {}).get(rider, 0)
                 else:
                     # Estimate based on selected riders
                     if stage == 22:
@@ -3966,19 +3973,31 @@ def show_versus_mode():
                         selected_riders = [rider for rider, _ in rider_expected_points[:9]]
                     
                     for rider in selected_riders:
-                        rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
-                        if not rider_row.empty:
-                            total_expected_points = rider_row.iloc[0]['expected_points']
-                            if stage <= 21:
-                                stage_points = total_expected_points * 0.05
-                            else:
-                                stage_points = total_expected_points * 0.08
-                            user_stage_points += stage_points
+                        # Use actual stage performance data if available
+                        if hasattr(results['user_team'], 'stage_performance_data') and (rider, stage) in results['user_team'].stage_performance_data:
+                            user_stage_points += results['user_team'].stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to estimated approach
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                total_expected_points = rider_row.iloc[0]['expected_points']
+                                if stage <= 21:
+                                    stage_points = total_expected_points * 0.05
+                                else:
+                                    stage_points = total_expected_points * 0.08
+                                user_stage_points += stage_points
                 
                 # Optimal team stage points
                 optimal_stage_points = 0
                 if hasattr(results['optimal_team'], 'stage_selections') and results['optimal_team'].stage_selections and stage in results['optimal_team'].stage_selections:
-                    optimal_stage_points = sum(results['optimal_team'].stage_points.get(stage, {}).values())
+                    # Use actual stage performance data if available
+                    selected_riders = results['optimal_team'].stage_selections[stage]
+                    for rider in selected_riders:
+                        if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, stage) in results['optimal_team'].stage_performance_data:
+                            optimal_stage_points += results['optimal_team'].stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to stage points if available
+                            optimal_stage_points += results['optimal_team'].stage_points.get(stage, {}).get(rider, 0)
                 else:
                     # Estimate based on selected riders
                     if stage == 22:
@@ -3995,14 +4014,19 @@ def show_versus_mode():
                         selected_riders = [rider for rider, _ in rider_expected_points[:9]]
                     
                     for rider in selected_riders:
-                        rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
-                        if not rider_row.empty:
-                            total_expected_points = rider_row.iloc[0]['expected_points']
-                            if stage <= 21:
-                                stage_points = total_expected_points * 0.05
-                            else:
-                                stage_points = total_expected_points * 0.08
-                            optimal_stage_points += stage_points
+                        # Use actual stage performance data if available
+                        if hasattr(results['optimal_team'], 'stage_performance_data') and (rider, stage) in results['optimal_team'].stage_performance_data:
+                            optimal_stage_points += results['optimal_team'].stage_performance_data[(rider, stage)]
+                        else:
+                            # Fallback to estimated approach
+                            rider_row = results['rider_data'][results['rider_data']['rider_name'] == rider]
+                            if not rider_row.empty:
+                                total_expected_points = rider_row.iloc[0]['expected_points']
+                                if stage <= 21:
+                                    stage_points = total_expected_points * 0.05
+                                else:
+                                    stage_points = total_expected_points * 0.08
+                                optimal_stage_points += stage_points
                 
                 difference = user_stage_points - optimal_stage_points
                 stage_comparison_data.append({
@@ -4378,8 +4402,8 @@ def show_versus_mode():
         rider_data = results['rider_data']
         
         # Compare selected riders
-        user_riders = comparison['user_team']['riders']
-        optimal_riders = comparison['optimal_team']['riders']
+        user_riders = comparison['user_team']['rider_names']
+        optimal_riders = comparison['optimal_team']['rider_names']
         
         # Find common riders
         common_riders = set(user_riders) & set(optimal_riders)

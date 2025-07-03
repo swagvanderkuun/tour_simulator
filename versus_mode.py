@@ -8,6 +8,7 @@ from team_optimization import TeamOptimizer, TeamSelection
 from datetime import datetime
 from pulp import *
 import warnings
+import time
 warnings.filterwarnings('ignore')
 
 @dataclass
@@ -1033,59 +1034,382 @@ class VersusMode:
         
         return analysis
     
-    def run_unified_simulations(self, user_team: UserTeam, num_simulations: int = 200) -> Dict:
+    def run_unified_simulations(self, user_team: UserTeam, num_simulations: int = 500) -> Dict:
         """
-        Run unified simulations that will be used for all calculations to ensure consistency.
+        Run unified simulations that capture all necessary data in a single batch.
+        Uses parallel processing and suppresses simulation output for better performance.
         
         Args:
             user_team: User's team
-            num_simulations: Number of simulations to run
+            num_simulations: Number of simulations to run (increased for better accuracy)
             
         Returns:
             Dictionary containing all simulation results and data
         """
-        print(f"Running {num_simulations} unified simulations for consistent results...")
+        print(f"Running {num_simulations} unified simulations with parallel processing...")
+        start_time = time.time()
         
-        # Run simulations for rider performance data
-        rider_data = self.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=num_simulations, metric='mean')
+        # Import parallel processing
+        from joblib import Parallel, delayed
+        import logging
         
-        # Optimize stage selection for user team using the same rider data
+        # Suppress simulation output
+        logging.getLogger().setLevel(logging.ERROR)
+        
+        # Run all simulations in parallel with comprehensive data collection
+        simulation_results = Parallel(n_jobs=-1, verbose=0)(
+            delayed(self._run_comprehensive_simulation)(user_team, i)
+            for i in range(num_simulations)
+        )
+        
+        # Process all results to extract different data types
+        teammate_bonus_data = self._process_teammate_bonus_data(simulation_results, num_simulations)
+        rider_data = self._process_rider_performance_data(simulation_results, num_simulations, teammate_bonus_data)
+        stage_performance = self._process_stage_performance_data(simulation_results, num_simulations)
+        
+        # Optimize stage selection for user team using the rider data
         user_team = self.optimize_stage_selection(user_team, rider_data, num_simulations=num_simulations)
-        
-        # Run user team simulations using the same simulation results
-        user_simulation_results = self.run_user_team_simulations(user_team, num_simulations=num_simulations)
         
         # Get optimal team using the same rider data
         optimal_team = self.team_optimizer.optimize_with_stage_selection(
             rider_data, num_simulations, risk_aversion=0.0, abandon_penalty=1.0
         )
         
-        # Get stage performance data using the same method as Team Optimization
-        stage_performance = self.team_optimizer._get_stage_performance_data(num_simulations)
-        
         # Attach stage performance data to both team objects for dashboard access
         user_team.stage_performance_data = stage_performance
         optimal_team.stage_performance_data = stage_performance
         
-        # Run optimal team simulations using the same approach
-        optimal_simulation_results = self.run_user_team_simulations(
-            UserTeam(
-                riders=optimal_team.riders,
-                total_cost=optimal_team.total_cost,
-                rider_names=optimal_team.rider_names,
-                stage_selections=optimal_team.stage_selections,
-                stage_points=optimal_team.stage_points
-            ),
-            num_simulations=num_simulations
-        )
+        # Extract team simulation results from the comprehensive data
+        user_simulation_results = self._extract_team_simulation_results(simulation_results, user_team)
+        optimal_simulation_results = self._extract_team_simulation_results(simulation_results, optimal_team)
+        
+        elapsed_time = time.time() - start_time
+        print(f"Unified simulations completed in {elapsed_time:.2f} seconds")
         
         return {
             'rider_data': rider_data,
             'user_team': user_team,
             'optimal_team': optimal_team,
             'user_simulation_results': user_simulation_results,
-            'optimal_simulation_results': optimal_simulation_results
+            'optimal_simulation_results': optimal_simulation_results,
+            'teammate_bonus_data': teammate_bonus_data
         }
+    
+    def _run_comprehensive_simulation(self, user_team: UserTeam, simulation_id: int) -> Dict:
+        """
+        Run a single comprehensive simulation that captures all necessary data.
+        
+        Args:
+            user_team: User's team
+            simulation_id: ID of this simulation
+            
+        Returns:
+            Dictionary with all simulation data
+        """
+        # Create a new simulator for this simulation
+        simulator = TourSimulator()
+        simulator.rider_db = self.rider_db
+        
+        # Suppress simulator output
+        import sys
+        from io import StringIO
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        
+        try:
+            # Run simulation
+            simulator.simulate_tour()
+        finally:
+            # Restore stdout
+            sys.stdout = old_stdout
+        
+        # Extract all rider points
+        rider_points = dict(simulator.scorito_points)
+        
+        # Extract stage-by-stage points for all riders
+        stage_records = simulator.scorito_points_records
+        rider_stage_points = {}
+        
+        # Group records by rider and stage
+        for record in stage_records:
+            rider_name = record['rider']
+            stage = record['stage']
+            cumulative_points = record['scorito_points']
+            
+            if rider_name not in rider_stage_points:
+                rider_stage_points[rider_name] = {}
+            rider_stage_points[rider_name][stage] = cumulative_points
+        
+        # Calculate per-stage points by taking differences
+        stage_performance = {}
+        for rider_name, stage_data in rider_stage_points.items():
+            stages = sorted(stage_data.keys())
+            for i, stage in enumerate(stages):
+                if i == 0:
+                    # First stage: points earned = cumulative points
+                    points_earned = stage_data[stage]
+                else:
+                    # Other stages: points earned = current cumulative - previous cumulative
+                    points_earned = stage_data[stage] - stage_data[stages[i-1]]
+                
+                stage_performance[(rider_name, stage)] = points_earned
+        
+        # Calculate user team points with optimal stage selection
+        user_team_points = self._calculate_optimal_stage_points_for_simulation(
+            simulator, user_team.rider_names
+        )
+        
+        # Analyze teammate bonuses
+        teammate_bonus_analysis = self._analyze_teammate_bonuses_from_simulation(simulator)
+        
+        return {
+            'simulation_id': simulation_id,
+            'rider_points': rider_points,
+            'stage_performance': stage_performance,
+            'user_team_points': user_team_points,
+            'teammate_bonus_analysis': teammate_bonus_analysis
+        }
+    
+    def _process_rider_performance_data(self, simulation_results: List[Dict], num_simulations: int, teammate_bonus_data: Dict = None) -> pd.DataFrame:
+        """
+        Process simulation results to create rider performance DataFrame.
+        
+        Args:
+            simulation_results: List of simulation result dictionaries
+            num_simulations: Number of simulations run
+            
+        Returns:
+            DataFrame with rider performance data
+        """
+        # Collect all rider points
+        all_points = []
+        for sim_result in simulation_results:
+            for rider_name, points in sim_result['rider_points'].items():
+                all_points.append({
+                    'rider_name': rider_name,
+                    'points': points,
+                    'simulation': sim_result['simulation_id']
+                })
+        
+        # Calculate statistics
+        points_df = pd.DataFrame(all_points)
+        rider_stats = points_df.groupby('rider_name')['points'].agg([
+            'mean', 'median', 'std', 'count'
+        ]).reset_index()
+        
+        # Calculate mode
+        mode_values = []
+        for rider_name in rider_stats['rider_name']:
+            rider_points = points_df[points_df['rider_name'] == rider_name]['points'].values
+            hist, bins = np.histogram(rider_points, bins='auto')
+            mode_idx = np.argmax(hist)
+            mode_values.append((bins[mode_idx] + bins[mode_idx + 1]) / 2)
+        
+        rider_stats['mode'] = mode_values
+        
+        # Create final DataFrame
+        expected_points_df = pd.DataFrame({
+            'rider_name': rider_stats['rider_name'],
+            'expected_points': rider_stats['mean'],
+            'points_std': rider_stats['std'],
+            'points_mean': rider_stats['mean'],
+            'points_median': rider_stats['median'],
+            'points_mode': rider_stats['mode'],
+            'simulation_count': rider_stats['count']
+        })
+        
+        # Add rider information
+        rider_info = []
+        for rider in self.rider_db.get_all_riders():
+            rider_info.append({
+                'rider_name': rider.name,
+                'price': rider.price,
+                'team': rider.team,
+                'age': rider.age,
+                'chance_of_abandon': rider.chance_of_abandon
+            })
+        
+        rider_info_df = pd.DataFrame(rider_info)
+        final_df = rider_info_df.merge(expected_points_df, on='rider_name', how='left')
+        
+        # Fill missing values
+        for col in ['expected_points', 'points_std', 'points_mean', 'points_median', 'points_mode', 'simulation_count']:
+            final_df[col] = final_df[col].fillna(0)
+        
+        # Add teammate bonus analysis
+        final_df['teammate_bonus_potential'] = 0.0
+        final_df['teammate_bonus_team_size'] = 0
+        
+        # Add teammate bonus potential to riders based on team analysis
+        for team, bonus_info in teammate_bonus_data.items():
+            team_riders = bonus_info['riders']
+            bonus_per_rider = bonus_info['estimated_bonus_per_rider']
+            
+            # Add teammate bonus potential to riders in this team
+            team_mask = final_df['team'] == team
+            final_df.loc[team_mask, 'teammate_bonus_potential'] = bonus_per_rider
+            final_df.loc[team_mask, 'teammate_bonus_team_size'] = bonus_info['team_size']
+        
+        # Calculate adjusted expected points including teammate bonuses
+        final_df['expected_points_with_teammate_bonus'] = (
+            final_df['expected_points'] + final_df['teammate_bonus_potential']
+        )
+        
+        return final_df
+    
+    def _process_stage_performance_data(self, simulation_results: List[Dict], num_simulations: int) -> Dict:
+        """
+        Process simulation results to create stage performance data.
+        
+        Args:
+            simulation_results: List of simulation result dictionaries
+            num_simulations: Number of simulations run
+            
+        Returns:
+            Dictionary mapping (rider_name, stage) to expected points
+        """
+        # Collect all stage performance data
+        stage_data = {}
+        
+        for sim_result in simulation_results:
+            for (rider_name, stage), points in sim_result['stage_performance'].items():
+                key = (rider_name, stage)
+                if key not in stage_data:
+                    stage_data[key] = []
+                stage_data[key].append(points)
+        
+        # Calculate means
+        expected_stage_points = {}
+        for key, points_list in stage_data.items():
+            expected_stage_points[key] = np.mean(points_list)
+        
+        return expected_stage_points
+    
+    def _process_teammate_bonus_data(self, simulation_results: List[Dict], num_simulations: int) -> Dict:
+        """
+        Process simulation results to create teammate bonus data.
+        
+        Args:
+            simulation_results: List of simulation result dictionaries
+            num_simulations: Number of simulations run
+            
+        Returns:
+            Dictionary with teammate bonus analysis
+        """
+        # Aggregate teammate bonus data across all simulations
+        team_bonus_data = {}
+        
+        for sim_result in simulation_results:
+            for team, bonus_info in sim_result['teammate_bonus_analysis'].items():
+                if team not in team_bonus_data:
+                    team_bonus_data[team] = {
+                        'riders': bonus_info['riders'],
+                        'team_size': bonus_info['team_size'],
+                        'potential_bonus_riders': bonus_info['potential_bonus_riders'],
+                        'estimated_bonus_per_rider': bonus_info['estimated_bonus_per_rider'],
+                        'simulation_count': 0
+                    }
+                team_bonus_data[team]['simulation_count'] += 1
+        
+        return team_bonus_data
+    
+    def _extract_team_simulation_results(self, simulation_results: List[Dict], team) -> List[Dict]:
+        """
+        Extract team-specific simulation results from comprehensive data.
+        
+        Args:
+            simulation_results: List of comprehensive simulation results
+            team: Team object (UserTeam or TeamSelection)
+            
+        Returns:
+            List of team simulation results
+        """
+        team_results = []
+        
+        for sim_result in simulation_results:
+            # Calculate team points using stage selections if available
+            team_points = 0
+            if hasattr(team, 'stage_selections') and team.stage_selections:
+                for stage, selected_riders in team.stage_selections.items():
+                    stage_points = 0
+                    for rider_name in selected_riders:
+                        stage_points += sim_result['stage_performance'].get((rider_name, stage), 0)
+                    team_points += stage_points
+            else:
+                # Use the pre-calculated optimal stage points
+                team_points = sim_result['user_team_points']
+            
+            team_results.append({
+                'simulation': sim_result['simulation_id'] + 1,
+                'team_points': team_points,
+                'rider_points': {name: sim_result['rider_points'].get(name, 0) 
+                               for name in team.rider_names}
+            })
+        
+        return team_results
+    
+    def _analyze_teammate_bonuses_from_simulation(self, simulator) -> Dict:
+        """
+        Analyze teammate bonuses from a single simulation.
+        This method replicates the functionality from team_optimization.py.
+        
+        Args:
+            simulator: TourSimulator instance that has completed a simulation
+            
+        Returns:
+            Dictionary with teammate bonus analysis
+        """
+        # Get all riders and their teams
+        all_riders = self.rider_db.get_all_riders()
+        team_riders = {}
+        
+        for rider in all_riders:
+            if rider.team not in team_riders:
+                team_riders[rider.team] = []
+            team_riders[rider.team].append(rider.name)
+        
+        # Analyze each team
+        team_bonus_analysis = {}
+        
+        for team_name, riders in team_riders.items():
+            team_size = len(riders)
+            
+            # Count how many riders from this team scored points
+            scoring_riders = [rider for rider in riders if rider in simulator.scorito_points and simulator.scorito_points[rider] > 0]
+            potential_bonus_riders = len(scoring_riders)
+            
+            # Estimate bonus per rider based on team size
+            estimated_bonus_per_rider = self._estimate_teammate_bonus_per_rider(team_size)
+            
+            team_bonus_analysis[team_name] = {
+                'riders': riders,
+                'team_size': team_size,
+                'potential_bonus_riders': potential_bonus_riders,
+                'estimated_bonus_per_rider': estimated_bonus_per_rider
+            }
+        
+        return team_bonus_analysis
+    
+    def _estimate_teammate_bonus_per_rider(self, team_size: int) -> float:
+        """
+        Estimate teammate bonus per rider based on team size.
+        This method replicates the functionality from team_optimization.py.
+        
+        Args:
+            team_size: Number of riders in the team
+            
+        Returns:
+            Estimated bonus points per rider
+        """
+        # Simple heuristic: more riders = more potential for bonuses
+        if team_size >= 4:
+            return 2.0  # High potential for bonuses
+        elif team_size >= 3:
+            return 1.5  # Medium potential
+        elif team_size >= 2:
+            return 1.0  # Low potential
+        else:
+            return 0.0  # No bonus for single riders
 
 def interactive_team_selection() -> List[str]:
     """

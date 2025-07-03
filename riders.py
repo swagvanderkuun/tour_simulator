@@ -89,7 +89,7 @@ class RiderDatabase:
             {"name": "VLASOV Aleksandr", "team": "Red Bull - BORA - hansgrohe (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "break_away": "D", "punch": "D"}, "price": 0.75, "chance_of_abandon": 0.05},
             {"name": "VAN POPPEL Danny", "team": "Red Bull - BORA - hansgrohe (WT)", "age": 25, "tiers": {"sprint": "D", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.75, "chance_of_abandon": 0.05},
             {"name": "LIPOWITZ Florian", "team": "Red Bull - BORA - hansgrohe (WT)", "age": 24, "tiers": {"sprint": "E", "itt": "B", "mountain": "B", "break_away": "E", "punch": "D"}, "price": 3, "chance_of_abandon": 0.05},
-            {"name": "EVENEPOEL Remco", "team": "Soudal Quick-Step (WT)", "age": 24, "tiers": {"sprint": "E", "itt": "S", "mountain": "B", "break_away": "E", "punch": "B"}, "price": 6, "chance_of_abandon": 0.05},
+            {"name": "EVENEPOEL Remco", "team": "Soudal Quick-Step (WT)", "age": 24, "tiers": {"sprint": "E", "itt": "S", "mountain": "A", "break_away": "E", "punch": "B"}, "price": 6, "chance_of_abandon": 0.05},
             {"name": "MERLIER Tim", "team": "Soudal Quick-Step (WT)", "age": 25, "tiers": {"sprint": "S", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 3.5, "chance_of_abandon": 0.05},
             {"name": "VAN LERBERGHE Bert", "team": "Soudal Quick-Step (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "EENKHOORN Pascal", "team": "Soudal Quick-Step (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},

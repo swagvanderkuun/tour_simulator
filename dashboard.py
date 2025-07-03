@@ -3732,6 +3732,18 @@ def show_versus_mode():
                         f"• **Risk Aversion:** {versus_risk_aversion:.1f} - {'No penalty for high variance' if versus_risk_aversion == 0.0 else 'Penalizes inconsistent performers'}\n"
                         f"• **Abandon Penalty:** {versus_abandon_penalty:.1f} - {'No penalty for abandon risk' if versus_abandon_penalty == 0.0 else 'Penalizes riders likely to abandon'}")
                 
+                # Simulation settings
+                st.subheader("🔧 Simulation Settings")
+                num_simulations = st.slider(
+                    "Number of simulations", 
+                    min_value=1, 
+                    max_value=2000, 
+                    value=100, 
+                    step=1,
+                    help="More simulations provide more accurate results but take longer to run"
+                )
+                st.info(f"**Simulation Count:** {num_simulations} - {'Quick test' if num_simulations < 50 else 'Good accuracy' if num_simulations < 200 else 'High accuracy' if num_simulations < 500 else 'Very high accuracy'}")
+                
                 run_sim = st.button('Run Versus Simulation', type='primary')
                 if run_sim:
                     with st.spinner('Running unified simulations for consistent results... (this may take a minute)'):
@@ -3744,7 +3756,7 @@ def show_versus_mode():
                         inject_rider_database(versus.team_optimizer.simulator, st.session_state.rider_db)
                         
                         # Run unified simulations for consistent results
-                        unified_results = versus.run_unified_simulations(user_team, num_simulations=50)
+                        unified_results = versus.run_unified_simulations(user_team, num_simulations=num_simulations)
                         
                         # Compare teams using the unified results
                         comparison = versus.compare_teams(

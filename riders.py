@@ -124,7 +124,7 @@ class RiderDatabase:
             {"name": "ZIMMERMANN Georg", "team": "Intermarch\u00e9 - Wanty (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "break_away": "D", "punch": "D"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "BARR\u00c9 Louis", "team": "Intermarch\u00e9 - Wanty (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "D", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "MILAN Jonathan", "team": "Lidl - Trek (WT)", "age": 25, "tiers": {"sprint": "A", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 4, "chance_of_abandon": 0.05},
-            {"name": "SKJELMOSE Mattias", "team": "Lidl - Trek (WT)", "age": 24, "tiers": {"sprint": "E", "itt": "C", "mountain": "C", "break_away": "D", "punch": "C"}, "price": 2.5, "chance_of_abandon": 0.05},
+            {"name": "SKJELMOSE Mattias", "team": "Lidl - Trek (WT)", "age": 24, "tiers": {"sprint": "E", "itt": "C", "mountain": "C", "break_away": "E", "punch": "C"}, "price": 2.5, "chance_of_abandon": 0.05},
             {"name": "STUYVEN Jasper", "team": "Lidl - Trek (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "THEUNS Edward", "team": "Lidl - Trek (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "D", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},
             {"name": "CONSONNI Simone", "team": "Lidl - Trek (WT)", "age": 25, "tiers": {"sprint": "E", "itt": "E", "mountain": "E", "break_away": "E", "punch": "E"}, "price": 0.5, "chance_of_abandon": 0.05},

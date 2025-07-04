@@ -149,8 +149,6 @@ class VersusMode:
         Returns:
             Updated UserTeam with stage selections
         """
-        print("Optimizing stage selection for user team...")
-        
         # Get stage performance data for all riders
         stage_performance = self.team_optimizer._get_stage_performance_data(num_simulations)
         
@@ -185,7 +183,6 @@ class VersusMode:
         prob.solve()
         
         if prob.status != LpStatusOptimal:
-            print(f"Warning: Stage optimization failed with status: {LpStatus[prob.status]}")
             return user_team
         
         # Extract solution
@@ -222,14 +219,9 @@ class VersusMode:
         Returns:
             List of simulation results
         """
-        print(f"Running {num_simulations} simulations with user team...")
-        
         simulation_results = []
         
         for i in range(num_simulations):
-            if i % 10 == 0:
-                print(f"Simulation {i+1}/{num_simulations}")
-            
             # Create a new simulator for this simulation
             simulator = TourSimulator()
             simulator.rider_db = self.rider_db  # Ensure rider database is set
@@ -254,7 +246,6 @@ class VersusMode:
                     team_points += stage_points
             else:
                 # Fallback: if no stage selections, use a more accurate approximation
-                print("Warning: No stage selections available, using stage-optimized scoring")
                 # Calculate what the optimal stage selection would be for this simulation
                 optimal_stage_points = self._calculate_optimal_stage_points_for_simulation(
                     simulator, user_team.rider_names
@@ -375,8 +366,6 @@ class VersusMode:
         Returns:
             Optimal team selection
         """
-        print("Generating optimal team for comparison...")
-        
         # Run simulations to get expected points
         rider_data = self.team_optimizer.run_simulation(num_simulations, metric=metric)
         
@@ -402,8 +391,6 @@ class VersusMode:
         Returns:
             Dictionary with comparison results
         """
-        print("Comparing teams using Team Optimization analysis methods...")
-        
         # Use the same rider data and analysis methods as Team Optimization
         rider_data = self.team_optimizer.run_simulation_with_teammate_analysis(100, metric='mean')
         
@@ -1046,7 +1033,6 @@ class VersusMode:
         Returns:
             Dictionary containing all simulation results and data
         """
-        print(f"Running {num_simulations} unified simulations with parallel processing...")
         start_time = time.time()
         
         # Import parallel processing
@@ -1496,7 +1482,6 @@ def interactive_team_selection() -> List[str]:
             rider = versus.rider_db.get_rider(rider_name)
             remaining_budget += rider.price
             team_counts[rider.team] -= 1
-            print(f"Removed {rider_name}")
         else:
             # Add rider
             rider = versus.rider_db.get_rider(rider_name)
@@ -1513,7 +1498,6 @@ def interactive_team_selection() -> List[str]:
             selected_riders.append(rider_name)
             remaining_budget -= rider.price
             team_counts[rider.team] = team_counts.get(rider.team, 0) + 1
-            print(f"Added {rider_name}")
         
         print(f"Selected riders: {len(selected_riders)}/20")
         print(f"Remaining budget: {remaining_budget:.1f}")
@@ -1551,11 +1535,11 @@ def main():
     print(f"User team created: {user_team}")
     
     # Get rider performance data using Team Optimization methods
-    print("\nStep 2: Analyzing rider performance using Team Optimization methods...")
+            # print("\nStep 2: Analyzing rider performance using Team Optimization methods...")
     rider_data = versus.team_optimizer.run_simulation_with_teammate_analysis(num_simulations=100, metric='mean')
     
     # Optimize stage selection for user team
-    print("\nStep 3: Optimizing stage selection for your team...")
+            # print("\nStep 3: Optimizing stage selection for your team...")
     user_team = versus.optimize_stage_selection(user_team, rider_data, num_simulations=50)
     
     # Get optimal team for comparison
@@ -1563,7 +1547,7 @@ def main():
     optimal_team = versus.get_optimal_team(num_simulations=50, metric='mean')
     
     # Compare teams using Team Optimization analysis methods
-    print("\nStep 5: Comparing teams using Team Optimization analysis...")
+            # print("\nStep 5: Comparing teams using Team Optimization analysis...")
     comparison = versus.compare_teams(user_team, optimal_team)
     
     # Print comparison results

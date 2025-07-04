@@ -18,7 +18,7 @@ class MultiSimulationAnalyzer:
         
     def run_simulations(self, rider_db, progress_callback=None):
         """Run multiple simulations and collect comprehensive data"""
-        print(f"Running {self.num_simulations} simulations...")
+        # print(f"Running {self.num_simulations} simulations...")
         
         for sim in range(self.num_simulations):
             if progress_callback:
@@ -38,7 +38,7 @@ class MultiSimulationAnalyzer:
     
     def _calculate_comprehensive_metrics(self):
         """Calculate all comprehensive metrics from simulation results"""
-        print("Calculating comprehensive metrics...")
+        # print("Calculating comprehensive metrics...")
         
         # Initialize data structures
         self.metrics = {

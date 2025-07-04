@@ -176,6 +176,86 @@ def main():
         ["📊 Overview", "🎯 Single Simulation", "🔍 Exploration", "⚡ Team Optimization", "🆚 Versus Mode", "👥 Rider Management", "🏁 Stage Types"]
     )
     
+    # Team overview in sidebar (fixed position, not affected by scrolling)
+    if page == "🆚 Versus Mode" and 'versus_selected_riders' in st.session_state:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("📊 Team Overview")
+        
+        # Calculate team statistics
+        selected_count = len(st.session_state['versus_selected_riders'])
+        if selected_count > 0:
+            # Get rider database for calculations
+            rider_db = st.session_state.rider_db
+            selected_riders = [rider_db.get_rider(name) for name in st.session_state['versus_selected_riders'] if rider_db.get_rider(name)]
+            total_cost = sum(rider.price for rider in selected_riders)
+            budget_remaining = 48.0 - total_cost
+            team_counts = {}
+            for rider in selected_riders:
+                if rider.team not in team_counts:
+                    team_counts[rider.team] = 0
+                team_counts[rider.team] += 1
+            num_teams = len(team_counts)
+            
+            # Display team statistics in a compact format
+            st.sidebar.markdown(f"""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 12px; border-radius: 8px; color: white; margin-bottom: 10px;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px;">Team Status</div>
+                <div style="font-size: 11px; margin-bottom: 3px;">👥 Riders: {selected_count}/20</div>
+                <div style="font-size: 11px; margin-bottom: 3px;">💰 Budget: {total_cost:.1f}/48.0</div>
+                <div style="font-size: 11px; margin-bottom: 3px;">💵 Remaining: {budget_remaining:.1f}</div>
+                <div style="font-size: 11px;">🏢 Teams: {num_teams}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Progress bars for visual feedback
+            rider_progress = selected_count / 20
+            budget_progress = total_cost / 48.0
+            
+            st.sidebar.write("**Rider Progress:**")
+            st.sidebar.progress(rider_progress)
+            st.sidebar.write("**Budget Usage:**")
+            st.sidebar.progress(budget_progress)
+        else:
+            st.sidebar.info("No riders selected yet.")
+        
+        # Team action buttons
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("⚡ Team Actions")
+        
+        # Generate optimized team button
+        if st.sidebar.button('🔥 Generate Optimized Team', type='primary', help='Create an optimized team using 10 simulations'):
+            with st.spinner('🔥 Creating spicy optimized team with 10 simulations...'):
+                try:
+                    # Temporarily suppress logging output
+                    import logging
+                    logging.getLogger('team_optimization').setLevel(logging.WARNING)
+                    
+                    # Create optimizer with current rider database
+                    optimizer = TeamOptimizer(budget=48.0, team_size=20)
+                    optimizer.rider_db = st.session_state.rider_db
+                    inject_rider_database(optimizer.simulator, st.session_state.rider_db)
+                    
+                    # Run quick simulation to get rider data
+                    rider_data = optimizer.run_simulation_with_teammate_analysis(10, metric='mean')
+                    
+                    # Optimize team
+                    optimal_team = optimizer.optimize_team(rider_data, risk_aversion=0.0, abandon_penalty=1.0)
+                    
+                    # Set the optimized team as selection
+                    st.session_state['versus_selected_riders'] = optimal_team.rider_names
+                    
+                    st.success(f'🎯 Generated optimized team with {len(optimal_team.rider_names)} riders!')
+                    st.rerun()
+                    
+                except Exception as e:
+                    st.error(f'Could not generate team: {str(e)}')
+        
+        # Clear team button
+        if st.sidebar.button('🗑️ Clear Team', help='Remove all selected riders'):
+            st.session_state['versus_selected_riders'] = []
+            st.rerun()
+    
     # Page routing
     if page == "📊 Overview":
         show_overview()
@@ -2864,14 +2944,14 @@ def run_optimizer_simulation(optimizer, num_simulations, rider_db, metric='mean'
         rider_db: RiderDatabase instance
         metric: Metric to use for expected points ('mean', 'median', 'mode')
     """
-    print(f"Running {num_simulations} simulations to calculate expected points using {metric}...")
+    # print(f"Running {num_simulations} simulations to calculate expected points using {metric}...")
     
     # Store points from all simulations
     all_points = []
     
     for i in range(num_simulations):
         if i % 10 == 0:
-            print(f"Simulation {i+1}/{num_simulations}")
+            pass  # removed print(f"Simulation {i+1}/{num_simulations}")
         
         # Ensure the simulator has the correct rider database and stage profiles
         inject_rider_database(optimizer.simulator, rider_db)
@@ -2980,7 +3060,7 @@ def get_stage_performance_data_with_injection(optimizer, num_simulations, rider_
     
     for sim in range(num_simulations):
         if sim % 10 == 0:
-            print(f"Stage analysis simulation {sim+1}/{num_simulations}")
+            pass  # removed print(f"Stage analysis simulation {sim+1}/{num_simulations}")
         
         # Ensure the simulator has the correct rider database and stage profiles
         inject_rider_database(optimizer.simulator, rider_db)
@@ -3048,8 +3128,6 @@ def optimize_with_stage_selection_with_injection(optimizer, rider_data, num_simu
     """
     from team_optimization import TeamSelection
     from pulp import LpProblem, LpMaximize, LpVariable, lpSum, LpStatusOptimal, LpStatus
-    
-    print("Running advanced optimization with stage selection...")
     
     # Use our custom method to get stage-by-stage performance data
     stage_performance = get_stage_performance_data_with_injection(optimizer, num_simulations, rider_db)
@@ -3544,6 +3622,8 @@ def show_versus_mode():
         if 'versus_selected_riders' not in st.session_state:
             st.session_state['versus_selected_riders'] = []
 
+
+        
         # Create two columns: main content and sidebar
         main_col, sidebar_col = st.columns([4, 1])
         
@@ -3614,7 +3694,7 @@ def show_versus_mode():
                 selected_teams = st.multiselect(
                     "Select Teams to Show:",
                     team_names,
-                    default=team_names[:6],  # Show first 6 by default
+                    default=team_names,  # Show all teams by default
                     key='versus_teams'
                 )
             else:

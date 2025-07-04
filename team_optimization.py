@@ -60,7 +60,7 @@ class TeamOptimizer:
         simulator.rider_db = self.rider_db  # Use the same rider database
         
         # Run simulation
-        simulator.simulate_tour()
+        simulator.simulate_tour(verbose=False)
         
         # Return the scorito points
         return dict(simulator.scorito_points)
@@ -75,7 +75,7 @@ class TeamOptimizer:
         simulator.rider_db = self.rider_db  # Use the same rider database
         
         # Run simulation
-        simulator.simulate_tour()
+        simulator.simulate_tour(verbose=False)
         
         # Analyze teammate bonuses from the simulation
         teammate_bonus_analysis = self._analyze_teammate_bonuses_from_simulation(simulator)
@@ -179,7 +179,7 @@ class TeamOptimizer:
         # Use parallel processing for simulations with teammate analysis
         try:
             # Run simulations in parallel
-            simulation_results = Parallel(n_jobs=-1, verbose=1)(
+            simulation_results = Parallel(n_jobs=-1, verbose=0)(
                 delayed(self._run_single_simulation_with_teammate_analysis)()
                 for _ in range(num_simulations)
             )
@@ -575,7 +575,7 @@ class TeamOptimizer:
                 logger.info(f"Stage analysis simulation {sim+1}/{num_simulations}")
             
             # Run simulation and collect stage-by-stage points
-            self.simulator.simulate_tour()
+            self.simulator.simulate_tour(verbose=False)
             
             # Extract stage points from the records and calculate per-stage points
             stage_records = self.simulator.scorito_points_records
@@ -664,7 +664,7 @@ class TeamOptimizer:
         alternatives = []
         
         for i in range(num_alternatives):
-            print(f"Generating alternative team {i+1}/{num_alternatives}")
+            # print(f"Generating alternative team {i+1}/{num_alternatives}")
             
             # Add random constraints to get different solutions
             min_riders_per_team = {}
@@ -1219,7 +1219,7 @@ def main():
             print(f"  {row['rider_name']} ({row['team']}): {row['teammate_bonus_potential']:.2f} bonus points")
         
         # Optimize team with teammate bonuses
-        print(f"\nOptimizing team selection with teammate bonus consideration using {metric}...")
+        # print(f"\nOptimizing team selection with teammate bonus consideration using {metric}...")
         optimal_team = optimizer.optimize_team_with_teammate_bonuses(
             rider_data, 
             risk_aversion=0.0, 
@@ -1306,7 +1306,7 @@ def main():
         print(f"  - Riders: {', '.join(team.rider_names[:5])}{'...' if len(team.rider_names) > 5 else ''}")
     
     # Optimize team with advanced stage selection and teammate bonuses
-    print("\nOptimizing team selection with stage-by-stage analysis and teammate bonuses...")
+    # print("\nOptimizing team selection with stage-by-stage analysis and teammate bonuses...")
     optimal_team = optimizer.optimize_with_stage_selection_and_teammate_bonuses(
         rider_data, 
         num_simulations=50, 

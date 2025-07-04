@@ -167,6 +167,8 @@ def main():
         st.session_state.multi_simulation_results = None
     if 'optimization_results' not in st.session_state:
         st.session_state.optimization_results = None
+    if 'versus_selected_riders' not in st.session_state:
+        st.session_state['versus_selected_riders'] = []
     
     # Sidebar navigation
     st.sidebar.title("🚴‍♂️ Tour de France Simulator")
@@ -3618,9 +3620,7 @@ def show_versus_mode():
         available_riders = versus.get_available_riders()
     
 
-        # Initialize session state for selected riders
-        if 'versus_selected_riders' not in st.session_state:
-            st.session_state['versus_selected_riders'] = []
+        # Session state already initialized in main function
 
 
         

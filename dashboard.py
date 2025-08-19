@@ -12,13 +12,13 @@ import base64
 import matplotlib.pyplot as plt
 
 # Import our custom modules
-from simulator import TourSimulator
-from team_optimization import TeamOptimizer, TeamSelection
-from riders import RiderDatabase, Rider
-from rider_parameters import RiderParameters, get_tier_parameters, update_tier_parameters
+from tour_simulator.core.simulator import TourSimulator
+from tour_simulator.services.team_optimization import TeamOptimizer, TeamSelection
+from tour_simulator.core.riders import RiderDatabase, Rider
+from tour_simulator.models.rider_parameters import RiderParameters, get_tier_parameters, update_tier_parameters
 from multi_simulator import MultiSimulationAnalyzer
-from versus_mode import VersusMode
-from stage_profiles import StageType, STAGE_PROFILES, validate_stage_profile, update_stage_profile
+from tour_simulator.services.versus_mode import VersusMode
+from tour_simulator.core.stage_profiles import StageType, STAGE_PROFILES, validate_stage_profile, update_stage_profile
 
 # Page configuration
 st.set_page_config(
@@ -2084,7 +2084,7 @@ def show_tier_parameters_management():
     """)
     
     # Import rider parameters
-    from rider_parameters import get_tier_parameters, update_tier_parameters
+    from tour_simulator.models.rider_parameters import get_tier_parameters, update_tier_parameters
     
     # Initialize tier parameters in session state
     if 'tier_parameters' not in st.session_state:
@@ -3046,7 +3046,7 @@ def optimize_with_stage_selection_with_injection(optimizer, rider_data, num_simu
     Returns:
         TeamSelection object with optimal team
     """
-    from team_optimization import TeamSelection
+    from tour_simulator.services.team_optimization import TeamSelection
     from pulp import LpProblem, LpMaximize, LpVariable, lpSum, LpStatusOptimal, LpStatus
     
     print("Running advanced optimization with stage selection...")

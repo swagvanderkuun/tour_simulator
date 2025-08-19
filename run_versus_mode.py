@@ -12,7 +12,7 @@ Usage:
     python run_versus_mode.py
 """
 
-from versus_mode import main
+from tour_simulator.services.versus_mode import main
 
 if __name__ == "__main__":
     main() 

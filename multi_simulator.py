@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from simulator import TourSimulator
+from tour_simulator.core.simulator import TourSimulator
 from collections import defaultdict
 import plotly.express as px
 import plotly.graph_objects as go

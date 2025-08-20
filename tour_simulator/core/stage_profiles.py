@@ -11,21 +11,23 @@ class StageType(Enum):
     SPRINT = "sprint"
     PUNCH = "punch"
     ITT = "itt"
+    TTT = "ttt"  # New: Team Time Trial
     MOUNTAIN = "mountain"
     BREAK_AWAY = "break_away"
 
 # Stage profiles for the Tour de France 2025
 # Each stage can be a mix of different types with weights that sum to 1
+# Now includes Team Time Trial (TTT) support
 STAGE_PROFILES = {
     1: {StageType.SPRINT: 1.0},
     2: {StageType.PUNCH: 0.8, StageType.SPRINT: 0.2},
     3: {StageType.SPRINT: 1.0},
     4: {StageType.PUNCH: 0.7, StageType.SPRINT: 0.3},
-    5: {StageType.ITT: 1.0},
+    5: {StageType.TTT: 1.0},  # Team Time Trial
     6: {StageType.PUNCH: 0.6, StageType.BREAK_AWAY: 0.3, StageType.MOUNTAIN: 0.1},
     7: {StageType.PUNCH: 0.7, StageType.MOUNTAIN: 0.3},
     8: {StageType.SPRINT: 0.9, StageType.PUNCH: 0.1},
-    9: {StageType.SPRINT: 1.0},
+    9: {StageType.ITT: 1.0},  # Individual Time Trial
     10: {StageType.MOUNTAIN: 0.5, StageType.BREAK_AWAY: 0.5},
     11: {StageType.BREAK_AWAY: 0.2, StageType.SPRINT: 0.2, StageType.PUNCH: 0.6},
     12: {StageType.MOUNTAIN: 1.0},

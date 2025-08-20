@@ -21,7 +21,7 @@ class TestStageType:
 
     def test_stage_type_completeness(self):
         """Test that all expected stage types are defined."""
-        expected_types = ["sprint", "punch", "itt", "mountain", "break_away"]
+        expected_types = ["sprint", "punch", "itt", "ttt", "mountain", "break_away"]
         actual_types = [stage_type.value for stage_type in StageType]
         
         assert set(expected_types) == set(actual_types)
@@ -67,8 +67,8 @@ class TestStageProfiles:
         # Stage 1 should be pure sprint
         assert STAGE_PROFILES[1] == {StageType.SPRINT: 1.0}
         
-        # Stage 5 should be pure ITT
-        assert STAGE_PROFILES[5] == {StageType.ITT: 1.0}
+        # Stage 5 should be pure TTT
+        assert STAGE_PROFILES[5] == {StageType.TTT: 1.0}  # Changed to TTT
         
         # Stage 12 should be pure mountain
         assert STAGE_PROFILES[12] == {StageType.MOUNTAIN: 1.0}
@@ -90,7 +90,7 @@ class TestGetStageProfile:
         assert profile == {StageType.SPRINT: 1.0}
         
         profile = get_stage_profile(5)
-        assert profile == {StageType.ITT: 1.0}
+        assert profile == {StageType.TTT: 1.0}  # Changed to TTT
 
     def test_get_stage_profile_returns_reference(self):
         """Test that get_stage_profile returns the same reference (current behavior)."""
@@ -121,8 +121,8 @@ class TestGetStageType:
         # Stage 1 is pure sprint
         assert get_stage_type(1) == StageType.SPRINT
         
-        # Stage 5 is pure ITT
-        assert get_stage_type(5) == StageType.ITT
+        # Stage 5 is pure TTT
+        assert get_stage_type(5) == StageType.TTT  # Changed to TTT
         
         # Stage 12 is pure mountain
         assert get_stage_type(12) == StageType.MOUNTAIN
@@ -161,7 +161,7 @@ class TestGetStagesOfType:
         assert 1 in sprint_stages  # Pure sprint
         assert 3 in sprint_stages  # Pure sprint
         assert 8 in sprint_stages  # 90% sprint, 10% punch
-        assert 9 in sprint_stages  # Pure sprint
+        # Stage 9 is now ITT, not sprint
         
         # Should be list of integers
         assert all(isinstance(stage, int) for stage in sprint_stages)
@@ -184,7 +184,7 @@ class TestGetStagesOfType:
         itt_stages = get_stages_of_type(StageType.ITT)
         
         # Should include ITT stage
-        assert 5 in itt_stages  # Pure ITT
+        assert 9 in itt_stages  # Pure ITT
         
         # Should not include non-ITT stages
         assert 1 not in itt_stages  # Sprint stage

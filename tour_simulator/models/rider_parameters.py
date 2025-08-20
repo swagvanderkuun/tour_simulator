@@ -125,6 +125,7 @@ class RiderParameters:
             StageType.SPRINT: self.sprint_ability,
             StageType.PUNCH: self.punch_ability,
             StageType.ITT: self.itt_ability,
+            StageType.TTT: self.itt_ability,  # TTT uses same ability as ITT
             StageType.MOUNTAIN: self.mountain_ability,
             StageType.BREAK_AWAY: self.break_away_ability
         }

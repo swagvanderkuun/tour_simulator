@@ -53,7 +53,8 @@ STAGE_TIME_GAPS = {
     "punch": 0.2,
     "break_away": 1,
     "mountain": 20,
-    "itt": 5
+    "itt": 5,
+    "ttt": 3  # Team Time Trial - smaller gaps than ITT, larger than sprint
 }
 
 # Youth age limit (example: 25)
